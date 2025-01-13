@@ -64,15 +64,15 @@ Options:
 ## 👨‍💻 Development
 
 ```bash
-git clone https://github.com/artob/clientele.rs.git
+git clone https://github.com/dryrust/clientele.rs.git
 ```
 
 - - -
 
-[![Share on Twitter](https://img.shields.io/badge/share%20on-twitter-03A9F4?logo=twitter)](https://twitter.com/share?url=https://github.com/artob/clientele.rs&text=Clientele.rs)
-[![Share on Reddit](https://img.shields.io/badge/share%20on-reddit-red?logo=reddit)](https://reddit.com/submit?url=https://github.com/artob/clientele.rs&title=Clientele.rs)
-[![Share on Hacker News](https://img.shields.io/badge/share%20on-hacker%20news-orange?logo=ycombinator)](https://news.ycombinator.com/submitlink?u=https://github.com/artob/clientele.rs&t=Clientele.rs)
-[![Share on Facebook](https://img.shields.io/badge/share%20on-facebook-1976D2?logo=facebook)](https://www.facebook.com/sharer/sharer.php?u=https://github.com/artob/clientele.rs)
+[![Share on Twitter](https://img.shields.io/badge/share%20on-twitter-03A9F4?logo=twitter)](https://twitter.com/share?url=https://github.com/dryrust/clientele.rs&text=Clientele.rs)
+[![Share on Reddit](https://img.shields.io/badge/share%20on-reddit-red?logo=reddit)](https://reddit.com/submit?url=https://github.com/dryrust/clientele.rs&title=Clientele.rs)
+[![Share on Hacker News](https://img.shields.io/badge/share%20on-hacker%20news-orange?logo=ycombinator)](https://news.ycombinator.com/submitlink?u=https://github.com/dryrust/clientele.rs&t=Clientele.rs)
+[![Share on Facebook](https://img.shields.io/badge/share%20on-facebook-1976D2?logo=facebook)](https://www.facebook.com/sharer/sharer.php?u=https://github.com/dryrust/clientele.rs)
 
 [naming conventions]: https://rust-lang.github.io/api-guidelines/naming.html
 
