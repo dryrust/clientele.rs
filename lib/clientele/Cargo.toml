@@ -25,11 +25,11 @@ all = [
     "dotenv",
     "parse",
     "serde",
+    "subcommands",
     "tokio",
     "tracing",
     "unicode",
     "wild",
-    "subcommands",
 ]
 argfile = ["dep:argfile"]
 camino = ["dep:camino"]
@@ -44,13 +44,12 @@ parse-datetime = []
 parse-duration = ["dep:duration-str"]
 serde = ["camino?/serde1"]
 std = ["clap?/std", "dogma/std", "error-stack?/std", "tracing?/std"]
-tokio = ["dep:tokio"]
 subcommands = []
+tokio = ["dep:tokio"]
 tracing = ["dep:tracing"]
 unicode = ["clap?/unicode"]
 unstable = ["dogma/unstable"]
 wild = ["dep:wild"]
-
 
 [dev-dependencies]
 temp-dir = "0.1.14"

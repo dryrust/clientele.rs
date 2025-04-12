@@ -39,9 +39,9 @@ pub use options::*;
 pub mod paths;
 
 #[cfg(all(feature = "std", feature = "subcommands"))]
-mod subcommands_provider;
+mod subcommands;
 #[cfg(all(feature = "std", feature = "subcommands"))]
-pub use subcommands_provider::*;
+pub use subcommands::*;
 
 mod sysexits;
 pub use sysexits::*;
