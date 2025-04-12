@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.7 - 2025-04-12
+### Added
+- `SubcommandsProvider`
+- A `serde` feature that enables the optional dependency on Serde
+- A `serde-json` feature that enables the optional dependency on serde_json
+- Conversion of `serde_json::Error` to `SysexitsError`
+
 ## 0.2.6 - 2025-04-12
 ### Added
 - A `tokio` feature that enables the optional dependency on Tokio
