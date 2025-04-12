@@ -307,6 +307,20 @@ impl From<std::io::Error> for SysexitsError {
     }
 }
 
+#[cfg(feature = "serde-json")]
+impl From<serde_json::Error> for SysexitsError {
+    fn from(error: serde_json::Error) -> Self {
+        // See: https://docs.rs/serde_json/latest/serde_json/struct.Error.html
+        match error.classify() {
+            serde_json::error::Category::Io => Self::EX_IOERR,
+            serde_json::error::Category::Syntax => Self::EX_DATAERR,
+            serde_json::error::Category::Data => Self::EX_DATAERR,
+            serde_json::error::Category::Eof => Self::EX_NOINPUT,
+            _ => Self::EX_SOFTWARE,
+        }
+    }
+}
+
 #[cfg(feature = "tokio")]
 impl From<tokio::task::JoinError> for SysexitsError {
     fn from(error: tokio::task::JoinError) -> Self {

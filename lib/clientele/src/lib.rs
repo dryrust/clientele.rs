@@ -27,8 +27,8 @@ pub use dotenvy::dotenv;
 #[cfg(feature = "std")]
 pub mod envs;
 
-mod feature;
-pub use feature::*;
+mod features;
+pub use features::*;
 
 #[cfg(all(feature = "std", feature = "clap"))]
 mod options;
@@ -63,6 +63,10 @@ pub mod crates {
     pub use duration_str;
     #[cfg(feature = "error-stack")]
     pub use error_stack;
+    #[cfg(feature = "serde")]
+    pub use serde;
+    #[cfg(feature = "serde-json")]
+    pub use serde_json;
     #[cfg(feature = "tokio")]
     pub use tokio;
     #[cfg(feature = "tracing")]

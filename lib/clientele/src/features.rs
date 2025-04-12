@@ -26,6 +26,12 @@ pub static FEATURES: &[&str] = &[
     "parse-duration",
     #[cfg(feature = "serde")]
     "serde",
+    #[cfg(feature = "serde-json")]
+    "serde-json",
+    #[cfg(feature = "subcommands")]
+    "subcommands",
+    #[cfg(feature = "tokio")]
+    "tokio",
     #[cfg(feature = "tracing")]
     "tracing",
     #[cfg(feature = "unicode")]
