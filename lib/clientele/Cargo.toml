@@ -29,6 +29,7 @@ all = [
     "tracing",
     "unicode",
     "wild",
+    "subcommands",
 ]
 argfile = ["dep:argfile"]
 camino = ["dep:camino"]
@@ -44,10 +45,15 @@ parse-duration = ["dep:duration-str"]
 serde = ["camino?/serde1"]
 std = ["clap?/std", "dogma/std", "error-stack?/std", "tracing?/std"]
 tokio = ["dep:tokio"]
+subcommands = []
 tracing = ["dep:tracing"]
 unicode = ["clap?/unicode"]
 unstable = ["dogma/unstable"]
 wild = ["dep:wild"]
+
+
+[dev-dependencies]
+temp-dir = "0.1.14"
 
 [dependencies]
 argfile = { version = "0.2", default-features = false, optional = true }
