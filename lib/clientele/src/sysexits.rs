@@ -307,6 +307,14 @@ impl From<std::io::Error> for SysexitsError {
     }
 }
 
+#[cfg(feature = "tokio")]
+impl From<tokio::task::JoinError> for SysexitsError {
+    fn from(error: tokio::task::JoinError) -> Self {
+        // See: https://docs.rs/tokio/latest/tokio/task/struct.JoinError.html
+        Self::EX_SOFTWARE
+    }
+}
+
 #[cfg(feature = "std")]
 impl std::process::Termination for SysexitsError {
     fn report(self) -> std::process::ExitCode {

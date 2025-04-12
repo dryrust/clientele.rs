@@ -58,6 +58,8 @@ pub mod crates {
     pub use duration_str;
     #[cfg(feature = "error-stack")]
     pub use error_stack;
+    #[cfg(feature = "tokio")]
+    pub use tokio;
     #[cfg(feature = "tracing")]
     pub use tracing;
     #[cfg(feature = "parse-byteunit")]
