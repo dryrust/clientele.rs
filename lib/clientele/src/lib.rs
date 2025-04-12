@@ -38,6 +38,11 @@ pub use options::*;
 #[cfg(all(feature = "std", feature = "camino"))]
 pub mod paths;
 
+#[cfg(all(feature = "std", feature = "subcommands"))]
+mod subcommands_provider;
+#[cfg(all(feature = "std", feature = "subcommands"))]
+pub use subcommands_provider::*;
+
 mod sysexits;
 pub use sysexits::*;
 
