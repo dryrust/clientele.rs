@@ -44,6 +44,16 @@ pub fn xdg_cache_home() -> Option<String> {
     var("XDG_CACHE_HOME")
 }
 
+/// See: https://docs.python.org/3/using/cmdline.html#envvar-PYTHONHOME
+pub fn python_home() -> Option<String> {
+    var("PYTHONHOME")
+}
+
+/// See: https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH
+pub fn python_path() -> Option<String> {
+    var("PYTHONPATH")
+}
+
 #[cfg(feature = "std")]
 fn var(key: impl AsRef<std::ffi::OsStr>) -> Option<String> {
     use std::env::VarError::*;
@@ -52,4 +62,9 @@ fn var(key: impl AsRef<std::ffi::OsStr>) -> Option<String> {
         Ok(value) if value.trim().is_empty() => None,
         Ok(value) => Some(String::from(value.trim())),
     }
+}
+
+#[cfg(not(feature = "std"))]
+fn var(_key: impl AsRef<std::ffi::OsStr>) -> Option<String> {
+    None // environment variables not supported
 }
