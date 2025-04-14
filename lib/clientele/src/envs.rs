@@ -31,7 +31,7 @@ pub mod xdg;
 pub use xdg::*;
 
 #[cfg(feature = "std")]
-fn var(key: impl AsRef<std::ffi::OsStr>) -> Option<String> {
+pub fn var(key: impl AsRef<std::ffi::OsStr>) -> Option<String> {
     use std::env::VarError::*;
     match std::env::var(key) {
         Err(NotPresent | NotUnicode(_)) => None,
@@ -41,6 +41,6 @@ fn var(key: impl AsRef<std::ffi::OsStr>) -> Option<String> {
 }
 
 #[cfg(not(feature = "std"))]
-fn var(_key: impl AsRef<std::ffi::OsStr>) -> Option<String> {
+pub fn var(_key: impl AsRef<std::ffi::OsStr>) -> Option<String> {
     None // environment variables not supported
 }
