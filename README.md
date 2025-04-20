@@ -1,7 +1,7 @@
 # Clientele.rs
 
 [![License](https://img.shields.io/badge/license-Public%20Domain-blue.svg)](https://unlicense.org)
-[![Compatibility](https://img.shields.io/badge/rust-1.70%2B-blue)](https://rust-lang.org)
+[![Compatibility](https://img.shields.io/badge/rust-1.81%2B-blue)](https://blog.rust-lang.org/2024/09/05/Rust-1.81.0.html)
 [![Package](https://img.shields.io/crates/v/clientele)](https://crates.io/crates/clientele)
 [![Documentation](https://docs.rs/clientele/badge.svg)](https://docs.rs/clientele/)
 
@@ -25,7 +25,7 @@ and Windows. It packages and re-exports [`clap`], [`camino`], [`dotenvy`],
 
 ## 🛠️ Prerequisites
 
-- [Rust](https://rust-lang.org) 1.70+
+- [Rust](https://rust-lang.org) 1.81+
 
 ## ⬇️ Installation
 
