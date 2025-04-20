@@ -5,16 +5,18 @@
 [![Package](https://img.shields.io/crates/v/clientele)](https://crates.io/crates/clientele)
 [![Documentation](https://docs.rs/clientele/badge.svg)](https://docs.rs/clientele/)
 
-**Clientele** makes it easy to write superb command-line utilities in Rust that
-follow consistent best practices on all target platforms including Linux, macOS,
-and Windows. It packages and re-exports [`clap`], [`camino`], [`dotenvy`],
-[`argfile`], and [`wild`] into a single easy dependency.
+**Clientele** makes it easy to write superb command-line utilities in Rust
+that follow consistent best practices on all target platforms including Linux,
+macOS, and Windows. It packages and re-exports [`clap`], [`camino`],
+[`dotenvy`], [`wild`], [`argfile`], and [`getenv`] into a single easy
+dependency.
 
 ## ✨ Features
 
 - Showcases how to structure a CLI program in Rust (see the [examples](#-examples)).
 - Loads environment variables from `.env` files (using the [`dotenvy`] crate).
-- Expands wildcards (globs) on Windows (using the [`wild`] crate).
+- Provides convenience getters for common variables (using the [`getenv`] crate).
+- Expands wildcard arguments (globs) on Windows (using the [`wild`] crate).
 - Expands @argfiles similarly to [`javac`] or Python (using the [`argfile`] crate).
 - Defines a standard set of essential CLI options (using the [`clap`] crate).
 - Provides the [`Utf8Path`] and [`Utf8PathBuf`] types (using the [`camino`] crate).
@@ -107,6 +109,7 @@ git clone https://github.com/dryrust/clientele.rs.git
 [`camino`]: https://crates.io/crates/camino
 [`clap`]: https://crates.io/crates/clap
 [`dotenvy`]: https://crates.io/crates/dotenvy
+[`getenv`]: https://crates.io/crates/getenv
 [`wild`]: https://crates.io/crates/wild
 
 [`sysexits.h(3)`]: https://man7.org/linux/man-pages/man3/sysexits.h.3head.html

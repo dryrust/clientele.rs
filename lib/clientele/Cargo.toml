@@ -23,6 +23,7 @@ all = [
     "color",
     "dirs",
     "dotenv",
+    "getenv",
     "parse",
     "serde",
     "serde-json",
@@ -39,13 +40,20 @@ color = ["clap?/color"]
 dirs = ["dep:dirs"]
 dotenv = ["dep:dotenvy"]
 error-stack = ["dep:error-stack"]
+getenv = ["dep:getenv"]
 parse = ["parse-byteunit", "parse-datetime", "parse-duration"]
 parse-byteunit = ["dep:ubyte"]
 parse-datetime = []
 parse-duration = ["dep:duration-str"]
 serde = ["dep:serde", "camino?/serde1"]
 serde-json = ["serde", "dep:serde_json"]
-std = ["clap?/std", "dogma/std", "error-stack?/std", "tracing?/std"]
+std = [
+    "clap?/std",
+    "dogma/std",
+    "error-stack?/std",
+    "getenv?/std",
+    "tracing?/std",
+]
 subcommands = []
 tokio = ["dep:tokio"]
 tracing = ["dep:tracing"]
@@ -72,6 +80,15 @@ dogma = { version = "0.1", default-features = false }
 duration-str = { version = "0.11", default-features = false, optional = true }
 dotenvy = { version = "0.15", default-features = false, optional = true }
 error-stack = { version = "0.5", default-features = false, optional = true }
+getenv = { version = "0.1", default-features = false, features = [
+    "locale",
+    "macos",
+    "openssl",
+    "posix",
+    "proxy",
+    "windows",
+    "xdg",
+], optional = true }
 serde = { version = "1", default-features = false, optional = true }
 serde_json = { version = "1", default-features = false, features = [
     "alloc",

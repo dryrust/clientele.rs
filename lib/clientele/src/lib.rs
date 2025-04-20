@@ -24,8 +24,8 @@ pub use camino::{Utf8Path, Utf8PathBuf};
 #[cfg(feature = "dotenv")]
 pub use dotenvy::dotenv;
 
-#[cfg(feature = "std")]
-pub mod envs;
+#[cfg(all(feature = "std", feature = "getenv"))]
+pub use getenv as envs;
 
 mod features;
 pub use features::*;
@@ -35,7 +35,7 @@ mod options;
 #[cfg(all(feature = "std", feature = "clap"))]
 pub use options::*;
 
-#[cfg(all(feature = "std", feature = "camino"))]
+#[cfg(all(feature = "std", feature = "getenv", feature = "camino"))]
 pub mod paths;
 
 #[cfg(all(feature = "std", feature = "subcommands"))]
@@ -63,6 +63,8 @@ pub mod crates {
     pub use duration_str;
     #[cfg(feature = "error-stack")]
     pub use error_stack;
+    #[cfg(feature = "getenv")]
+    pub use getenv;
     #[cfg(feature = "serde")]
     pub use serde;
     #[cfg(feature = "serde-json")]
