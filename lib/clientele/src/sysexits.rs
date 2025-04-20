@@ -128,8 +128,6 @@ impl SysexitsError {
     }
 
     #[cfg(feature = "std")]
-    #[rustversion::nightly]
-    #[doc(hidden)]
     fn as_exit_status(&self) -> Option<std::process::ExitStatus> {
         match *self {
             Self::EX_OK => Some(std::process::ExitStatus::default()),
