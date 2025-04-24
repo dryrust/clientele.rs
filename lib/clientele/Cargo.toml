@@ -24,6 +24,7 @@ all = [
     "dirs",
     "dotenv",
     "getenv",
+    "gofer",
     "parse",
     "serde",
     "serde-json",
@@ -41,6 +42,7 @@ dirs = ["dep:dirs"]
 dotenv = ["dep:dotenvy"]
 error-stack = ["dep:error-stack"]
 getenv = ["dep:getenv"]
+gofer = ["dep:gofer"]
 parse = ["parse-byteunit", "parse-datetime", "parse-duration"]
 parse-byteunit = ["dep:ubyte"]
 parse-datetime = []
@@ -52,6 +54,7 @@ std = [
     "dogma/std",
     "error-stack?/std",
     "getenv?/std",
+    "gofer?/std",
     "tracing?/std",
 ]
 subcommands = []
@@ -89,6 +92,7 @@ getenv = { version = "0.1", default-features = false, features = [
     "windows",
     "xdg",
 ], optional = true }
+gofer = { version = "0.1", default-features = false, optional = true }
 serde = { version = "1", default-features = false, optional = true }
 serde_json = { version = "1", default-features = false, features = [
     "alloc",

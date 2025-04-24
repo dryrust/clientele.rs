@@ -305,16 +305,30 @@ impl From<std::io::Error> for SysexitsError {
     }
 }
 
+#[cfg(feature = "gofer")]
+impl From<gofer::Error> for SysexitsError {
+    fn from(error: gofer::Error) -> Self {
+        // See: https://docs.rs/gofer/latest/gofer/enum.Error.html
+        use gofer::Error::*;
+        match error {
+            InvalidUrl(_) => Self::EX_DATAERR,
+            UnknownScheme(_) => Self::EX_DATAERR,
+            _ => Self::EX_SOFTWARE, // catch-all
+        }
+    }
+}
+
 #[cfg(feature = "serde-json")]
 impl From<serde_json::Error> for SysexitsError {
     fn from(error: serde_json::Error) -> Self {
         // See: https://docs.rs/serde_json/latest/serde_json/struct.Error.html
+        use serde_json::error::Category::*;
         match error.classify() {
-            serde_json::error::Category::Io => Self::EX_IOERR,
-            serde_json::error::Category::Syntax => Self::EX_DATAERR,
-            serde_json::error::Category::Data => Self::EX_DATAERR,
-            serde_json::error::Category::Eof => Self::EX_NOINPUT,
-            _ => Self::EX_SOFTWARE,
+            Io => Self::EX_IOERR,
+            Syntax => Self::EX_DATAERR,
+            Data => Self::EX_DATAERR,
+            Eof => Self::EX_NOINPUT,
+            _ => Self::EX_SOFTWARE, // catch-all
         }
     }
 }
