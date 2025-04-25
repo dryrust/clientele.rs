@@ -271,6 +271,13 @@ impl TryFrom<std::process::ExitStatus> for SysexitsError {
 #[cfg(feature = "std")]
 impl From<std::boxed::Box<dyn std::error::Error>> for SysexitsError {
     fn from(error: std::boxed::Box<dyn std::error::Error>) -> Self {
+        Self::from(&error)
+    }
+}
+
+#[cfg(feature = "std")]
+impl From<&std::boxed::Box<dyn std::error::Error>> for SysexitsError {
+    fn from(error: &std::boxed::Box<dyn std::error::Error>) -> Self {
         Self::EX_SOFTWARE
     }
 }
@@ -278,6 +285,13 @@ impl From<std::boxed::Box<dyn std::error::Error>> for SysexitsError {
 #[cfg(feature = "std")]
 impl From<std::io::Error> for SysexitsError {
     fn from(error: std::io::Error) -> Self {
+        Self::from(&error)
+    }
+}
+
+#[cfg(feature = "std")]
+impl From<&std::io::Error> for SysexitsError {
+    fn from(error: &std::io::Error) -> Self {
         use std::io::ErrorKind::*;
         match error.kind() {
             AddrInUse => Self::EX_TEMPFAIL,
@@ -308,6 +322,13 @@ impl From<std::io::Error> for SysexitsError {
 #[cfg(feature = "gofer")]
 impl From<gofer::Error> for SysexitsError {
     fn from(error: gofer::Error) -> Self {
+        Self::from(&error)
+    }
+}
+
+#[cfg(feature = "gofer")]
+impl From<&gofer::Error> for SysexitsError {
+    fn from(error: &gofer::Error) -> Self {
         // See: https://docs.rs/gofer/latest/gofer/enum.Error.html
         use gofer::Error::*;
         match error {
@@ -321,6 +342,13 @@ impl From<gofer::Error> for SysexitsError {
 #[cfg(feature = "serde-json")]
 impl From<serde_json::Error> for SysexitsError {
     fn from(error: serde_json::Error) -> Self {
+        Self::from(&error)
+    }
+}
+
+#[cfg(feature = "serde-json")]
+impl From<&serde_json::Error> for SysexitsError {
+    fn from(error: &serde_json::Error) -> Self {
         // See: https://docs.rs/serde_json/latest/serde_json/struct.Error.html
         use serde_json::error::Category::*;
         match error.classify() {
@@ -336,6 +364,13 @@ impl From<serde_json::Error> for SysexitsError {
 #[cfg(feature = "tokio")]
 impl From<tokio::task::JoinError> for SysexitsError {
     fn from(error: tokio::task::JoinError) -> Self {
+        Self::from(&error)
+    }
+}
+
+#[cfg(feature = "tokio")]
+impl From<&tokio::task::JoinError> for SysexitsError {
+    fn from(error: &tokio::task::JoinError) -> Self {
         // See: https://docs.rs/tokio/latest/tokio/task/struct.JoinError.html
         Self::EX_SOFTWARE
     }
