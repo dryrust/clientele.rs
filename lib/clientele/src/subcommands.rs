@@ -48,6 +48,18 @@ impl SubcommandsProvider {
     pub fn iter(&self) -> impl Iterator<Item = &Subcommand> {
         self.commands.iter()
     }
+
+    pub fn into_iter(self) -> impl Iterator<Item = Subcommand> {
+        self.commands.into_iter()
+    }
+
+    pub fn get_commands(&self) -> &Vec<Subcommand> {
+        &self.commands
+    }
+
+    pub fn into_commands(self) -> Vec<Subcommand> {
+        self.commands
+    }
 }
 
 #[cfg(unix)]
