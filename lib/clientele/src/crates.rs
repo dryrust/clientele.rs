@@ -39,7 +39,7 @@ pub use serde_json;
 pub use tokio;
 
 #[cfg(feature = "tracing")]
-pub use tracing;
+pub use tracing_core;
 
 #[cfg(feature = "parse-byteunit")]
 pub use ubyte;
