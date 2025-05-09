@@ -10,6 +10,11 @@
 #![deny(unsafe_code)]
 #![allow(unused)]
 
+pub use known_errors::{
+    abort,
+    sysexits::{exit, SysexitsError, SysexitsResult},
+};
+
 #[doc(hidden)]
 mod prelude;
 
@@ -42,9 +47,6 @@ pub mod paths;
 mod subcommands;
 #[cfg(all(feature = "std", feature = "subcommands"))]
 pub use subcommands::*;
-
-mod sysexits;
-pub use sysexits::*;
 
 #[doc(hidden)]
 pub mod crates;

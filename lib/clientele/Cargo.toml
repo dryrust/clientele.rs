@@ -40,25 +40,26 @@ clap = ["dep:clap"]
 color = ["clap?/color"]
 dirs = ["dep:dirs"]
 dotenv = ["dep:dotenvy"]
-error-stack = ["dep:error-stack"]
+error-stack = ["dep:error-stack", "known-errors/error-stack"]
 getenv = ["dep:getenv"]
-gofer = ["dep:gofer"]
+gofer = ["dep:gofer", "known-errors/gofer"]
 parse = ["parse-byteunit", "parse-datetime", "parse-duration"]
 parse-byteunit = ["dep:ubyte"]
 parse-datetime = []
 parse-duration = ["dep:duration-str"]
-serde = ["dep:serde", "camino?/serde1"]
-serde-json = ["serde", "dep:serde_json"]
+serde = ["dep:serde", "known-errors/serde", "camino?/serde1"]
+serde-json = ["serde", "dep:serde_json", "known-errors/serde-json"]
 std = [
     "clap?/std",
     "dogma/std",
     "error-stack?/std",
     "getenv?/std",
     "gofer?/std",
+    "known-errors/std",
     "tracing-core?/std",
 ]
 subcommands = []
-tokio = ["dep:tokio"]
+tokio = ["dep:tokio", "known-errors/tokio"]
 tracing = ["dep:tracing-core"]
 unicode = ["clap?/unicode"]
 unstable = ["dogma/unstable"]
@@ -93,6 +94,9 @@ getenv = { version = "0.1", default-features = false, features = [
     "xdg",
 ], optional = true }
 gofer = { version = "0.1", default-features = false, optional = true }
+known-errors = { version = "0.1", default-features = false, features = [
+    "sysexits",
+] }
 serde = { version = "1", default-features = false, optional = true }
 serde_json = { version = "1", default-features = false, features = [
     "alloc",
