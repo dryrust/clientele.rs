@@ -10,6 +10,10 @@
 #![deny(unsafe_code)]
 #![allow(unused)]
 
+#[cfg(doctest)]
+#[doc = include_str!("../../../README.md")]
+pub struct ReadmeDoctests;
+
 pub use known_errors::{
     abort,
     sysexits::{exit, SysexitsError, SysexitsResult},
@@ -32,9 +36,6 @@ pub use dotenvy::dotenv;
 #[cfg(all(feature = "std", feature = "getenv"))]
 pub use getenv as envs;
 
-mod features;
-pub use features::*;
-
 #[cfg(all(feature = "std", feature = "clap"))]
 mod options;
 #[cfg(all(feature = "std", feature = "clap"))]
@@ -44,13 +45,11 @@ pub use options::*;
 pub mod paths;
 
 #[cfg(all(feature = "std", feature = "subcommands"))]
+#[doc(hidden)]
 mod subcommands;
 #[cfg(all(feature = "std", feature = "subcommands"))]
+#[doc(hidden)]
 pub use subcommands::*;
 
 #[doc(hidden)]
 pub mod crates;
-
-#[doc = include_str!("../../../README.md")]
-#[cfg(doctest)]
-pub struct ReadmeDoctests;
