@@ -14,10 +14,10 @@
 #[doc = include_str!("../../../README.md")]
 pub struct ReadmeDoctests;
 
-pub use known_errors::{
-    abort,
-    sysexits::{exit, SysexitsError, SysexitsResult},
-};
+pub use known_errors::sysexits::{SysexitsError, SysexitsResult};
+
+#[cfg(feature = "std")]
+pub use known_errors::{abort, sysexits::exit};
 
 #[doc(hidden)]
 mod prelude;
