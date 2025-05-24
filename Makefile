@@ -1,7 +1,7 @@
 CARGO = cargo
 
 all: Cargo.toml
-	$(CARGO) build
+	$(CARGO) build --release
 
 check: Cargo.toml
 	$(CARGO) test -- --nocapture

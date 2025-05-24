@@ -55,13 +55,13 @@ clientele = { version = "0.3", default-features = false, features = ["dotenv"] }
 
 See [`examples/skeleton/main.rs`] for a complete example.
 
-### Importing the library
+### Importing the Library
 
 ```rust
 use clientele::*;
 ```
 
-### Running the example
+### Running the Example
 
 ```bash
 cargo run --example skeleton
