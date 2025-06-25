@@ -29,19 +29,6 @@ pub struct StandardOptions {
 }
 
 #[cfg(feature = "tracing")]
-impl Into<tracing_core::Level> for StandardOptions {
-    fn into(self) -> tracing_core::Level {
-        match (self.debug, self.verbose) {
-            (false, 0) => tracing_core::Level::ERROR,
-            (false, 1) => tracing_core::Level::WARN,
-            (false, 2) => tracing_core::Level::INFO,
-            (false, _) => tracing_core::Level::DEBUG,
-            (true, _) => tracing_core::Level::TRACE,
-        }
-    }
-}
-
-#[cfg(feature = "tracing")]
 impl Into<tracing_core::LevelFilter> for StandardOptions {
     fn into(self) -> tracing_core::LevelFilter {
         match (self.debug, self.verbose) {
