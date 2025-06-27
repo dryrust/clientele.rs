@@ -31,6 +31,13 @@ pub struct StandardOptions {
 #[cfg(feature = "tracing")]
 impl Into<tracing_core::LevelFilter> for StandardOptions {
     fn into(self) -> tracing_core::LevelFilter {
+        (&self).into()
+    }
+}
+
+#[cfg(feature = "tracing")]
+impl Into<tracing_core::LevelFilter> for &StandardOptions {
+    fn into(self) -> tracing_core::LevelFilter {
         match (self.debug, self.verbose) {
             (false, 0) => tracing_core::LevelFilter::ERROR,
             (false, 1) => tracing_core::LevelFilter::WARN,
