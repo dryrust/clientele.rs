@@ -93,7 +93,7 @@ getenv = { version = "0.1", default-features = false, features = [
     "windows",
     "xdg",
 ], optional = true }
-gofer = { version = "0.1", default-features = false, optional = true }
+gofer = { version = "0.1.6", default-features = false, optional = true }
 known-errors = { version = "0.1", default-features = false, features = [
     "sysexits",
 ] }
