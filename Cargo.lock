@@ -233,12 +233,13 @@ dependencies = [
 
 [[package]]
 name = "dogma"
-version = "0.1.9"
+version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4329b663bcb56cab24a624e8eb2032805e999c3724cd570e3ba1aef5a9d7bb8"
+checksum = "6815ef812a6db53f46eb6e2eb07a67e22d6339dc4e53d3eefbd9e87d74b59680"
 dependencies = [
  "iri-string",
  "known-schemes",
+ "serde",
 ]
 
 [[package]]
@@ -321,9 +322,9 @@ checksum = "a8d1add55171497b4705a648c6b583acafb01d58050a51727785f0b2c8e0a2b2"
 
 [[package]]
 name = "gofer"
-version = "0.1.6"
+version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa38d11e4108fae535511c0032c5a9084e6686d8d62a86c24b17585a3421900c"
+checksum = "fd6761a81efac6a3b56c289383c0e94539ee8ad7441feb682436778019a5bfb0"
 dependencies = [
  "clap",
  "data-url",
@@ -375,9 +376,13 @@ dependencies = [
 
 [[package]]
 name = "known-schemes"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2474d01704cbcb2ed17c7cc1106b950775b9979d983c9b129adbe830cb317c2c"
+checksum = "5a1880aed2e64661127bf2dfc5714fab26d807ad0efab04660cc4243fa2bc5a9"
+dependencies = [
+ "iri-string",
+ "serde",
+]
 
 [[package]]
 name = "libc"

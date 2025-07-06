@@ -80,8 +80,9 @@ clap = { version = "4.5", default-features = false, features = [
     "wrap_help",
 ], optional = true }
 dirs = { version = "6.0", default-features = false, optional = true }
-dogma = { version = "0.1", default-features = false }
+dogma = { version = "0.1.10", default-features = false }
 duration-str = { version = "0.15", default-features = false, optional = true }
+#duration-str = { version = "0.17", default-features = false, optional = true } # FIXME
 dotenvy = { version = "0.15", default-features = false, optional = true }
 error-stack = { version = "0.5", default-features = false, optional = true }
 getenv = { version = "0.1", default-features = false, features = [
@@ -93,7 +94,7 @@ getenv = { version = "0.1", default-features = false, features = [
     "windows",
     "xdg",
 ], optional = true }
-gofer = { version = "0.1.6", default-features = false, optional = true }
+gofer = { version = "0.1.8", default-features = false, optional = true }
 known-errors = { version = "0.1", default-features = false, features = [
     "sysexits",
 ] }
