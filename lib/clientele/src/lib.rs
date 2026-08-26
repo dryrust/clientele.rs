@@ -58,3 +58,6 @@ pub use subcommands::*;
 
 #[doc(hidden)]
 pub mod crates;
+
+mod color;
+pub use color::*;
