@@ -23,6 +23,8 @@ impl TestFile {
 }
 
 pub static TEST_PREFIX: &str = "clientele-";
+
+#[allow(unused)]
 pub static TEST_LEVEL: usize = 1;
 
 pub static TEST_FILES: &[TestFile] = &[

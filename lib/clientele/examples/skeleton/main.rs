@@ -36,11 +36,13 @@ pub fn main() -> Result<(), SysexitsError> {
     // Parse command-line options:
     let options = Options::parse_from(args);
 
+    // Print the program version, if requested:
     if options.flags.version {
         println!("skeleton {}", env!("CARGO_PKG_VERSION"));
         return Ok(());
     }
 
+    // Print the program license, if requested:
     if options.flags.license {
         println!("This is free and unencumbered software released into the public domain.");
         return Ok(());

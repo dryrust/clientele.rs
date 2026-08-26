@@ -30,6 +30,11 @@ pub use args::*;
 #[cfg(feature = "camino")]
 pub use camino::{Utf8Path, Utf8PathBuf};
 
+#[cfg(feature = "clap")]
+mod clap;
+#[cfg(feature = "clap")]
+pub use clap::*;
+
 #[cfg(feature = "dotenv")]
 pub use dotenvy::dotenv;
 
