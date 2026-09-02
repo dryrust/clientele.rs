@@ -42,7 +42,7 @@ pub use dotenvy::dotenv;
 pub use getenv as envs;
 
 #[cfg(all(feature = "std", feature = "clap"))]
-mod options;
+pub mod options;
 #[cfg(all(feature = "std", feature = "clap"))]
 pub use options::*;
 

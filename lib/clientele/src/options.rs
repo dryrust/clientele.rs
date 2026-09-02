@@ -1,5 +1,7 @@
 // This is free and unencumbered software released into the public domain.
 
+pub mod sort;
+
 extern crate std;
 
 use clap::{ArgAction, Args};
