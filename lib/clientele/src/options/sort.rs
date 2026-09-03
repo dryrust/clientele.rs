@@ -4,6 +4,12 @@ use alloc::{borrow::ToOwned, format, string::String, vec, vec::Vec};
 use core::str::FromStr;
 
 /// A sequence of sort keys.
+///
+/// ```rust,ignore
+/// /// Sort resources by the specified keys. (Prefix a key with `-` for descending order.)
+/// #[clap(long, aliases = ["sort-by", "order", "order-by"], value_name = "[+|-]KEY,...", allow_hyphen_values = true)]
+/// sort: Option<SortKeys>,
+/// ```
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct SortKeys<T: Clone + ToString = String> {
     keys: Vec<SortKey<T>>,
@@ -31,11 +37,29 @@ impl<T: Clone + ToString> SortKeys<T> {
     }
 }
 
+impl core::fmt::Display for SortKeys {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        for (i, key) in self.keys.iter().enumerate() {
+            if i > 0 {
+                write!(f, ",")?;
+            }
+            write!(f, "{}", key)?;
+        }
+        Ok(())
+    }
+}
+
 /// A sort key.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct SortKey<T: Clone + ToString = String> {
     key: T,
     descending: bool,
+}
+
+impl core::fmt::Display for SortKey {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}{}", if self.descending { "-" } else { "" }, self.key)
+    }
 }
 
 impl<T: Clone + ToString> SortKey<T> {
