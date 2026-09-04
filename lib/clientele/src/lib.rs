@@ -61,3 +61,6 @@ pub mod crates;
 
 mod color;
 pub use color::*;
+
+#[cfg(all(feature = "std", feature = "tracing"))]
+pub mod tracing;

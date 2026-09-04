@@ -57,10 +57,11 @@ std = [
     "gofer?/std",
     "known-errors/std",
     "tracing-core?/std",
+    "tracing-subscriber?/std",
 ]
 subcommands = []
 tokio = ["dep:tokio", "known-errors/tokio"]
-tracing = ["dep:tracing-core"]
+tracing = ["dep:tracing-core", "dep:tracing-subscriber"]
 unicode = ["clap?/unicode"]
 unstable = ["dogma/unstable"]
 wild = ["dep:wild"]
@@ -106,5 +107,6 @@ tokio = { version = "1", default-features = false, features = [
     "rt",
 ], optional = true }
 tracing-core = { version = "0.1", default-features = false, optional = true }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"], optional = true }
 ubyte = { version = "0.10", default-features = false, optional = true }
 wild = { version = "2", default-features = false, optional = true }

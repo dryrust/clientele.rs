@@ -44,7 +44,7 @@ impl Into<tracing_core::LevelFilter> for &StandardOptions {
             (false, 0) => tracing_core::LevelFilter::ERROR,
             (false, 1) => tracing_core::LevelFilter::WARN,
             (false, 2) => tracing_core::LevelFilter::INFO,
-            (false, _) => tracing_core::LevelFilter::DEBUG,
+            (false, 3 | _) => tracing_core::LevelFilter::DEBUG,
             (true, _) => tracing_core::LevelFilter::TRACE,
         }
     }
