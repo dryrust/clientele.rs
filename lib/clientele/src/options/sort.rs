@@ -15,17 +15,43 @@ pub struct SortKeys<T: Clone = String> {
     keys: Vec<SortKey<T>>,
 }
 
-impl<T: Clone> Default for SortKeys<T> {
+impl<T: Clone> AsRef<[SortKey<T>]> for SortKeys<T> {
+    fn as_ref(&self) -> &[SortKey<T>] {
+        &self.keys
+    }
+}
+
+impl<T: Clone> From<Vec<SortKey<T>>> for SortKeys<T> {
+    fn from(input: Vec<SortKey<T>>) -> Self {
+        Self { keys: input }
+    }
+}
+
+impl<T: Clone + Default> Default for SortKeys<T> {
     fn default() -> Self {
-        Self { keys: vec![] }
+        Self {
+            keys: vec![SortKey::<T>::default()],
+        }
     }
 }
 
 impl<T: Clone> SortKeys<T> {
+    pub fn empty() -> Self {
+        Self { keys: vec![] }
+    }
+
     pub fn new(keys: &[SortKey<T>]) -> Self {
         Self {
             keys: keys.to_owned(),
         }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.keys.is_empty()
+    }
+
+    pub fn keys(&self) -> &[SortKey<T>] {
+        &self.keys
     }
 }
 
@@ -64,12 +90,36 @@ impl core::fmt::Display for SortKey<String> {
     }
 }
 
+impl<T: Clone> From<(T, bool)> for SortKey<T> {
+    fn from((key, descending): (T, bool)) -> Self {
+        Self::new(key, descending)
+    }
+}
+
+impl<T: Clone + Default> Default for SortKey<T> {
+    fn default() -> Self {
+        Self::new(T::default(), false)
+    }
+}
+
 impl<T: Clone> SortKey<T> {
     pub fn new(key: impl Into<T>, descending: bool) -> Self {
         Self {
             key: key.into(),
             descending,
         }
+    }
+
+    pub fn key(&self) -> &T {
+        &self.key
+    }
+
+    pub fn ascending(&self) -> bool {
+        !self.descending
+    }
+
+    pub fn descending(&self) -> bool {
+        self.descending
     }
 }
 
