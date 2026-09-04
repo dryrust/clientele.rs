@@ -11,23 +11,25 @@ use core::str::FromStr;
 /// sort: Option<SortKeys>,
 /// ```
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub struct SortKeys<T: Clone + ToString = String> {
+pub struct SortKeys<T: Clone = String> {
     keys: Vec<SortKey<T>>,
 }
 
-impl Default for SortKeys {
+impl<T: Clone> Default for SortKeys<T> {
     fn default() -> Self {
         Self { keys: vec![] }
     }
 }
 
-impl<T: Clone + ToString> SortKeys<T> {
+impl<T: Clone> SortKeys<T> {
     pub fn new(keys: &[SortKey<T>]) -> Self {
         Self {
             keys: keys.to_owned(),
         }
     }
+}
 
+impl<T: Clone + ToString> SortKeys<T> {
     pub fn to_sql(&self) -> String {
         self.keys
             .iter()
@@ -51,26 +53,29 @@ impl core::fmt::Display for SortKeys {
 
 /// A sort key.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub struct SortKey<T: Clone + ToString = String> {
+pub struct SortKey<T: Clone = String> {
     key: T,
     descending: bool,
 }
 
-impl core::fmt::Display for SortKey {
+impl core::fmt::Display for SortKey<String> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}{}", if self.descending { "-" } else { "" }, self.key)
     }
 }
 
-impl<T: Clone + ToString> SortKey<T> {
+impl<T: Clone> SortKey<T> {
     pub fn new(key: impl Into<T>, descending: bool) -> Self {
         Self {
             key: key.into(),
             descending,
         }
     }
+}
 
+impl<T: Clone + ToString> SortKey<T> {
     pub fn to_sql(&self) -> String {
+        // TODO: check that the key is SQL safe
         format!(
             "{} {}",
             self.key.to_string(),
@@ -79,39 +84,60 @@ impl<T: Clone + ToString> SortKey<T> {
     }
 }
 
+fn parse_sort_keys<T: Clone>(
+    input: &str,
+    parse_key: impl Fn(&str) -> Result<T, String>,
+) -> Result<SortKeys<T>, String> {
+    if input.is_empty() {
+        return Err("sort expression must contain at least one key".to_owned());
+    }
+
+    let keys = input
+        .split(',')
+        .map(|key| {
+            let (descending, key) = match key.as_bytes().first() {
+                Some(b'-') => (true, &key[1..]),
+                Some(b'+') => (false, &key[1..]),
+                _ => (false, key),
+            };
+
+            if key.is_empty() {
+                return Err("sort keys must not be empty".to_owned());
+            }
+            if key.starts_with('+') || key.starts_with('-') {
+                return Err(format!("invalid sort key: {key}"));
+            }
+
+            Ok(SortKey {
+                key: parse_key(key)?,
+                descending,
+            })
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(SortKeys { keys })
+}
+
 impl FromStr for SortKeys {
     type Err = String;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        if input.is_empty() {
-            return Err("sort expression must contain at least one key".to_owned());
-        }
+        parse_sort_keys(input, |key| Ok(key.to_owned()))
+    }
+}
 
-        let keys = input
-            .split(',')
-            .map(|key| {
-                let (descending, key) = match key.as_bytes().first() {
-                    Some(b'-') => (true, &key[1..]),
-                    Some(b'+') => (false, &key[1..]),
-                    _ => (false, key),
-                };
+fn parse_value_enum_sort_keys<T: clap::ValueEnum>(input: &str) -> Result<SortKeys<T>, String> {
+    parse_sort_keys(input, |key| <T as clap::ValueEnum>::from_str(key, false))
+}
 
-                if key.is_empty() {
-                    return Err("sort keys must not be empty".to_owned());
-                }
-                if key.starts_with('+') || key.starts_with('-') {
-                    return Err(format!("invalid sort key: {key}"));
-                }
-                // TODO: check that the key is SQL safe
+impl<T> clap::builder::ValueParserFactory for SortKeys<T>
+where
+    T: clap::ValueEnum + Send + Sync + 'static,
+{
+    type Parser = clap::builder::ValueParser;
 
-                Ok(SortKey {
-                    key: key.to_owned(),
-                    descending,
-                })
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-
-        Ok(Self { keys })
+    fn value_parser() -> Self::Parser {
+        clap::builder::ValueParser::new(parse_value_enum_sort_keys::<T>)
     }
 }
 
@@ -121,12 +147,25 @@ mod tests {
 
     use super::{SortKey, SortKeys};
     use alloc::{borrow::ToOwned, vec};
-    use clap::Parser;
+    use clap::{Parser, ValueEnum};
 
     #[derive(Parser, Debug)]
     struct Args {
         #[clap(long, value_name = "[+|-]KEY,...", allow_hyphen_values = true)]
         sort: Option<SortKeys>,
+    }
+
+    #[derive(Clone, Debug, Eq, Hash, PartialEq, ValueEnum)]
+    enum Column {
+        Handle,
+        Id,
+        Name,
+    }
+
+    #[derive(Parser, Debug)]
+    struct EnumArgs {
+        #[clap(long, value_name = "[+|-]KEY,...", allow_hyphen_values = true)]
+        sort: Option<SortKeys<Column>>,
     }
 
     #[test]
@@ -167,6 +206,25 @@ mod tests {
                 }],
             })
         );
+    }
+
+    #[test]
+    fn parses_value_enum_sort_keys() {
+        let args = EnumArgs::try_parse_from(["my-program", "--sort=-name,+id,handle"]).unwrap();
+
+        assert_eq!(
+            args.sort,
+            Some(SortKeys::new(&[
+                SortKey::new(Column::Name, true),
+                SortKey::new(Column::Id, false),
+                SortKey::new(Column::Handle, false),
+            ]))
+        );
+    }
+
+    #[test]
+    fn rejects_unknown_value_enum_sort_keys() {
+        assert!(EnumArgs::try_parse_from(["my-program", "--sort=unknown"]).is_err());
     }
 
     #[test]
