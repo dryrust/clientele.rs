@@ -3,7 +3,7 @@
 ## Project map
 - Work within this project; do not inspect parent directories.
 - Rust 2021 workspace; one library, `lib/clientele`, providing CLI utilities and
-  dependency re-exports. Declared MSRV: Rust 1.81. Targets: Linux, macOS, Windows.
+  dependency re-exports. Declared MSRV: Rust 1.97. Targets: Linux, macOS, Windows.
 - `Cargo.toml`: workspace metadata. `lib/clientele/Cargo.toml`: features/dependencies.
 - Under `lib/clientele/src/`: `lib.rs` defines exports/module gates; `crates.rs`
   re-exports dependencies; `args.rs` expands arguments; `clap/` and `color.rs`
@@ -49,5 +49,5 @@ Smoke-test CLI changes with `cargo run --locked --example skeleton -- config`.
 Current baseline caveats (recheck when relevant):
 - `error-stack` and `--all-features` fail in `known-errors`.
   Clippy and rustdoc have existing warnings.
-- Locked dependencies include Rust 1.85 requirements despite the declared 1.81 MSRV.
-  Report check failures; do not silently raise MSRV or disable checks.
+
+Report check failures; do not silently raise MSRV or disable checks.

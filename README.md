@@ -1,7 +1,7 @@
 # Clientele.rs
 
 [![License](https://img.shields.io/badge/license-Public%20Domain-blue.svg)](https://unlicense.org)
-[![Compatibility](https://img.shields.io/badge/rust-1.81%2B-blue)](https://blog.rust-lang.org/2024/09/05/Rust-1.81.0/)
+[![Compatibility](https://img.shields.io/badge/rust-1.97%2B-blue)](https://blog.rust-lang.org/2026/07/09/Rust-1.97.0/)
 [![Package](https://img.shields.io/crates/v/clientele)](https://crates.io/crates/clientele)
 [![Documentation](https://docs.rs/clientele/badge.svg)](https://docs.rs/clientele/)
 
@@ -27,7 +27,7 @@ dependency.
 
 ## 🛠️ Prerequisites
 
-- [Rust](https://rust-lang.org) 1.81+
+- [Rust](https://rust-lang.org) 1.97+
 
 ## ⬇️ Installation
 
