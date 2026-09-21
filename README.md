@@ -41,14 +41,14 @@ cargo add clientele
 
 ```toml
 [dependencies]
-clientele = "0.3"
+clientele = "0.4"
 ```
 
 ### Installation in `Cargo.toml` (with only specific features enabled)
 
 ```toml
 [dependencies]
-clientele = { version = "0.3", default-features = false, features = ["dotenv"] }
+clientele = { version = "0.4", default-features = false, features = ["dotenv"] }
 ```
 
 ## 👉 Examples

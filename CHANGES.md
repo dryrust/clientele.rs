@@ -5,20 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.4.0 - 2026-09-21
 ### Changed
-- MSRV is now 1.97 (was 1.81).
-
+- MSRV is now 1.97 (was 1.81)
 ### Fixed
-- Enabling `clap` now enables its required `std` support.
+- Enabling `clap` now enables its required `std` support
 - `std,tracing` builds without `clap`; only the options-based subscriber
-  initializer requires `clap`, while tracing formats remain available.
+  initializer requires `clap`, while tracing formats remain available
 - Skip the skeleton example and subcommand integration tests when their required
-  features are disabled, allowing minimal all-target builds and tests.
+  features are disabled, allowing minimal all-target builds and tests
 - Report `EX_USAGE` (64) instead of panicking when the skeleton receives flags
-  without a subcommand.
+  without a subcommand
 - Preserve sysexits status codes for skeleton application errors, including
-  `EX_NOINPUT` (66) for missing @argfiles.
+  `EX_NOINPUT` (66) for missing @argfiles
 
 ## 0.3.14 - 2025-09-04
 ### Added
