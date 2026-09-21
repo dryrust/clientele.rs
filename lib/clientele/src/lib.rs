@@ -2,6 +2,11 @@
 
 //! This crate provides CLI support utilities.
 //!
+//! # Feature dependencies
+//!
+//! The `clap` feature also enables `std`. Tracing formats require `std` and
+//! `tracing`; the options-based tracing initializer additionally requires `clap`.
+//!
 //! ```edition2021
 //! # use clientele::*;
 //! ```

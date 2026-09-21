@@ -19,6 +19,12 @@ jobs:
       run: cargo build --verbose --examples
     - name: Run tests
       run: cargo test --verbose
+    - name: Test minimal feature combinations
+      run: |
+        cargo test --workspace --no-default-features --locked
+        for features in std tracing std,tracing clap clap,tracing clap,dotenv subcommands std,subcommands; do
+          cargo test --workspace --no-default-features --features "$features" --locked
+        done
   build-windows:
     name: Build on Windows
     runs-on: windows-latest

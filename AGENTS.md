@@ -18,6 +18,7 @@
   Unsafe code is forbidden. Keep optional dependencies optional; update feature
   declarations, module gates, and re-exports together.
 - Defaults are `all` + `std`; `all` excludes `error-stack` and `unstable`.
+  `clap` enables `std`; tracing formats need `std,tracing`, their initializer also `clap`.
   `#![no_std]` is commented out: disabling defaults does not prove no-std support.
 - Preserve `OsString`/`PathBuf` for OS input; Camino paths explicitly require UTF-8.
   Argument expansion is Windows globs first, then @argfiles. Subcommand discovery
@@ -37,17 +38,16 @@ Run relevant checks from the project root:
 ```sh
 cargo fmt --all -- --check
 cargo test --workspace --locked
-cargo check -p clientele --lib --no-default-features --locked
+cargo check -p clientele --all-targets --no-default-features --locked
 cargo clippy --workspace --all-targets --locked
 cargo doc --workspace --no-deps --locked
 ```
 For feature changes, also check affected combinations with
-`cargo check -p clientele --lib --no-default-features --features <set> --locked`.
+`cargo check -p clientele --all-targets --no-default-features --features <set> --locked`.
 Smoke-test CLI changes with `cargo run --locked --example skeleton -- config`.
 
 Current baseline caveats (recheck when relevant):
-- Minimal all-target builds fail because examples/integration tests lack gates.
-- `std,tracing` without `clap` fails; `error-stack` and `--all-features` fail in
-  `known-errors`. Clippy and rustdoc have existing warnings.
+- `error-stack` and `--all-features` fail in `known-errors`.
+  Clippy and rustdoc have existing warnings.
 - Locked dependencies include Rust 1.85 requirements despite the declared 1.81 MSRV.
   Report check failures; do not silently raise MSRV or disable checks.
