@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   initializer requires `clap`, while tracing formats remain available.
 - Skip the skeleton example and subcommand integration tests when their required
   features are disabled, allowing minimal all-target builds and tests.
+- Report `EX_USAGE` (64) instead of panicking when the skeleton receives flags
+  without a subcommand.
+- Preserve sysexits status codes for skeleton application errors, including
+  `EX_NOINPUT` (66) for missing @argfiles.
 
 ## 0.3.14 - 2025-09-04
 ### Added

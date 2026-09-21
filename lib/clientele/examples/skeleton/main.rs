@@ -4,9 +4,10 @@
 #![allow(unused)]
 
 use clientele::{
-    crates::clap::{Parser, Subcommand},
+    crates::clap::{error::ErrorKind, CommandFactory, Parser, Subcommand},
     StandardOptions, SysexitsError,
 };
+use std::process::ExitCode;
 
 /// Skeleton command-line interface (CLI)
 #[derive(Debug, Parser)]
@@ -26,7 +27,19 @@ enum Command {
     Config {},
 }
 
-pub fn main() -> Result<(), SysexitsError> {
+/// Runs the CLI, reporting application failures with their sysexits status codes.
+pub fn main() -> ExitCode {
+    // Returning Result directly would turn every application error into status 1.
+    match run() {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            eprintln!("Error: {error}");
+            error.as_exit_code()
+        }
+    }
+}
+
+fn run() -> Result<(), SysexitsError> {
     // Load environment variables from `.env`:
     clientele::dotenv().ok();
 
@@ -48,10 +61,16 @@ pub fn main() -> Result<(), SysexitsError> {
         return Ok(());
     }
 
-    match options.command.unwrap() {
-        Command::Config {} => {
+    match options.command {
+        Some(Command::Config {}) => {
             println!("This is the implementation of the `config` subcommand.");
             Ok(())
+        }
+        None => {
+            Options::command()
+                .error(ErrorKind::MissingSubcommand, "a subcommand is required")
+                .print()?;
+            clientele::exit(SysexitsError::EX_USAGE)
         }
     }
 }

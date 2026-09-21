@@ -26,6 +26,11 @@ required-features = ["std", "subcommands"]
 name = "subcommands_list"
 required-features = ["std", "subcommands"]
 
+[[test]]
+name = "skeleton_cli"
+harness = false
+required-features = ["std", "clap", "dotenv"]
+
 [features]
 default = ["all", "std"]
 all = [
