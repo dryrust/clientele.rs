@@ -85,6 +85,17 @@ pub static TEST_FILES: &[TestFile] = &[
         win_ext: "bat",
     },
     TestFile {
+        name: "clientele-hello~",
+        command_name: "hello~",
+        content: "Backup of hello",
+        unix_mode: 0o755,
+        // Unix rejects the trailing '~' despite executable permissions. Windows
+        // creates hello~.bat: the tilde is in the stem and PATHEXT permits .BAT.
+        should_be_listed: cfg!(windows),
+        should_be_found: cfg!(windows),
+        win_ext: "bat",
+    },
+    TestFile {
         name: "clientele-two-levels",
         command_name: "two-levels",
         content: "Should be filtered out!",
