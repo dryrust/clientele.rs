@@ -24,7 +24,7 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 3a**, adding checked SQL rendering using approved columns.
+**Suggested next leaf: 3b**, specifying empty, default, and whitespace sort behavior.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -33,14 +33,6 @@ polish or feature growth. Priorities do not override an explicitly selected task
 
 File: [options/sort.rs](lib/clientele/src/options/sort.rs).
 
-- [ ] **3a. Add checked SQL rendering using approved column mappings.**
-  `SortKeys<String>` accepts arbitrary key text and `to_sql()` interpolates it.
-  For example, `"(SELECT 1)".parse::<SortKeys>()?.to_sql()` produces
-  `(SELECT 1) ASC`. The code already has a SQL-safety TODO. Add an explicit
-  checked API, preferably mapping typed enum keys to approved SQL columns, and
-  document the trust requirements of the existing raw renderer. Test unknown
-  keys, SQL expressions, punctuation/quoting cases, and ascending/descending
-  multi-key output. Preserve existing public entry points during the migration.
 - [ ] **3b. Specify valid empty/default/whitespace behavior.**
   `SortKeys::<String>::default()` contains one empty key: it displays as an empty
   string but `is_empty()` is false, and SQL rendering yields ` ASC`. Parsing an
@@ -194,6 +186,12 @@ combinations with `cargo check -p clientele --all-targets --no-default-features
 Useful sets: `clap`; `std,subcommands`; `std,getenv,camino`; `std,tracing`;
 `clap,tracing`; `clap,color,tracing`; `error-stack`; `std,error-stack`.
 Preserve optional-example/test gates in `lib/clientele/Cargo.toml`.
+
+For sort parsing, checked SQL rendering, and their doctests with minimal features:
+
+```sh
+cargo test -p clientele --no-default-features --features clap --locked
+```
 
 For subcommand lookup/listing regressions with only their required features:
 

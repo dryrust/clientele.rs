@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
+- `SortKey::to_sql_checked()` and `SortKeys::to_sql_checked()` for approved column
+  mappings with identifier validation and explicit `SortSqlError` failures
 - `ColorChoiceExt::to_bool_for()` and `ColorStream` for stream-aware automatic
   color detection, preserving `to_bool()` as the stdout shorthand
 - `paths::home_dir()` and `paths::temp_dir()` for native directory resolution,
