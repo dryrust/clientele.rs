@@ -5,16 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.4.1 - 2026-10-02
 ### Fixed
 - Require `known-errors` 0.1.2 and use its fixed `error-stack` integration,
-  fixing `std,error-stack` and `--all-features` builds without making
-  `error-stack` enable `std`
+  fixing `std,error-stack` and `--all-features` builds
+- Stop the color pre-scan at `--` and preserve non-UTF-8 argument boundaries
+- Honor the skeleton's `--color` choice for Clap help, errors, and diagnostics
 - Resolve the README doctest path through Cargo package metadata so doctests
   work in both the workspace and the packaged crate
-- Stop the color pre-scan at `--` and preserve non-UTF-8 argument boundaries
-- Honor the skeleton's `--color` choice for Clap help, parse errors, and
-  missing-subcommand diagnostics
 
 ## 0.4.0 - 2026-09-21
 ### Changed
