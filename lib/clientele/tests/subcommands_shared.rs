@@ -10,6 +10,8 @@ pub struct TestFile {
     #[allow(dead_code)]
     pub should_be_listed: bool,
     #[allow(dead_code)]
+    pub should_be_found: bool,
+    #[allow(dead_code)]
     pub win_ext: &'static str,
 }
 
@@ -32,18 +34,21 @@ pub static TEST_FILES: &[TestFile] = &[
         name: "clientele-hello",
         content: "Hello, world!",
         should_be_listed: true,
+        should_be_found: true,
         win_ext: "bat",
     },
     TestFile {
         name: "clientele-two-levels",
         content: "Should be filtered out!",
         should_be_listed: false,
+        should_be_found: true, // Lookup is not limited by listing depth.
         win_ext: "bat",
     },
     TestFile {
         name: "abcdefg-test",
         content: "Shouldn't appear!",
         should_be_listed: false,
+        should_be_found: false,
         win_ext: "bat",
     },
     #[cfg(windows)]
@@ -51,6 +56,7 @@ pub static TEST_FILES: &[TestFile] = &[
         name: "clientele-hola",
         content: "Hola mundo!",
         should_be_listed: true,
+        should_be_found: true,
         win_ext: "cmd",
     },
 ];

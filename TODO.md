@@ -24,8 +24,8 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 2a**, asserting lookup presence and absence before
-changing subcommand discovery behavior.
+**Suggested next leaf: 2b**, isolating environment-dependent subcommand fixtures
+before expanding discovery regression coverage.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -74,13 +74,6 @@ inspection and need native Windows regression tests.
 
 ## 2. Reliable subcommand regression tests (P1)
 
-- [ ] **2a. Assert lookup presence and absence unconditionally.**
-  In `lib/clientele/tests/subcommands_find.rs`, the presence assertion is
-  commented out, so returning `None` for every fixture passes the test. Give
-  lookup fixtures explicit expected results. Do not simply reuse
-  `should_be_listed`: `clientele-two-levels` is excluded by a shallow listing but
-  should still be found by its full subcommand name. The test must fail if
-  `find()` always returns `None` or accepts a nonmatching command.
 - [ ] **2b. Isolate environment-dependent discovery fixtures.**
   `lib/clientele/tests/subcommands_shared.rs::init()` replaces process-global
   `PATH`. Current binaries each have one test; adding parallel cases requires
@@ -261,6 +254,12 @@ combinations with `cargo check -p clientele --all-targets --no-default-features
 Useful sets: `clap`; `std,subcommands`; `std,getenv,camino`; `std,tracing`;
 `clap,tracing`; `clap,color,tracing`; `error-stack`; `std,error-stack`.
 Preserve optional-example/test gates in `lib/clientele/Cargo.toml`.
+
+For subcommand lookup/listing regressions with only their required features:
+
+```sh
+cargo test -p clientele --test subcommands_find --test subcommands_list --no-default-features --features std,subcommands --locked
+```
 
 For native directory resolution, checked UTF-8 conversion, and their feature gates:
 

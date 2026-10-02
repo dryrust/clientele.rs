@@ -14,13 +14,13 @@ pub fn test_find() -> Result<()> {
 
         let cd_name = file.name.trim_start_matches(TEST_PREFIX);
         let cmd = SubcommandsProvider::find(TEST_PREFIX, cd_name);
-        let path = dir.child(file.full_name());
+        let expected_path = file.should_be_found.then(|| dir.child(file.full_name()));
 
-        // assert_eq!(cmd.is_some(), file.should_be_listed);
-
-        if let Some(cmd) = cmd {
-            assert_eq!(cmd.path, path);
-        }
+        assert_eq!(
+            cmd.map(|cmd| cmd.path),
+            expected_path,
+            "lookup result for {cd_name:?}",
+        );
     }
 
     Ok(())
