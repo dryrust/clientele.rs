@@ -1,5 +1,8 @@
 # Clientele enhancement backlog
 
+Note: the next release is going to be 0.5.0, meaning backwards
+incompatibility does not need to be strictly preserved.
+
 Review snapshot: 2026-10-02. This file records the outstanding project review
 findings and enough context to continue without the original conversation.
 Task IDs are stable and may contain gaps. Recheck the relevant code before
@@ -21,8 +24,8 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Current focus:** item 6, consistent color policy. **Suggested next leaf: 6c**,
-adding stream-aware automatic color detection.
+**Current focus:** item 6, consistent color policy. **Suggested next leaf: 6d**,
+applying the shared color policy to tracing output.
 For subcommand work, start with 2a before changing discovery behavior.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
@@ -122,17 +125,10 @@ Files: [color_choice.rs](lib/clientele/src/clap/color_choice.rs),
 [CLI tests](lib/clientele/tests/skeleton_cli.rs), and
 [tracing.rs](lib/clientele/src/tracing.rs).
 
-- [ ] **6c. Add stream-aware automatic color detection.**
-  `ColorChoiceExt::to_bool()` always checks stdout, but stderr may be redirected
-  independently. Add an API that evaluates the intended output stream while
-  preserving the existing method's stdout semantics. Preserve explicit
-  `Always`/`Never` precedence; document the environment policy. Test independent
-  stdout/stderr terminal status and unset, empty, and nonempty `NO_COLOR`.
-  Prefer injected detection inputs or isolated child processes over global
-  environment mutation in parallel tests.
 - [ ] **6d. Apply the shared policy to tracing output.**
-  Depends on 6c. `init_tracing_subscriber()` writes to stderr but ignores
-  `StandardOptions.color`. The optional `tracing-subscriber` dependency currently
+  `init_tracing_subscriber()` writes to stderr but ignores `StandardOptions.color`.
+  Use `ColorChoiceExt::to_bool_for(ColorStream::Stderr)` for stream-aware detection.
+  The optional `tracing-subscriber` dependency currently
   enables `fmt`, not `ansi`; consider Cargo feature unification when configuring
   color. Wire ANSI support and its runtime setting through the appropriate
   optional features. Test captured logging output and explicit overrides,

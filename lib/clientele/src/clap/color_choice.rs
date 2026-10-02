@@ -3,33 +3,96 @@
 use clap::ColorChoice;
 use std::ffi::OsString;
 
+/// The output stream to inspect for automatic color detection.
+///
+/// Available with the `clap` feature, which also enables `std`.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ColorStream {
+    /// Detect whether standard output is a terminal.
+    Stdout,
+    /// Detect whether standard error is a terminal.
+    Stderr,
+}
+
+/// Resolves a Clap color choice for an output stream.
+///
+/// Available with the `clap` feature; querying the policy does not require the
+/// `color` feature.
 pub trait ColorChoiceExt {
-    /// Converts this color choice to a boolean value, where `true` means color
-    /// should be enabled and `false` means color should be disabled.
+    /// Returns whether color should be enabled for standard output.
     ///
-    /// This is used to determine whether color should be enabled for the current
-    /// terminal session.
+    /// Equivalent to [`Self::to_bool_for`] with [`ColorStream::Stdout`], including
+    /// its `NO_COLOR` policy and explicit-choice precedence.
     fn to_bool(&self) -> bool {
-        use std::{
-            env,
-            io::{stdout, IsTerminal},
-        };
-        match self.as_color_choice() {
-            ColorChoice::Always => true,
-            ColorChoice::Never => false,
-            ColorChoice::Auto => {
-                stdout().is_terminal()
-                    && !env::var_os("NO_COLOR").is_some_and(|value| !value.is_empty())
-            }
-        }
+        self.to_bool_for(ColorStream::Stdout)
     }
 
+    /// Returns whether color should be enabled for the selected output stream.
+    ///
+    /// [`ColorChoice::Always`] returns `true` and [`ColorChoice::Never`] returns
+    /// `false`, regardless of terminal status or environment variables.
+    /// [`ColorChoice::Auto`] enables color only when the selected stream is a
+    /// terminal and `NO_COLOR` is unset or empty. Any nonempty `NO_COLOR` value,
+    /// including `0` or non-UTF-8 values, disables automatic color.
+    ///
+    /// Terminal detection uses [`std::io::IsTerminal`] and treats detection
+    /// failures as non-terminal output. Only `NO_COLOR` is consulted; variables
+    /// such as `CLICOLOR`, `CLICOLOR_FORCE`, and `FORCE_COLOR` are ignored.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use clientele::{crates::clap::ColorChoice, ColorChoiceExt, ColorStream};
+    ///
+    /// let choice = ColorChoice::Auto;
+    /// let stderr_color = choice.to_bool_for(ColorStream::Stderr);
+    ///
+    /// assert!(ColorChoice::Always.to_bool_for(ColorStream::Stderr));
+    /// assert!(!ColorChoice::Never.to_bool_for(ColorStream::Stdout));
+    /// ```
+    fn to_bool_for(&self, stream: ColorStream) -> bool {
+        use std::{
+            env,
+            io::{stderr, stdout, IsTerminal},
+        };
+        color_enabled(
+            self.as_color_choice(),
+            stream,
+            || stdout().is_terminal(),
+            || stderr().is_terminal(),
+            || env::var_os("NO_COLOR"),
+        )
+    }
+
+    /// Borrows the underlying Clap color choice.
     fn as_color_choice(&self) -> &ColorChoice;
 }
 
 impl ColorChoiceExt for ColorChoice {
     fn as_color_choice(&self) -> &ColorChoice {
         self
+    }
+}
+
+// Inject detection so tests can vary each stream and NO_COLOR without changing
+// process-global state. Closures preserve short-circuiting for explicit choices.
+fn color_enabled(
+    choice: &ColorChoice,
+    stream: ColorStream,
+    stdout_is_terminal: impl FnOnce() -> bool,
+    stderr_is_terminal: impl FnOnce() -> bool,
+    no_color: impl FnOnce() -> Option<OsString>,
+) -> bool {
+    match choice {
+        ColorChoice::Always => true,
+        ColorChoice::Never => false,
+        ColorChoice::Auto => {
+            let is_terminal = match stream {
+                ColorStream::Stdout => stdout_is_terminal(),
+                ColorStream::Stderr => stderr_is_terminal(),
+            };
+            is_terminal && !no_color().is_some_and(|value| !value.is_empty())
+        }
     }
 }
 
@@ -57,7 +120,98 @@ pub fn color_choice(args: &[OsString]) -> ColorChoice {
 
 #[cfg(test)]
 mod tests {
-    use super::{color_choice, ColorChoice, OsString};
+    use super::{color_choice, color_enabled, ColorChoice, ColorChoiceExt, ColorStream, OsString};
+
+    #[test]
+    fn auto_detects_each_stream_independently() {
+        for (stdout, stderr) in [(false, false), (false, true), (true, false), (true, true)] {
+            for (stream, expected) in [(ColorStream::Stdout, stdout), (ColorStream::Stderr, stderr)]
+            {
+                assert_eq!(
+                    color_enabled(&ColorChoice::Auto, stream, || stdout, || stderr, || None),
+                    expected,
+                    "{stream:?}: stdout terminal={stdout}, stderr terminal={stderr}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn auto_honors_nonempty_no_color() {
+        for stream in [ColorStream::Stdout, ColorStream::Stderr] {
+            for (no_color, expected) in [
+                (None, true),
+                (Some(""), true),
+                (Some("0"), false),
+                (Some("1"), false),
+            ] {
+                assert_eq!(
+                    color_enabled(
+                        &ColorChoice::Auto,
+                        stream,
+                        || true,
+                        || true,
+                        || no_color.map(OsString::from),
+                    ),
+                    expected,
+                    "{stream:?}: NO_COLOR={no_color:?}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn explicit_choices_override_detection() {
+        for stream in [ColorStream::Stdout, ColorStream::Stderr] {
+            for (choice, expected) in [(ColorChoice::Always, true), (ColorChoice::Never, false)] {
+                assert_eq!(
+                    color_enabled(
+                        &choice,
+                        stream,
+                        || panic!("explicit choice must not inspect stdout"),
+                        || panic!("explicit choice must not inspect stderr"),
+                        || panic!("explicit choice must not inspect NO_COLOR"),
+                    ),
+                    expected,
+                    "{choice:?} on {stream:?}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn to_bool_retains_stdout_semantics() {
+        for choice in [ColorChoice::Auto, ColorChoice::Always, ColorChoice::Never] {
+            // Trait objects also support the stream-aware method.
+            let choice: &dyn ColorChoiceExt = &choice;
+            assert_eq!(choice.to_bool(), choice.to_bool_for(ColorStream::Stdout));
+        }
+    }
+
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn non_utf8_no_color_disables_auto() {
+        #[cfg(unix)]
+        let no_color = {
+            use std::os::unix::ffi::OsStringExt;
+            OsString::from_vec(vec![0xff])
+        };
+        #[cfg(windows)]
+        let no_color = {
+            use std::os::windows::ffi::OsStringExt;
+            OsString::from_wide(&[0xd800])
+        };
+
+        for stream in [ColorStream::Stdout, ColorStream::Stderr] {
+            assert!(!color_enabled(
+                &ColorChoice::Auto,
+                stream,
+                || true,
+                || true,
+                || Some(no_color.clone()),
+            ));
+        }
+    }
 
     #[test]
     fn stops_at_end_of_options() {
