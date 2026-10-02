@@ -5,7 +5,7 @@ use std::path::Path;
 
 #[path = "support/subcommands_shared.rs"]
 mod subcommands_shared;
-use subcommands_shared::{Result, TEST_FILES, TEST_LEVEL, TEST_PREFIX};
+use subcommands_shared::{Result, TEST_DIRECTORY, TEST_FILES, TEST_LEVEL, TEST_PREFIX};
 
 fn main() -> Result<()> {
     subcommands_shared::run(test_list)
@@ -13,6 +13,8 @@ fn main() -> Result<()> {
 
 fn test_list(dir: &Path) -> Result<()> {
     let cmds = SubcommandsProvider::collect(TEST_PREFIX, TEST_LEVEL);
+    assert!(dir.join(TEST_DIRECTORY).is_dir());
+    assert!(cmds.iter().all(|cmd| cmd.path != dir.join(TEST_DIRECTORY)));
 
     for file in TEST_FILES {
         println!("{}: ", file.name);

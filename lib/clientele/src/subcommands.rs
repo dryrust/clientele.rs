@@ -41,6 +41,7 @@ impl SubcommandsProvider {
     /// preserves earlier dots: `demo-report.v1.bat` becomes `report.v1` with
     /// prefix `demo-`. Collected names can be passed to [`Self::find`] with the
     /// same prefix.
+    /// Directories are excluded, even if their names have executable extensions.
     ///
     /// On Windows, `PATHEXT` is a semicolon-separated list of dot-prefixed,
     /// nonempty extensions, matched case-insensitively in their original order.
@@ -73,6 +74,7 @@ impl SubcommandsProvider {
     /// exact prefixed filename if it has an extension. If no usable exact match
     /// exists, `PATHEXT` extensions are appended in order, preserving any dots
     /// already present in the command name.
+    /// Directories are never returned, including for explicit filename lookups.
     /// Parsing follows [`Self::collect`]'s `PATHEXT` rules. Missing or non-Unicode
     /// `PATHEXT` returns `None`, even for an explicit filename. An empty list of
     /// accepted extensions still permits exact filename lookup on Windows.
@@ -239,8 +241,8 @@ impl SubcommandsProvider {
         };
 
         let is_hidden = metadata.file_attributes() & FILE_ATTRIBUTE_HIDDEN != 0;
-        if is_hidden {
-            // skip hidden files
+        if !metadata.is_file() || is_hidden {
+            // Skip directories and other non-files, as well as hidden files.
             return false;
         }
 

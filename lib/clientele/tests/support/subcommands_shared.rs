@@ -29,6 +29,7 @@ impl TestFile {
 }
 
 pub static TEST_PREFIX: &str = "clientele-";
+pub const TEST_DIRECTORY: &str = "clientele-directory.bat";
 
 #[allow(unused)]
 pub static TEST_LEVEL: usize = 1;
@@ -132,6 +133,7 @@ pub fn run(check: impl FnOnce(&Path) -> Result<()>) -> Result<()> {
 /// Creates executable fixtures without changing the process environment.
 pub fn init() -> Result<TempDir> {
     let dir = TempDir::new()?;
+    std::fs::create_dir(dir.child(TEST_DIRECTORY))?;
 
     #[cfg(unix)]
     for file in TEST_FILES {

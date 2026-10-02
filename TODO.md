@@ -24,7 +24,7 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 1d**, rejecting directories during Windows command discovery.
+**Suggested next leaf: 1e**, honoring empty Unix `PATH` components consistently.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -37,10 +37,6 @@ Files: [subcommands.rs](lib/clientele/src/subcommands.rs),
 Unix examples below were reproduced on macOS. Windows findings came from source
 inspection and need native Windows regression tests.
 
-- [ ] **1d. Reject directories during Windows command discovery.**
-  Windows `filter_file()` checks hidden attributes but not `metadata.is_file()`.
-  Test that a directory named like `demo-hello.exe` is neither listed nor found,
-  while an ordinary matching executable file is accepted.
 - [ ] **1e. Honor empty Unix `PATH` components consistently.**
   They denote the current directory. `find()` handles them via `join(command)`,
   but `collect()` attempts `read_dir("")` and skips them. Test empty, leading,
