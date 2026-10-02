@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resolve the README doctest path through Cargo package metadata so doctests
   work in both the workspace and the packaged crate
 - Stop the color pre-scan at `--` and preserve non-UTF-8 argument boundaries
+- Honor the skeleton's `--color` choice for Clap help, parse errors, and
+  missing-subcommand diagnostics
 
 ## 0.4.0 - 2026-09-21
 ### Changed

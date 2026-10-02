@@ -8,7 +8,7 @@
 
 use std::{
     env,
-    process::{Command, ExitCode, Termination},
+    process::{Command, ExitCode, Output, Termination},
 };
 use temp_dir::TempDir;
 
@@ -16,6 +16,17 @@ use temp_dir::TempDir;
 mod skeleton;
 
 const CHILD_MODE: &str = "CLIENTELE_SKELETON_TEST_CHILD";
+const NO_COLOR_ENV: &[(&str, Option<&str>)] = &[
+    ("NO_COLOR", Some("1")),
+    ("CLICOLOR_FORCE", None),
+    ("FORCE_COLOR", None),
+];
+#[cfg(feature = "color")]
+const FORCE_COLOR_ENV: &[(&str, Option<&str>)] = &[
+    ("NO_COLOR", None),
+    ("CLICOLOR_FORCE", Some("1")),
+    ("FORCE_COLOR", Some("1")),
+];
 
 fn main() -> ExitCode {
     if env::var_os(CHILD_MODE).is_some() {
@@ -27,23 +38,28 @@ fn main() -> ExitCode {
     std::fs::write(dir.child(".env"), "").unwrap();
 
     for args in [&[][..], &["--unknown-option"], &["unknown-command"]] {
-        check(&dir, args, 2, "", "Usage:");
+        check(&dir, args, 2, "", "Usage:", NO_COLOR_ENV);
     }
     for args in [&["--debug"][..], &["-vv"], &["--debug", "--verbose"]] {
-        check(&dir, args, 64, "", "Usage:");
+        check(&dir, args, 64, "", "Usage:", NO_COLOR_ENV);
     }
-    #[cfg(feature = "color")]
-    check(&dir, &["--color", "never"], 64, "", "Usage:");
 
     for args in [&["--help"][..], &["-h"]] {
-        check(&dir, args, 0, "Usage:", "");
+        check(&dir, args, 0, "Usage:", "", NO_COLOR_ENV);
     }
     let version = format!("skeleton {}", env!("CARGO_PKG_VERSION"));
     for args in [&["--version"][..], &["-V"], &["--debug", "--version"]] {
-        check(&dir, args, 0, &version, "");
+        check(&dir, args, 0, &version, "", NO_COLOR_ENV);
     }
     for args in [&["--license"][..], &["--verbose", "--license"]] {
-        check(&dir, args, 0, "released into the public domain", "");
+        check(
+            &dir,
+            args,
+            0,
+            "released into the public domain",
+            "",
+            NO_COLOR_ENV,
+        );
     }
     for args in [
         &["config"][..],
@@ -56,12 +72,52 @@ fn main() -> ExitCode {
             0,
             "implementation of the `config` subcommand",
             "",
+            NO_COLOR_ENV,
         );
+    }
+
+    #[cfg(feature = "color")]
+    for (color_args, color_env, ansi) in [
+        (&["--color=always"][..], NO_COLOR_ENV, true),
+        (&["--color", "always"][..], NO_COLOR_ENV, true),
+        (&["--color=never"][..], FORCE_COLOR_ENV, false),
+        (&["--color", "never"][..], FORCE_COLOR_ENV, false),
+    ] {
+        for (suffix, code, stdout, stderr) in [
+            (&["--help"][..], 0, "Usage:", ""),
+            (&["--unknown-option"][..], 2, "", "unexpected argument"),
+            (&[][..], 64, "", "a subcommand is required"),
+            (&["config", "--help"][..], 0, "Usage:", ""),
+            (
+                &["config", "--unknown-option"][..],
+                2,
+                "",
+                "unexpected argument",
+            ),
+        ] {
+            let args = [color_args, suffix].concat();
+            let output = check(&dir, &args, code, stdout, stderr, color_env);
+            assert_color(&args, &output, ansi);
+
+            #[cfg(feature = "argfile")]
+            {
+                std::fs::write(dir.child("color-args.txt"), args.join("\n")).unwrap();
+                let output = check(&dir, &["@color-args.txt"], code, stdout, stderr, color_env);
+                assert_color(&args, &output, ansi);
+            }
+        }
     }
 
     #[cfg(feature = "argfile")]
     {
-        check(&dir, &["@missing-args.txt"], 66, "", "Error: EX_NOINPUT");
+        check(
+            &dir,
+            &["@missing-args.txt"],
+            66,
+            "",
+            "Error: EX_NOINPUT",
+            NO_COLOR_ENV,
+        );
         std::fs::write(dir.child("args.txt"), "config\n").unwrap();
         check(
             &dir,
@@ -69,24 +125,38 @@ fn main() -> ExitCode {
             0,
             "implementation of the `config` subcommand",
             "",
+            NO_COLOR_ENV,
         );
         std::fs::write(dir.child("args.txt"), "--debug\n").unwrap();
-        check(&dir, &["@args.txt"], 64, "", "Usage:");
+        check(&dir, &["@args.txt"], 64, "", "Usage:", NO_COLOR_ENV);
     }
 
     ExitCode::SUCCESS
 }
 
-fn check(dir: &TempDir, args: &[&str], code: i32, stdout: &str, stderr: &str) {
-    let output = Command::new(env::current_exe().unwrap())
+fn check(
+    dir: &TempDir,
+    args: &[&str],
+    code: i32,
+    stdout: &str,
+    stderr: &str,
+    color_env: &[(&str, Option<&str>)],
+) -> Output {
+    let mut command = Command::new(env::current_exe().unwrap());
+    command
         .args(args)
         .current_dir(dir.path())
         .env(CHILD_MODE, "1")
-        .env("NO_COLOR", "1")
-        .env_remove("CLICOLOR_FORCE")
-        .env_remove("FORCE_COLOR")
-        .output()
-        .expect("run skeleton child process");
+        .env("TERM", "xterm-256color")
+        .env_remove("CLICOLOR");
+    for &(key, value) in color_env {
+        if let Some(value) = value {
+            command.env(key, value);
+        } else {
+            command.env_remove(key);
+        }
+    }
+    let output = command.output().expect("run skeleton child process");
     assert_eq!(output.status.code(), Some(code), "{args:?}: {output:?}");
     for (actual, expected) in [(&output.stdout, stdout), (&output.stderr, stderr)] {
         let actual = String::from_utf8_lossy(actual);
@@ -98,5 +168,17 @@ fn check(dir: &TempDir, args: &[&str], code: i32, stdout: &str, stderr: &str) {
                 "{args:?}: expected {expected:?} in {actual:?}"
             );
         }
+    }
+    output
+}
+
+#[cfg(feature = "color")]
+fn assert_color(args: &[&str], output: &Output, ansi: bool) {
+    for actual in [&output.stdout, &output.stderr] {
+        assert_eq!(
+            actual.windows(2).any(|bytes| bytes == b"\x1b["),
+            ansi && !actual.is_empty(),
+            "{args:?}: unexpected ANSI color presence in {output:?}"
+        );
     }
 }

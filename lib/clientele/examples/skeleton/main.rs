@@ -4,7 +4,7 @@
 #![allow(unused)]
 
 use clientele::{
-    crates::clap::{error::ErrorKind, CommandFactory, Parser, Subcommand},
+    crates::clap::{error::ErrorKind, CommandFactory, FromArgMatches, Parser, Subcommand},
     StandardOptions, SysexitsError,
 };
 use std::process::ExitCode;
@@ -28,6 +28,9 @@ enum Command {
 }
 
 /// Runs the CLI, reporting application failures with their sysexits status codes.
+///
+/// With the `color` feature, `--color` in the expanded arguments controls Clap's
+/// help and error output, including missing-subcommand diagnostics.
 pub fn main() -> ExitCode {
     // Returning Result directly would turn every application error into status 1.
     match run() {
@@ -46,8 +49,19 @@ fn run() -> Result<(), SysexitsError> {
     // Expand wildcards and @argfiles:
     let args = clientele::args_os()?;
 
-    // Parse command-line options:
-    let options = Options::parse_from(args);
+    // Configure color before parsing, since Clap may print help or errors:
+    let mut command = Options::command();
+    #[cfg(feature = "color")]
+    {
+        command = command.color(clientele::color_choice(&args));
+    }
+
+    // Parse command-line options, retaining the configured command for errors:
+    let matches = command
+        .try_get_matches_from_mut(args)
+        .unwrap_or_else(|error| error.exit());
+    let options = Options::from_arg_matches(&matches)
+        .unwrap_or_else(|error| error.format(&mut command).exit());
 
     // Print the program version, if requested:
     if options.flags.version {
@@ -67,7 +81,7 @@ fn run() -> Result<(), SysexitsError> {
             Ok(())
         }
         None => {
-            Options::command()
+            command
                 .error(ErrorKind::MissingSubcommand, "a subcommand is required")
                 .print()?;
             clientele::exit(SysexitsError::EX_USAGE)

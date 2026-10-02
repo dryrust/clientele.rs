@@ -21,8 +21,8 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Current focus:** item 6, consistent color policy. **Suggested next leaf: 6b**,
-connecting the existing color pre-scan to the skeleton's Clap command.
+**Current focus:** item 6, consistent color policy. **Suggested next leaf: 6c**,
+adding stream-aware automatic color detection.
 For subcommand work, start with 2a before changing discovery behavior.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
@@ -122,17 +122,6 @@ Files: [color_choice.rs](lib/clientele/src/clap/color_choice.rs),
 [CLI tests](lib/clientele/tests/skeleton_cli.rs), and
 [tracing.rs](lib/clientele/src/tracing.rs).
 
-- [ ] **6b. Feed the pre-scanned choice into the skeleton's Clap command.**
-  `Options::parse_from(args)` currently ignores `color_choice()`. Capturing
-  `skeleton --color=always --help` produces no ANSI sequences. Configure Clap
-  before parsing expanded arguments and carry the same setting into the later
-  missing-subcommand diagnostic, which currently creates a fresh command.
-  Test forced color and no color for help on stdout and errors on stderr,
-  including both `--color=WHEN` and `--color WHEN`. Preserve existing statuses:
-  Clap parse errors use 2, flags without a subcommand use 64, and help uses 0.
-  The example must still build with `clap,dotenv` and no `color` feature.
-  Extend the existing subprocess fixture; it currently sets `NO_COLOR=1` and
-  removes `CLICOLOR_FORCE`/`FORCE_COLOR`, so make each test's environment explicit.
 - [ ] **6c. Add stream-aware automatic color detection.**
   `ColorChoiceExt::to_bool()` always checks stdout, but stderr may be redirected
   independently. Add an API that evaluates the intended output stream while
@@ -317,7 +306,7 @@ Useful sets: `clap`; `std,subcommands`; `std,getenv,camino`; `std,tracing`;
 `clap,tracing`; `clap,color,tracing`; `error-stack`; `std,error-stack`.
 Preserve optional-example/test gates in `lib/clientele/Cargo.toml`.
 
-For the next color step, run the existing CLI driver in both configurations:
+For skeleton color regressions, run the existing CLI driver in both configurations:
 
 ```sh
 cargo test -p clientele --test skeleton_cli --no-default-features --features clap,dotenv --locked
