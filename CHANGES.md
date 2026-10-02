@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Callers needing the executable filename should use `Subcommand.path.file_name()`
   instead of relying on the previously prefixed `name` field
 ### Fixed
+- Search the current directory for empty Unix `PATH` components during subcommand
+  listing, matching lookup while keeping an unset `PATH` distinct
 - Reject directories with executable extensions during Windows subcommand lookup
   and listing
 - Ignore empty, bare-dot, and missing-dot `PATHEXT` entries during Windows

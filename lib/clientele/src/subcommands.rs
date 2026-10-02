@@ -42,6 +42,9 @@ impl SubcommandsProvider {
     /// prefix `demo-`. Collected names can be passed to [`Self::find`] with the
     /// same prefix.
     /// Directories are excluded, even if their names have executable extensions.
+    /// On Unix, empty `PATH` components (including an empty `PATH`) search the
+    /// current directory and return relative executable paths. An unset `PATH`
+    /// yields no commands.
     ///
     /// On Windows, `PATHEXT` is a semicolon-separated list of dot-prefixed,
     /// nonempty extensions, matched case-insensitively in their original order.
@@ -78,6 +81,9 @@ impl SubcommandsProvider {
     /// Parsing follows [`Self::collect`]'s `PATHEXT` rules. Missing or non-Unicode
     /// `PATHEXT` returns `None`, even for an explicit filename. An empty list of
     /// accepted extensions still permits exact filename lookup on Windows.
+    ///
+    /// On Unix, empty `PATH` components search the current directory, whereas an
+    /// unset `PATH` returns `None`.
     ///
     /// Returns `None` if no match is found or the required search variables are
     /// unavailable. The returned [`Subcommand::name`] follows the same naming
@@ -152,7 +158,12 @@ impl SubcommandsProvider {
 
         let mut result = vec![];
         for path in std::env::split_paths(&paths) {
-            let Ok(dir) = std::fs::read_dir(path) else {
+            let directory = if path.as_os_str().is_empty() {
+                Path::new(".")
+            } else {
+                &path
+            };
+            let Ok(dir) = std::fs::read_dir(directory) else {
                 continue;
             };
 
@@ -162,7 +173,8 @@ impl SubcommandsProvider {
                     continue;
                 };
 
-                let path = entry.path();
+                // Keep the same path spelling as lookup, including empty components.
+                let path = path.join(entry.file_name());
                 if Self::filter_file(prefix, &path) {
                     result.push(path);
                 }

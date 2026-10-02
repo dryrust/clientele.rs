@@ -33,6 +33,11 @@ harness = false
 required-features = ["std", "subcommands"]
 
 [[test]]
+name = "subcommands_path"
+harness = false
+required-features = ["std", "subcommands"]
+
+[[test]]
 name = "skeleton_cli"
 harness = false
 required-features = ["std", "clap", "dotenv"]

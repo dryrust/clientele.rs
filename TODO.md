@@ -24,7 +24,7 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 1e**, honoring empty Unix `PATH` components consistently.
+**Suggested next leaf: 1f**, making subcommand listing deterministic and deduplicated.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -37,11 +37,6 @@ Files: [subcommands.rs](lib/clientele/src/subcommands.rs),
 Unix examples below were reproduced on macOS. Windows findings came from source
 inspection and need native Windows regression tests.
 
-- [ ] **1e. Honor empty Unix `PATH` components consistently.**
-  They denote the current directory. `find()` handles them via `join(command)`,
-  but `collect()` attempts `read_dir("")` and skips them. Test empty, leading,
-  trailing, and middle components in a subprocess with an isolated working
-  directory. Distinguish an unset `PATH` from an empty component.
 - [ ] **1f. Make listing deterministic and remove duplicate commands.**
   Repeated `PATH` entries currently duplicate results; directory enumeration
   order is unspecified. Define ordering and logical-name deduplication while
@@ -227,6 +222,7 @@ For subcommand lookup/listing regressions with only their required features:
 
 ```sh
 cargo test -p clientele --test subcommands_find --test subcommands_list --no-default-features --features std,subcommands --locked
+cargo test -p clientele --test subcommands_path --no-default-features --features std,subcommands --locked
 ```
 
 For native directory resolution, checked UTF-8 conversion, and their feature gates:
