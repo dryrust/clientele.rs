@@ -42,6 +42,12 @@ impl SubcommandsProvider {
     /// prefix `demo-`. Collected names can be passed to [`Self::find`] with the
     /// same prefix.
     ///
+    /// On Windows, `PATHEXT` is a semicolon-separated list of dot-prefixed,
+    /// nonempty extensions, matched case-insensitively in their original order.
+    /// Empty entries, bare dots, and entries without a leading dot are ignored;
+    /// whitespace and quotes are not trimmed. Missing or non-Unicode `PATHEXT`,
+    /// or a list with no accepted extensions, yields no collected commands.
+    ///
     /// Only names containing fewer than `level` hyphens are returned. Thus `1`
     /// lists top-level commands and `0` returns none. Any retained occurrence of
     /// the prefix counts toward this depth: `demo-demo-repeat` becomes
@@ -67,6 +73,9 @@ impl SubcommandsProvider {
     /// exact prefixed filename if it has an extension. If no usable exact match
     /// exists, `PATHEXT` extensions are appended in order, preserving any dots
     /// already present in the command name.
+    /// Parsing follows [`Self::collect`]'s `PATHEXT` rules. Missing or non-Unicode
+    /// `PATHEXT` returns `None`, even for an explicit filename. An empty list of
+    /// accepted extensions still permits exact filename lookup on Windows.
     ///
     /// Returns `None` if no match is found or the required search variables are
     /// unavailable. The returned [`Subcommand::name`] follows the same naming
@@ -193,13 +202,7 @@ impl SubcommandsProvider {
             return None;
         };
 
-        // NOTE: I am not sure if std::env::split_paths should be applied here,
-        // since it also deals with '"' which seems to not be used in PATHEXT?
-        return Some(
-            exts.split(';')
-                .map(|ext| ext[1..].to_lowercase())
-                .collect::<Vec<_>>(),
-        );
+        Some(parse_path_exts(&exts))
     }
 
     fn filter_file(prefix: &str, path: &Path, exts: Option<&[String]>) -> bool {
@@ -309,5 +312,51 @@ impl SubcommandsProvider {
         }
 
         None
+    }
+}
+
+// Kept platform-independent under tests so malformed Windows input is covered
+// on every development platform without mutating process-global environment.
+#[cfg(any(windows, test))]
+fn parse_path_exts(value: &str) -> Vec<String> {
+    value
+        .split(';')
+        .filter_map(|entry| entry.strip_prefix('.'))
+        .filter(|extension| !extension.is_empty())
+        .map(str::to_lowercase)
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_path_exts;
+
+    #[test]
+    fn ignores_empty_and_missing_dot_entries() {
+        for value in ["", ";;;", ".", "EXE;CMD", "éxe;λ;."] {
+            assert!(parse_path_exts(value).is_empty(), "{value:?}");
+        }
+        assert_eq!(parse_path_exts(";.EXE;;CMD;.;.BAT;"), ["exe", "bat"]);
+    }
+
+    #[test]
+    fn preserves_precedence_and_duplicates_with_case_folding() {
+        assert_eq!(
+            parse_path_exts(".cMd;.EXE;.bAt;.CMD"),
+            ["cmd", "exe", "bat", "cmd"]
+        );
+    }
+
+    #[test]
+    fn handles_unicode_without_splitting_code_points() {
+        assert_eq!(parse_path_exts("éxe;.ÉXE;λ;.Λ;.工具"), ["éxe", "λ", "工具"]);
+    }
+
+    #[test]
+    fn does_not_trim_whitespace_or_quotes() {
+        assert_eq!(
+            parse_path_exts(" .EXE;\".CMD\";.BAT ;. CMD"),
+            ["bat ", " cmd"]
+        );
     }
 }

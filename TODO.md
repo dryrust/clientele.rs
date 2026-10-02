@@ -24,7 +24,7 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 1c**, parsing `PATHEXT` without unchecked string indexing.
+**Suggested next leaf: 1d**, rejecting directories during Windows command discovery.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -37,12 +37,6 @@ Files: [subcommands.rs](lib/clientele/src/subcommands.rs),
 Unix examples below were reproduced on macOS. Windows findings came from source
 inspection and need native Windows regression tests.
 
-- [ ] **1c. Parse `PATHEXT` without indexing unchecked strings.**
-  `get_path_exts()` uses `ext[1..]`: empty entries can panic, and malformed entries
-  can lose a character or split a Unicode code point. Parse the leading dot
-  explicitly and define handling of empty/malformed entries. Test empty values,
-  trailing/repeated semicolons, missing dots, mixed case, and non-ASCII input.
-  Preserve extension precedence and document behavior when `PATHEXT` is absent.
 - [ ] **1d. Reject directories during Windows command discovery.**
   Windows `filter_file()` checks hidden attributes but not `metadata.is_file()`.
   Test that a directory named like `demo-hello.exe` is neither listed nor found,

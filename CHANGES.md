@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Callers needing the executable filename should use `Subcommand.path.file_name()`
   instead of relying on the previously prefixed `name` field
 ### Fixed
+- Ignore empty, bare-dot, and missing-dot `PATHEXT` entries during Windows
+  subcommand discovery instead of panicking or truncating malformed input
 - Honor `StandardOptions.color` for tracing output using stderr detection, and
   disable ANSI output without `color` even when dependency features enable it
 - Ignore relative XDG data, config, state, and cache home overrides and use the
