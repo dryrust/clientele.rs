@@ -22,9 +22,11 @@ jobs:
     - name: Test minimal feature combinations
       run: |
         cargo test --workspace --no-default-features --locked
-        for features in std tracing std,tracing clap clap,tracing clap,dotenv subcommands std,subcommands; do
+        for features in std tracing std,tracing clap clap,tracing clap,dotenv subcommands std,subcommands error-stack std,error-stack; do
           cargo test --workspace --no-default-features --features "$features" --locked
         done
+    - name: Test all features
+      run: cargo test --workspace --all-features --locked
   build-windows:
     name: Build on Windows
     runs-on: windows-latest
@@ -37,3 +39,5 @@ jobs:
       run: cargo build --verbose --examples
     - name: Run tests
       run: cargo test --verbose
+    - name: Test all features
+      run: cargo test --workspace --all-features --locked

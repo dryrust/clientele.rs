@@ -19,6 +19,10 @@ name = "skeleton"
 required-features = ["std", "clap", "dotenv"]
 
 [[test]]
+name = "error_stack"
+required-features = ["error-stack"]
+
+[[test]]
 name = "subcommands_find"
 required-features = ["std", "subcommands"]
 
@@ -113,7 +117,7 @@ getenv = { version = "0.1", default-features = false, features = [
     "xdg",
 ], optional = true }
 gofer = { version = "0.1.8", default-features = false, optional = true }
-known-errors = { version = "0.1", default-features = false, features = [
+known-errors = { version = "0.1.2", default-features = false, features = [
     "sysexits",
 ] }
 serde = { version = "1", default-features = false, optional = true }

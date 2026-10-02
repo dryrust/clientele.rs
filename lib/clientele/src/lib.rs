@@ -4,8 +4,12 @@
 //!
 //! # Feature dependencies
 //!
-//! The `clap` feature also enables `std`. Tracing formats require `std` and
-//! `tracing`; the options-based tracing initializer additionally requires `clap`.
+//! The `clap` feature also enables `std`. With `error-stack`, [`SysexitsError`]
+//! can be used as a report context with or without the `std` feature, including
+//! when default features are disabled.
+//!
+//! Tracing formats require `std` and `tracing`; the options-based tracing
+//! initializer additionally requires `clap`.
 //!
 //! ```edition2021
 //! # use clientele::*;

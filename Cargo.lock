@@ -329,13 +329,12 @@ checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 
 [[package]]
 name = "known-errors"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5046ff2073c83a9b05fee82dd1dcfe91b0eafc4cd872cdf398fa8a0efba77c2c"
+checksum = "0daa2778426c60a38424adaba48b56be6b3d99ef9c08cdd83e912de4a67c8d85"
 dependencies = [
  "error-stack",
  "gofer",
- "serde",
  "serde_json",
  "tokio",
 ]

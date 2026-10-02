@@ -18,7 +18,8 @@
   Unsafe code is forbidden. Keep optional dependencies optional; update feature
   declarations, module gates, and re-exports together.
 - Defaults are `all` + `std`; `all` excludes `error-stack` and `unstable`.
-  `clap` enables `std`; tracing formats need `std,tracing`, their initializer also `clap`.
+  `clap` enables `std`; `error-stack` works with or without `std`.
+  Tracing formats need `std,tracing`, their initializer also `clap`.
   `#![no_std]` is commented out: disabling defaults does not prove no-std support.
 - Preserve `OsString`/`PathBuf` for OS input; Camino paths explicitly require UTF-8.
   Argument expansion is Windows globs first, then @argfiles. Subcommand discovery
@@ -47,7 +48,6 @@ For feature changes, also check affected combinations with
 Smoke-test CLI changes with `cargo run --locked --example skeleton -- config`.
 
 Current baseline caveats (recheck when relevant):
-- `error-stack` and `--all-features` fail in `known-errors`.
-  Clippy and rustdoc have existing warnings.
+- Clippy and rustdoc have existing warnings.
 
 Report check failures; do not silently raise MSRV or disable checks.
