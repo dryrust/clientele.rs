@@ -19,6 +19,11 @@ fn test_find(dir: &Path) -> Result<()> {
 
     for file in TEST_FILES {
         println!("{}: ", file.name);
+        assert!(
+            dir.join(file.full_name()).is_file(),
+            "fixture {}",
+            file.name
+        );
 
         let cd_name = file.command_name;
         let cmd = SubcommandsProvider::find(TEST_PREFIX, cd_name);

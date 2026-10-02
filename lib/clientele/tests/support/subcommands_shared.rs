@@ -11,6 +11,9 @@ pub struct TestFile {
     pub name: &'static str,
     pub command_name: &'static str,
     pub content: &'static str,
+    /// Unix creation permissions, independent of the expected discovery result.
+    #[allow(dead_code)]
+    pub unix_mode: u32,
     #[allow(dead_code)]
     pub should_be_listed: bool,
     #[allow(dead_code)]
@@ -39,6 +42,7 @@ pub static TEST_FILES: &[TestFile] = &[
         name: "clientele-hello",
         command_name: "hello",
         content: "Hello, world!",
+        unix_mode: 0o755,
         should_be_listed: true,
         should_be_found: true,
         win_ext: "bat",
@@ -47,6 +51,7 @@ pub static TEST_FILES: &[TestFile] = &[
         name: "clientele-two-levels",
         command_name: "two-levels",
         content: "Should be filtered out!",
+        unix_mode: 0o755,
         should_be_listed: false,
         should_be_found: true, // Lookup is not limited by listing depth.
         win_ext: "bat",
@@ -55,14 +60,25 @@ pub static TEST_FILES: &[TestFile] = &[
         name: "abcdefg-test",
         command_name: "abcdefg-test",
         content: "Shouldn't appear!",
+        unix_mode: 0o755,
         should_be_listed: false,
         should_be_found: false,
         win_ext: "bat",
     },
     TestFile {
+        name: "clientele-data",
+        command_name: "data",
+        content: "Not an executable subcommand!",
+        unix_mode: 0o644,
+        should_be_listed: false,
+        should_be_found: false,
+        win_ext: "txt", // The child only permits .BAT and .CMD in PATHEXT.
+    },
+    TestFile {
         name: "clientele-report.v1",
         command_name: "report.v1",
         content: "Keep the dotted command name!",
+        unix_mode: 0o755,
         should_be_listed: true,
         should_be_found: true,
         win_ext: "bat",
@@ -71,6 +87,7 @@ pub static TEST_FILES: &[TestFile] = &[
         name: "clientele-clientele-repeat",
         command_name: "clientele-repeat",
         content: "Remove the prefix only once!",
+        unix_mode: 0o755,
         should_be_listed: false,
         should_be_found: true,
         win_ext: "bat",
@@ -79,6 +96,7 @@ pub static TEST_FILES: &[TestFile] = &[
         name: "clientele-clientele-report.v1",
         command_name: "clientele-report.v1",
         content: "Keep both the repeated prefix and dotted suffix!",
+        unix_mode: 0o755,
         should_be_listed: false,
         should_be_found: true,
         win_ext: "cmd",
@@ -88,6 +106,7 @@ pub static TEST_FILES: &[TestFile] = &[
         name: "clientele-hola",
         command_name: "hola",
         content: "Hola mundo!",
+        unix_mode: 0o755,
         should_be_listed: true,
         should_be_found: true,
         win_ext: "cmd",
@@ -130,7 +149,7 @@ pub fn run(check: impl FnOnce(&Path) -> Result<()>) -> Result<()> {
     Ok(())
 }
 
-/// Creates executable fixtures without changing the process environment.
+/// Creates discovery fixtures without changing the process environment.
 pub fn init() -> Result<TempDir> {
     let dir = TempDir::new()?;
     std::fs::create_dir(dir.child(TEST_DIRECTORY))?;
@@ -145,7 +164,7 @@ pub fn init() -> Result<TempDir> {
         let path = dir.child(file.name);
         let mut file = OpenOptions::new()
             .write(true)
-            .mode(0o755)
+            .mode(file.unix_mode)
             .truncate(true)
             .create(true)
             .open(&path)?;

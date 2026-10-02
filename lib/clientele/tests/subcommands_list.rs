@@ -15,6 +15,13 @@ fn main() -> Result<()> {
 
 fn test_list(dir: &Path) -> Result<()> {
     assert!(dir.join(TEST_DIRECTORY).is_dir());
+    for file in TEST_FILES {
+        assert!(
+            dir.join(file.full_name()).is_file(),
+            "fixture {}",
+            file.name
+        );
+    }
 
     // Include deeper names so repeated prefixes cannot be hidden by the level filter.
     for level in [TEST_LEVEL, usize::MAX] {

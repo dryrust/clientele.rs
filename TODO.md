@@ -24,18 +24,13 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 2e**, covering non-executable subcommand candidates.
+**Suggested next leaf: 2f**, covering hidden subcommand candidates.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
 
 ## 2. Reliable subcommand regression tests (P1)
 
-- [ ] **2e. Cover non-executable discovery candidates.**
-  Extend `lib/clientele/tests/support/subcommands_shared.rs` and its importers
-  with a matching Unix file without executable permission and a Windows file
-  whose extension is absent from the child's `PATHEXT`. Assert listing exclusion
-  and extensionless lookup absence alongside accepted executable fixtures.
 - [ ] **2f. Cover hidden discovery candidates.**
   Add isolated lookup/listing fixtures for Unix dotfiles and Windows hidden
   attributes. Ensure the prefix matches so the tests exercise hidden-file
