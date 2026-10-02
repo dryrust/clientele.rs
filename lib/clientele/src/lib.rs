@@ -62,7 +62,7 @@ pub mod options;
 #[cfg(all(feature = "std", feature = "clap"))]
 pub use options::*;
 
-#[cfg(all(feature = "std", feature = "getenv", feature = "camino"))]
+#[cfg(feature = "std")]
 pub mod paths;
 
 #[cfg(all(feature = "std", feature = "subcommands"))]

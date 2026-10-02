@@ -45,6 +45,11 @@ name = "paths_xdg"
 harness = false
 required-features = ["std", "getenv", "camino"]
 
+[[test]]
+name = "paths_native"
+harness = false
+required-features = ["std"]
+
 [features]
 default = ["all", "std"]
 all = [
