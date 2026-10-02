@@ -24,8 +24,8 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 2b**, isolating environment-dependent subcommand fixtures
-before expanding discovery regression coverage.
+**Suggested next leaf: 2d**, moving shared subcommand fixtures out of Cargo's
+test-target discovery.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -74,12 +74,6 @@ inspection and need native Windows regression tests.
 
 ## 2. Reliable subcommand regression tests (P1)
 
-- [ ] **2b. Isolate environment-dependent discovery fixtures.**
-  `lib/clientele/tests/subcommands_shared.rs::init()` replaces process-global
-  `PATH`. Current binaries each have one test; adding parallel cases requires
-  isolation. Follow the child-process pattern in
-  `lib/clientele/tests/skeleton_cli.rs`. Set `PATH` and Windows `PATHEXT`
-  explicitly in each child so developer configuration cannot affect results.
 - [ ] **2c. Assert complete listing results.**
   The listing test searches for expected entries individually, so extra entries
   and duplicates can escape detection. Compare the complete expected result;

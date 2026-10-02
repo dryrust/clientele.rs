@@ -24,10 +24,12 @@ required-features = ["error-stack"]
 
 [[test]]
 name = "subcommands_find"
+harness = false
 required-features = ["std", "subcommands"]
 
 [[test]]
 name = "subcommands_list"
+harness = false
 required-features = ["std", "subcommands"]
 
 [[test]]
