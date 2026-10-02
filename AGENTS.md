@@ -12,8 +12,13 @@
   executables; `tracing.rs` configures logging.
 - Tests: inline sort tests and `lib/clientele/tests/`. Consumer example:
   `lib/clientele/examples/skeleton/main.rs`.
+- [TODO.md](TODO.md): self-contained enhancement backlog with priorities,
+  findings, acceptance criteria, and verification commands.
 
 ## Editing rules
+- Read `TODO.md` before enhancement work. Interpret requests narrowly and work
+  on one small, atomic leaf task at a time; remove finished items from `TODO.md`
+  after verification.
 - Preserve public APIs, CLI behavior, MSRV, and platform-specific semantics.
   Unsafe code is forbidden. Keep optional dependencies optional; update feature
   declarations, module gates, and re-exports together.
