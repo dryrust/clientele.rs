@@ -3,6 +3,7 @@
 use clientele::SubcommandsProvider;
 use std::path::Path;
 
+#[path = "support/subcommands_shared.rs"]
 mod subcommands_shared;
 use subcommands_shared::{Result, TEST_FILES, TEST_PREFIX};
 

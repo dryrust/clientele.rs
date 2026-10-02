@@ -24,8 +24,8 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 2d**, moving shared subcommand fixtures out of Cargo's
-test-target discovery.
+**Suggested next leaf: 1a**, preserving executable names when collecting
+subcommands.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -79,9 +79,6 @@ inspection and need native Windows regression tests.
   and duplicates can escape detection. Compare the complete expected result;
   account for the ordering contract selected in 1f. Add non-executable, hidden,
   backup-file, directory, and missing-environment cases as focused follow-ups.
-- [ ] **2d. Move shared fixtures out of Cargo's test-target discovery.**
-  Move `lib/clientele/tests/subcommands_shared.rs` under a support subdirectory
-  and update its importers. Cargo currently runs it as a separate zero-test target.
 
 ## 3. Checked sort-to-SQL rendering and invariants (P1)
 
