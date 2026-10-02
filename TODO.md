@@ -24,8 +24,7 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 1b**, making `Subcommand.name` consistent between lookup
-and listing.
+**Suggested next leaf: 1c**, parsing `PATHEXT` without unchecked string indexing.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -38,10 +37,6 @@ Files: [subcommands.rs](lib/clientele/src/subcommands.rs),
 Unix examples below were reproduced on macOS. Windows findings came from source
 inspection and need native Windows regression tests.
 
-- [ ] **1b. Make `Subcommand.name` consistent between lookup and listing.**
-  `collect("demo-", ...)` returns `hello`, while `find("demo-", "hello")` returns
-  `demo-hello`. Define and document the public naming contract, assess existing
-  caller compatibility, and test both the returned name and executable path.
 - [ ] **1c. Parse `PATHEXT` without indexing unchecked strings.**
   `get_path_exts()` uses `ext[1..]`: empty entries can panic, and malformed entries
   can lose a character or split a Unicode code point. Parse the leading dot

@@ -39,7 +39,7 @@ fn test_list(dir: &Path) -> Result<()> {
 
         let found = SubcommandsProvider::find(TEST_PREFIX, &cmd.name)
             .unwrap_or_else(|| panic!("collected name {:?} cannot be found", cmd.name));
-        assert_eq!(found.path, cmd.path, "round-trip lookup for {:?}", cmd.name);
+        assert_eq!(&found, cmd, "round-trip lookup for {:?}", cmd.name);
     }
 
     Ok(())

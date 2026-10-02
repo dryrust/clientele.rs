@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   color detection, preserving `to_bool()` as the stdout shorthand
 - `paths::home_dir()` and `paths::temp_dir()` for native directory resolution,
   with checked `_utf8` variants and independently gated optional dependencies
+### Changed
+- `SubcommandsProvider::find()` now returns the same prefix-free logical name as
+  listing, also omitting the final Windows extension for explicit-name lookups.
+  Callers needing the executable filename should use `Subcommand.path.file_name()`
+  instead of relying on the previously prefixed `name` field
 ### Fixed
 - Honor `StandardOptions.color` for tracing output using stderr detection, and
   disable ANSI output without `color` even when dependency features enable it

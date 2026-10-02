@@ -1,6 +1,6 @@
 // This is free and unencumbered software released into the public domain.
 
-use clientele::SubcommandsProvider;
+use clientele::{Subcommand, SubcommandsProvider};
 use std::path::Path;
 
 #[path = "support/subcommands_shared.rs"]
@@ -17,20 +17,19 @@ fn test_find(dir: &Path) -> Result<()> {
 
         let cd_name = file.command_name;
         let cmd = SubcommandsProvider::find(TEST_PREFIX, cd_name);
-        let expected_path = file.should_be_found.then(|| dir.join(file.full_name()));
+        let expected = file.should_be_found.then(|| Subcommand {
+            name: cd_name.to_string(),
+            path: dir.join(file.full_name()),
+        });
 
-        assert_eq!(
-            cmd.map(|cmd| cmd.path),
-            expected_path,
-            "lookup result for {cd_name:?}",
-        );
+        assert_eq!(cmd, expected, "lookup result for {cd_name:?}");
 
         #[cfg(windows)]
         if file.should_be_found {
             let explicit_name = format!("{}.{}", cd_name, file.win_ext);
             assert_eq!(
-                SubcommandsProvider::find(TEST_PREFIX, &explicit_name).map(|cmd| cmd.path),
-                expected_path,
+                SubcommandsProvider::find(TEST_PREFIX, &explicit_name),
+                expected,
                 "lookup with explicit executable extension for {explicit_name:?}",
             );
         }

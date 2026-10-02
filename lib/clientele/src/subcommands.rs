@@ -2,10 +2,29 @@
 
 use std::path::{Path, PathBuf};
 
+/// A discovered executable subcommand. Requires `std,subcommands`.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Subcommand {
+    /// Logical name derived from the resolved filename by both lookup and listing.
+    ///
+    /// Exactly one leading search prefix is removed. Unix preserves all filename
+    /// suffixes; Windows removes the final extension, even when explicitly supplied
+    /// to lookup. Earlier dots and repeated prefixes are preserved.
     pub name: String,
+    /// Resolved executable path, retaining its prefix and any file extension.
     pub path: PathBuf,
+}
+
+impl Subcommand {
+    fn from_path(prefix: &str, path: PathBuf) -> Option<Self> {
+        let name = if cfg!(windows) {
+            path.file_stem()?
+        } else {
+            path.file_name()?
+        };
+        let name = name.to_str()?.strip_prefix(prefix)?.to_string();
+        Some(Self { name, path })
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -31,16 +50,7 @@ impl SubcommandsProvider {
         let commands = Self::collect_commands(prefix)
             .into_iter()
             // Construct public command names.
-            .flat_map(|path| {
-                let name = if cfg!(windows) {
-                    path.file_stem()?
-                } else {
-                    path.file_name()?
-                };
-                let name = name.to_str()?.strip_prefix(prefix)?.to_string();
-
-                Some(Subcommand { name, path })
-            })
+            .filter_map(|path| Subcommand::from_path(prefix, path))
             // Respect level.
             .filter(|cmd| {
                 let count = cmd.name.chars().filter(|&c| c == '-').count();
@@ -59,11 +69,15 @@ impl SubcommandsProvider {
     /// already present in the command name.
     ///
     /// Returns `None` if no match is found or the required search variables are
-    /// unavailable. The returned [`Subcommand::name`] includes `prefix`.
+    /// unavailable. The returned [`Subcommand::name`] follows the same naming
+    /// rules as [`Self::collect`]: exactly one prefix is removed, along with the
+    /// final extension on Windows. For example, `find("demo-", "hello")` returns
+    /// the logical name `hello`, not `demo-hello`; Windows lookup of `hello.bat`
+    /// also returns `hello` when that executable is found.
     pub fn find(prefix: &str, name: &str) -> Option<Subcommand> {
         let name = format!("{}{}", prefix, name);
         let path = Self::resolve_command(prefix, &name);
-        path.map(|path| Subcommand { name, path })
+        path.and_then(|path| Subcommand::from_path(prefix, path))
     }
 }
 
