@@ -17,7 +17,7 @@ fn test_list(dir: &Path) -> Result<()> {
     for file in TEST_FILES {
         println!("{}: ", file.name);
 
-        let cd_name = file.name.trim_start_matches(TEST_PREFIX);
+        let cd_name = file.command_name;
         let cmd = cmds.iter().find(|cmd| cmd.name == cd_name);
         let path = dir.join(file.full_name());
 
@@ -26,6 +26,20 @@ fn test_list(dir: &Path) -> Result<()> {
         if let Some(cmd) = cmd {
             assert_eq!(cmd.path, path);
         }
+    }
+
+    // Include deeper names so repeated prefixes cannot be hidden by the level filter.
+    let cmds = SubcommandsProvider::collect(TEST_PREFIX, usize::MAX);
+    for file in TEST_FILES.iter().filter(|file| file.should_be_found) {
+        let cmd = cmds
+            .iter()
+            .find(|cmd| cmd.name == file.command_name)
+            .unwrap_or_else(|| panic!("missing collected name {:?}", file.command_name));
+        assert_eq!(cmd.path, dir.join(file.full_name()));
+
+        let found = SubcommandsProvider::find(TEST_PREFIX, &cmd.name)
+            .unwrap_or_else(|| panic!("collected name {:?} cannot be found", cmd.name));
+        assert_eq!(found.path, cmd.path, "round-trip lookup for {:?}", cmd.name);
     }
 
     Ok(())

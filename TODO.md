@@ -24,8 +24,8 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 1a**, preserving executable names when collecting
-subcommands.
+**Suggested next leaf: 1b**, making `Subcommand.name` consistent between lookup
+and listing.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -38,14 +38,6 @@ Files: [subcommands.rs](lib/clientele/src/subcommands.rs),
 Unix examples below were reproduced on macOS. Windows findings came from source
 inspection and need native Windows regression tests.
 
-- [ ] **1a. Preserve executable names when collecting commands.**
-  With prefix `demo-`, executable `demo-report.v1` is listed as `report` because
-  `collect()` uses `file_stem()`. `demo-demo-repeat` becomes `repeat` because
-  `trim_start_matches()` removes multiple prefixes. Neither listed name can then
-  be resolved by `find()`. Preserve Unix filename suffixes, remove exactly one
-  prefix, and handle Windows executable extensions according to platform rules.
-  Accept when every fixture's collected name resolves to the same executable;
-  use a sufficiently high listing level for names containing additional hyphens.
 - [ ] **1b. Make `Subcommand.name` consistent between lookup and listing.**
   `collect("demo-", ...)` returns `hello`, while `find("demo-", "hello")` returns
   `demo-hello`. Define and document the public naming contract, assess existing

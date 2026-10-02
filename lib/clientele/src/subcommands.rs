@@ -14,16 +14,30 @@ pub struct SubcommandsProvider {
 }
 
 impl SubcommandsProvider {
+    /// Collects executable subcommands from `PATH` up to the requested name depth.
+    ///
+    /// Requires `std,subcommands`. Each name has exactly one leading `prefix`
+    /// removed. Unix preserves the rest of the filename, including dot suffixes.
+    /// Windows removes the final executable extension matched by `PATHEXT` but
+    /// preserves earlier dots: `demo-report.v1.bat` becomes `report.v1` with
+    /// prefix `demo-`. Collected names can be passed to [`Self::find`] with the
+    /// same prefix.
+    ///
+    /// Only names containing fewer than `level` hyphens are returned. Thus `1`
+    /// lists top-level commands and `0` returns none. Any retained occurrence of
+    /// the prefix counts toward this depth: `demo-demo-repeat` becomes
+    /// `demo-repeat` on Unix and requires a level of at least `2`.
     pub fn collect(prefix: &str, level: usize) -> SubcommandsProvider {
         let commands = Self::collect_commands(prefix)
             .into_iter()
-            // Construct ExternalCommand.
+            // Construct public command names.
             .flat_map(|path| {
-                let name = path
-                    .file_stem()?
-                    .to_string_lossy()
-                    .trim_start_matches(prefix)
-                    .to_string();
+                let name = if cfg!(windows) {
+                    path.file_stem()?
+                } else {
+                    path.file_name()?
+                };
+                let name = name.to_str()?.strip_prefix(prefix)?.to_string();
 
                 Some(Subcommand { name, path })
             })
@@ -37,6 +51,15 @@ impl SubcommandsProvider {
         SubcommandsProvider { commands }
     }
 
+    /// Finds the first usable executable for the prefixed name in `PATH` order.
+    ///
+    /// Requires `std,subcommands`. On Windows, each directory first checks the
+    /// exact prefixed filename if it has an extension. If no usable exact match
+    /// exists, `PATHEXT` extensions are appended in order, preserving any dots
+    /// already present in the command name.
+    ///
+    /// Returns `None` if no match is found or the required search variables are
+    /// unavailable. The returned [`Subcommand::name`] includes `prefix`.
     pub fn find(prefix: &str, name: &str) -> Option<Subcommand> {
         let name = format!("{}{}", prefix, name);
         let path = Self::resolve_command(prefix, &name);
@@ -252,19 +275,17 @@ impl SubcommandsProvider {
         };
 
         for path in std::env::split_paths(&paths) {
-            let mut path = path.join(command);
+            let path = path.join(command);
 
-            // Extension is provided. Just check if file exists.
-            if path.extension().is_some() {
-                match path.exists() {
-                    true if Self::filter_file(prefix, &path, None) => return Some(path),
-                    _ => continue,
-                }
+            // Prefer an explicitly provided executable filename in this directory.
+            if path.extension().is_some() && path.exists() && Self::filter_file(prefix, &path, None)
+            {
+                return Some(path);
             }
 
-            // Iterate extensions and check if file exists.
+            // Append executable extensions without replacing dots in the command stem.
             for ext in &exts {
-                path.set_extension(ext);
+                let path = path.with_added_extension(ext);
 
                 match path.exists() {
                     true if Self::filter_file(prefix, &path, None) => return Some(path),

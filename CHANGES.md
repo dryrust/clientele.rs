@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   disable ANSI output without `color` even when dependency features enable it
 - Ignore relative XDG data, config, state, and cache home overrides and use the
   existing home-based fallbacks
+- Preserve Unix filename suffixes and remove only one prefix in collected
+  subcommand names; resolve dotted Windows command stems using `PATHEXT`
 
 ## 0.4.1 - 2026-10-02
 ### Fixed

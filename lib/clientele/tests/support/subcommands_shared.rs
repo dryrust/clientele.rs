@@ -9,6 +9,7 @@ pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub struct TestFile {
     pub name: &'static str,
+    pub command_name: &'static str,
     pub content: &'static str,
     #[allow(dead_code)]
     pub should_be_listed: bool,
@@ -35,6 +36,7 @@ pub static TEST_LEVEL: usize = 1;
 pub static TEST_FILES: &[TestFile] = &[
     TestFile {
         name: "clientele-hello",
+        command_name: "hello",
         content: "Hello, world!",
         should_be_listed: true,
         should_be_found: true,
@@ -42,6 +44,7 @@ pub static TEST_FILES: &[TestFile] = &[
     },
     TestFile {
         name: "clientele-two-levels",
+        command_name: "two-levels",
         content: "Should be filtered out!",
         should_be_listed: false,
         should_be_found: true, // Lookup is not limited by listing depth.
@@ -49,14 +52,40 @@ pub static TEST_FILES: &[TestFile] = &[
     },
     TestFile {
         name: "abcdefg-test",
+        command_name: "abcdefg-test",
         content: "Shouldn't appear!",
         should_be_listed: false,
         should_be_found: false,
         win_ext: "bat",
     },
+    TestFile {
+        name: "clientele-report.v1",
+        command_name: "report.v1",
+        content: "Keep the dotted command name!",
+        should_be_listed: true,
+        should_be_found: true,
+        win_ext: "bat",
+    },
+    TestFile {
+        name: "clientele-clientele-repeat",
+        command_name: "clientele-repeat",
+        content: "Remove the prefix only once!",
+        should_be_listed: false,
+        should_be_found: true,
+        win_ext: "bat",
+    },
+    TestFile {
+        name: "clientele-clientele-report.v1",
+        command_name: "clientele-report.v1",
+        content: "Keep both the repeated prefix and dotted suffix!",
+        should_be_listed: false,
+        should_be_found: true,
+        win_ext: "cmd",
+    },
     #[cfg(windows)]
     TestFile {
         name: "clientele-hola",
+        command_name: "hola",
         content: "Hola mundo!",
         should_be_listed: true,
         should_be_found: true,
