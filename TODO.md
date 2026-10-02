@@ -24,32 +24,17 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 1f**, making subcommand listing deterministic and deduplicated.
+**Suggested next leaf: 2c**, asserting complete subcommand listing results.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
-
-## 1. Consistent subcommand discovery (P1)
-
-Files: [subcommands.rs](lib/clientele/src/subcommands.rs),
-[lookup tests](lib/clientele/tests/subcommands_find.rs), and
-[listing tests](lib/clientele/tests/subcommands_list.rs).
-Unix examples below were reproduced on macOS. Windows findings came from source
-inspection and need native Windows regression tests.
-
-- [ ] **1f. Make listing deterministic and remove duplicate commands.**
-  Repeated `PATH` entries currently duplicate results; directory enumeration
-  order is unspecified. Define ordering and logical-name deduplication while
-  retaining the first executable selected by `PATH` precedence. Test repeated
-  directories and the same command in different directories; listing and lookup
-  must agree on the winning executable.
 
 ## 2. Reliable subcommand regression tests (P1)
 
 - [ ] **2c. Assert complete listing results.**
   The listing test searches for expected entries individually, so extra entries
   and duplicates can escape detection. Compare the complete expected result;
-  account for the ordering contract selected in 1f. Add non-executable, hidden,
+  use lexical name ordering and exact-name deduplication. Add non-executable, hidden,
   backup-file, directory, and missing-environment cases as focused follow-ups.
 
 ## 3. Checked sort-to-SQL rendering and invariants (P1)
@@ -95,7 +80,7 @@ File: [options/sort.rs](lib/clientele/src/options/sort.rs).
   `SubcommandsProvider` has an inherent `into_iter()` and a `get_commands()`
   returning `&Vec<Subcommand>`. Add owned/borrowed `IntoIterator` support and a
   slice-based accessor while preserving existing methods. Test iteration order,
-  borrowing, and ownership; keep discovery behavior changes in item 1.
+  borrowing, and ownership; keep discovery behavior changes separate.
 - [ ] **8e. Support formatting typed sort keys.**
   `SortKey` and `SortKeys` implement `Display` only for string keys, although Clap
   parsing supports typed `ValueEnum` keys. Generalize formatting for suitable
@@ -223,6 +208,7 @@ For subcommand lookup/listing regressions with only their required features:
 ```sh
 cargo test -p clientele --test subcommands_find --test subcommands_list --no-default-features --features std,subcommands --locked
 cargo test -p clientele --test subcommands_path --no-default-features --features std,subcommands --locked
+cargo test -p clientele --test subcommands_order --no-default-features --features std,subcommands --locked
 ```
 
 For native directory resolution, checked UTF-8 conversion, and their feature gates:

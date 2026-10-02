@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `paths::home_dir()` and `paths::temp_dir()` for native directory resolution,
   with checked `_utf8` variants and independently gated optional dependencies
 ### Changed
+- Sort collected subcommands by logical name and return each exact name once,
+  selecting executables by `PATH` and Windows lookup/`PATHEXT` precedence
 - `SubcommandsProvider::find()` now returns the same prefix-free logical name as
   listing, also omitting the final Windows extension for explicit-name lookups.
   Callers needing the executable filename should use `Subcommand.path.file_name()`

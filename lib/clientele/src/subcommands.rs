@@ -52,12 +52,18 @@ impl SubcommandsProvider {
     /// whitespace and quotes are not trimmed. Missing or non-Unicode `PATHEXT`,
     /// or a list with no accepted extensions, yields no collected commands.
     ///
+    /// Results are sorted lexically by logical name using Rust string ordering.
+    /// Exactly equal names are returned once, with the first usable executable
+    /// in `PATH` order. On Windows, lookup's exact-filename and `PATHEXT`
+    /// precedence select the executable, rather than directory enumeration order.
+    /// Names with different spelling or case remain distinct.
+    ///
     /// Only names containing fewer than `level` hyphens are returned. Thus `1`
     /// lists top-level commands and `0` returns none. Any retained occurrence of
     /// the prefix counts toward this depth: `demo-demo-repeat` becomes
     /// `demo-repeat` on Unix and requires a level of at least `2`.
     pub fn collect(prefix: &str, level: usize) -> SubcommandsProvider {
-        let commands = Self::collect_commands(prefix)
+        let mut commands: Vec<_> = Self::collect_commands(prefix)
             .into_iter()
             // Construct public command names.
             .filter_map(|path| Subcommand::from_path(prefix, path))
@@ -65,6 +71,21 @@ impl SubcommandsProvider {
             .filter(|cmd| {
                 let count = cmd.name.chars().filter(|&c| c == '-').count();
                 count < level
+            })
+            .collect();
+
+        // Stable sorting preserves PATH precedence among equal logical names.
+        commands.sort_by(|left, right| left.name.cmp(&right.name));
+        commands.dedup_by(|left, right| left.name == right.name);
+
+        #[cfg(windows)]
+        let commands = commands
+            .into_iter()
+            .filter_map(|mut command| {
+                // Multiple extensions can share a stem in the same directory.
+                // Reuse lookup to honor PATHEXT and exact-filename precedence.
+                command.path = Self::resolve_command(prefix, &format!("{prefix}{}", command.name))?;
+                Some(command)
             })
             .collect();
 

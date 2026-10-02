@@ -33,6 +33,11 @@ harness = false
 required-features = ["std", "subcommands"]
 
 [[test]]
+name = "subcommands_order"
+harness = false
+required-features = ["std", "subcommands"]
+
+[[test]]
 name = "subcommands_path"
 harness = false
 required-features = ["std", "subcommands"]
