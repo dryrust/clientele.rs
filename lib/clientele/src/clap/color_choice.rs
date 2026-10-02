@@ -35,18 +35,57 @@ impl ColorChoiceExt for ColorChoice {
 
 /// Scans for `--color <when>` / `--color=<when>` ahead of parsing, so that
 /// the choice can be fed back into Clap for its own help/usage output.
+///
+/// Scanning stops at `--`. A separated value is taken only from the immediately
+/// following argument, even if it is not valid UTF-8. Invalid or missing values
+/// leave the previous choice unchanged, starting from [`ColorChoice::Auto`].
 pub fn color_choice(args: &[OsString]) -> ColorChoice {
     let mut choice = ColorChoice::Auto;
-    let mut args = args.iter().filter_map(|arg| arg.to_str());
+    let mut args = args.iter().take_while(|arg| arg.as_os_str() != "--");
     while let Some(arg) = args.next() {
         let value = if arg == "--color" {
-            args.next()
+            args.next().and_then(|arg| arg.to_str())
         } else {
-            arg.strip_prefix("--color=")
+            arg.to_str().and_then(|arg| arg.strip_prefix("--color="))
         };
         if let Some(value) = value {
             choice = value.parse().unwrap_or(choice);
         }
     }
     choice
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{color_choice, ColorChoice, OsString};
+
+    #[test]
+    fn stops_at_end_of_options() {
+        let args = ["app", "--color=never", "--", "--color=always"].map(OsString::from);
+        assert_eq!(color_choice(&args), ColorChoice::Never);
+
+        let args = ["app", "--color", "--", "--color=always"].map(OsString::from);
+        assert_eq!(color_choice(&args), ColorChoice::Auto);
+    }
+
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn non_utf8_values_preserve_argument_boundaries() {
+        #[cfg(unix)]
+        let invalid = {
+            use std::os::unix::ffi::OsStringExt;
+            OsString::from_vec(vec![0xff])
+        };
+        #[cfg(windows)]
+        let invalid = {
+            use std::os::windows::ffi::OsStringExt;
+            OsString::from_wide(&[0xd800])
+        };
+
+        let mut args = ["app".into(), "--color".into(), invalid, "always".into()];
+        assert_eq!(color_choice(&args), ColorChoice::Auto);
+
+        args[3] = "--color=never".into();
+        assert_eq!(color_choice(&args), ColorChoice::Never);
+    }
 }
