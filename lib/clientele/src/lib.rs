@@ -19,8 +19,13 @@
 #![deny(unsafe_code)]
 #![allow(unused)]
 
+// Cargo adjusts the README path when packaging the crate.
 #[cfg(doctest)]
-#[doc = include_str!("../../../README.md")]
+#[doc = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/",
+    env!("CARGO_PKG_README")
+))]
 pub struct ReadmeDoctests;
 
 pub use known_errors::sysexits::{SysexitsError, SysexitsResult};

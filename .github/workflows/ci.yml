@@ -27,6 +27,14 @@ jobs:
         done
     - name: Test all features
       run: cargo test --workspace --all-features --locked
+    - name: Test packaged doctests
+      shell: bash
+      run: |
+        cargo package -p clientele --locked --target-dir target
+        for manifest in target/package/clientele-*/Cargo.toml; do
+          cargo test --manifest-path "$manifest" --target-dir target --doc --locked
+          cargo test --manifest-path "$manifest" --target-dir target --doc --no-default-features --locked
+        done
   build-windows:
     name: Build on Windows
     runs-on: windows-latest
@@ -41,3 +49,11 @@ jobs:
       run: cargo test --verbose
     - name: Test all features
       run: cargo test --workspace --all-features --locked
+    - name: Test packaged doctests
+      shell: bash
+      run: |
+        cargo package -p clientele --locked --target-dir target
+        for manifest in target/package/clientele-*/Cargo.toml; do
+          cargo test --manifest-path "$manifest" --target-dir target --doc --locked
+          cargo test --manifest-path "$manifest" --target-dir target --doc --no-default-features --locked
+        done

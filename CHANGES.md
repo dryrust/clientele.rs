@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Require `known-errors` 0.1.2 and use its fixed `error-stack` integration,
   fixing `std,error-stack` and `--all-features` builds without making
   `error-stack` enable `std`
+- Resolve the README doctest path through Cargo package metadata so doctests
+  work in both the workspace and the packaged crate
 
 ## 0.4.0 - 2026-09-21
 ### Changed
