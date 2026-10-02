@@ -24,8 +24,8 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 2a**, asserting lookup presence and absence before
-changing subcommand discovery behavior.
+**Suggested next leaf: 7b**, adding documented OS-native home/temp directory helpers.
+For subcommand work, start with 2a before changing discovery behavior.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -121,13 +121,6 @@ File: [options/sort.rs](lib/clientele/src/options/sort.rs).
 File: [paths.rs](lib/clientele/src/paths.rs). The module requires
 `std,getenv,camino`; its public paths are explicitly UTF-8.
 
-- [ ] **7a. Validate XDG home variables as absolute paths.**
-  `XDG_CONFIG_HOME=relative/config` currently returns that relative path. The
-  [XDG specification](https://specifications.freedesktop.org/basedir-spec/latest/#variables)
-  requires relative values to be ignored. Apply validation to data, config,
-  state, and cache homes and use their existing home-based fallbacks. Test unset,
-  empty, relative, absolute, and unavailable-home cases in isolated processes.
-  Empty values already fall back through `getenv`; preserve that behavior.
 - [ ] **7b. Add documented OS-native home/temp directory helpers.**
   Current helpers read environment variables; `home()` has a Windows TODO and
   `tmpdir()` returns `None` when `TMPDIR` is unset. Keep those existing contracts
@@ -280,6 +273,12 @@ combinations with `cargo check -p clientele --all-targets --no-default-features
 Useful sets: `clap`; `std,subcommands`; `std,getenv,camino`; `std,tracing`;
 `clap,tracing`; `clap,color,tracing`; `error-stack`; `std,error-stack`.
 Preserve optional-example/test gates in `lib/clientele/Cargo.toml`.
+
+For XDG environment-path regressions:
+
+```sh
+cargo test -p clientele --test paths_xdg --no-default-features --features std,getenv,camino --locked
+```
 
 For skeleton color regressions, run the existing CLI driver in both configurations:
 

@@ -40,6 +40,11 @@ name = "tracing_color"
 harness = false
 required-features = ["std", "clap", "tracing"]
 
+[[test]]
+name = "paths_xdg"
+harness = false
+required-features = ["std", "getenv", "camino"]
+
 [features]
 default = ["all", "std"]
 all = [

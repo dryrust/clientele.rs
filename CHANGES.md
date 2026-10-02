@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Honor `StandardOptions.color` for tracing output using stderr detection, and
   disable ANSI output without `color` even when dependency features enable it
+- Ignore relative XDG data, config, state, and cache home overrides and use the
+  existing home-based fallbacks
 
 ## 0.4.1 - 2026-10-02
 ### Fixed
