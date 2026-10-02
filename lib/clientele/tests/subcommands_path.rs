@@ -1,10 +1,91 @@
 // This is free and unencumbered software released into the public domain.
 
-//! Unix PATH-component regression checks, each in an isolated child process.
+//! Unix PATH-component and Windows missing-environment checks in isolated children.
 
 fn main() {
     #[cfg(unix)]
     unix::run();
+    #[cfg(windows)]
+    windows::run();
+}
+
+#[cfg(windows)]
+mod windows {
+    use clientele::{Subcommand, SubcommandsProvider};
+    use std::{env, ffi::OsStr, fs, path::PathBuf, process::Command};
+    use temp_dir::TempDir;
+
+    const CHILD_MODE: &str = "CLIENTELE_WINDOWS_PATH_TEST_CHILD";
+    const PATH_EXTENSIONS: &str = ".BAT;.CMD";
+    const FILES: &[(&str, &str)] = &[("hello", "bat"), ("hola", "cmd")];
+
+    /// Checks each missing search variable independently, plus a populated control.
+    pub fn run() {
+        if let Ok(case) = env::var(CHILD_MODE) {
+            assert!(matches!(case.as_str(), "present" | "PATH" | "PATHEXT"));
+            let dir = PathBuf::from(env::args_os().nth(1).expect("fixture directory"));
+            // Verify the requested absence, including that the other variable is set.
+            for (variable, value) in [
+                ("PATH", dir.as_os_str()),
+                ("PATHEXT", OsStr::new(PATH_EXTENSIONS)),
+            ] {
+                let expected = (case != variable).then(|| value.to_os_string());
+                assert_eq!(env::var_os(variable), expected, "{case}: {variable}");
+            }
+
+            let mut expected_listing = Vec::new();
+            for &(name, extension) in FILES {
+                let path = dir.join(format!("clientele-{name}.{extension}"));
+                assert!(path.is_file(), "missing fixture: {path:?}");
+                let expected = (case == "present").then_some(Subcommand {
+                    name: name.to_string(),
+                    path,
+                });
+                for query in [name.to_string(), format!("{name}.{extension}")] {
+                    assert_eq!(
+                        SubcommandsProvider::find("clientele-", &query),
+                        expected,
+                        "{case}: lookup {query:?}",
+                    );
+                }
+                expected_listing.extend(expected);
+            }
+            assert_eq!(
+                SubcommandsProvider::collect("clientele-", usize::MAX).into_commands(),
+                expected_listing,
+                "{case}: listing",
+            );
+            return;
+        }
+
+        let dir = TempDir::new().expect("create Windows discovery fixtures");
+        let fixture_dir = std::path::absolute(dir.path()).unwrap();
+        for &(name, extension) in FILES {
+            fs::write(
+                fixture_dir.join(format!("clientele-{name}.{extension}")),
+                "@echo off\r\nexit /b 0\r\n",
+            )
+            .unwrap();
+        }
+
+        for case in ["present", "PATH", "PATHEXT"] {
+            let mut command = Command::new(env::current_exe().unwrap());
+            command
+                .arg(&fixture_dir)
+                // A current-directory fixture also detects accidental PATH fallbacks.
+                .current_dir(&fixture_dir)
+                .env(CHILD_MODE, case)
+                .env("PATH", &fixture_dir)
+                .env("PATHEXT", PATH_EXTENSIONS);
+            if case != "present" {
+                command.env_remove(case);
+            }
+            let output = command
+                .output()
+                .expect("run Windows search-environment child");
+            assert!(output.status.success(), "{case}: {output:?}");
+        }
+    }
 }
 
 #[cfg(unix)]

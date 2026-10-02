@@ -24,17 +24,10 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 2h**, covering missing Windows discovery environment.
+**Suggested next leaf: 3a**, adding checked SQL rendering using approved columns.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
-
-## 2. Reliable subcommand regression tests (P1)
-
-- [ ] **2h. Cover missing Windows discovery environment.**
-  Test unset `PATH` and unset `PATHEXT` independently in child processes with
-  matching executable fixtures, asserting empty listing and lookup absence.
-  Unix unset-`PATH` coverage already exists in `subcommands_path.rs`.
 
 ## 3. Checked sort-to-SQL rendering and invariants (P1)
 
