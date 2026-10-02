@@ -24,9 +24,8 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Current focus:** item 6, consistent color policy. **Suggested next leaf: 6d**,
-applying the shared color policy to tracing output.
-For subcommand work, start with 2a before changing discovery behavior.
+**Suggested next leaf: 2a**, asserting lookup presence and absence before
+changing subcommand discovery behavior.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -116,26 +115,6 @@ File: [options/sort.rs](lib/clientele/src/options/sort.rs).
   invariants and distinguish `empty()` from a default sort. Test constructors,
   parsing, formatting, and checked rendering; assess compatibility before
   changing existing defaults or accepting/trimming/rejecting whitespace.
-
-## 6. Consistent color policy (P2; current focus)
-
-Files: [color_choice.rs](lib/clientele/src/clap/color_choice.rs),
-[options.rs](lib/clientele/src/options.rs),
-[skeleton](lib/clientele/examples/skeleton/main.rs),
-[CLI tests](lib/clientele/tests/skeleton_cli.rs), and
-[tracing.rs](lib/clientele/src/tracing.rs).
-
-- [ ] **6d. Apply the shared policy to tracing output.**
-  `init_tracing_subscriber()` writes to stderr but ignores `StandardOptions.color`.
-  Use `ColorChoiceExt::to_bool_for(ColorStream::Stderr)` for stream-aware detection.
-  The optional `tracing-subscriber` dependency currently
-  enables `fmt`, not `ansi`; consider Cargo feature unification when configuring
-  color. Wire ANSI support and its runtime setting through the appropriate
-  optional features. Test captured logging output and explicit overrides,
-  including a debug-format event that can visibly demonstrate color. Verify
-  `std,tracing` without Clap, `clap,tracing` without color, and
-  `clap,color,tracing`. Existing plain/debug formats and level filtering should
-  retain their documented behavior.
 
 ## 7. Environment paths and native directories (P2)
 
@@ -308,6 +287,14 @@ For skeleton color regressions, run the existing CLI driver in both configuratio
 cargo test -p clientele --test skeleton_cli --no-default-features --features clap,dotenv --locked
 cargo test -p clientele --test skeleton_cli --no-default-features --features clap,color,dotenv --locked
 cargo run --locked --example skeleton -- config
+```
+
+For tracing color regressions, including dependency-enabled ANSI without `color`:
+
+```sh
+cargo test -p clientele --test tracing_color --no-default-features --features clap,tracing --locked
+cargo test -p clientele --test tracing_color --no-default-features --features clap,color,tracing --locked
+cargo test -p clientele --test tracing_color --no-default-features --features clap,tracing,tracing-subscriber/ansi --locked
 ```
 
 For release/dependency checks, retain MSRV and all-features coverage:

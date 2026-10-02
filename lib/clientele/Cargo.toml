@@ -35,6 +35,11 @@ name = "skeleton_cli"
 harness = false
 required-features = ["std", "clap", "dotenv"]
 
+[[test]]
+name = "tracing_color"
+harness = false
+required-features = ["std", "clap", "tracing"]
+
 [features]
 default = ["all", "std"]
 all = [
@@ -58,7 +63,7 @@ all = [
 argfile = ["dep:argfile"]
 camino = ["dep:camino"]
 clap = ["dep:clap", "std"]
-color = ["clap?/color"]
+color = ["clap?/color", "tracing-subscriber?/ansi"]
 dirs = ["dep:dirs"]
 dotenv = ["dep:dotenvy"]
 error-stack = ["dep:error-stack", "known-errors/error-stack"]
@@ -89,6 +94,7 @@ wild = ["dep:wild"]
 
 [dev-dependencies]
 temp-dir = "0.1"
+tracing = { version = "0.1", default-features = false, features = ["std"] }
 
 [dependencies]
 argfile = { version = "0.2", default-features = false, optional = true }

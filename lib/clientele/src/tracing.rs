@@ -34,6 +34,15 @@ pub const STDERR_DEBUG_FORMAT: LazyLock<Format<Compact, ()>> =
 ///
 /// Requires the `clap` feature in addition to `std` and `tracing`.
 ///
+/// Writes to stderr using [`STDERR_PLAIN_FORMAT`], or [`STDERR_DEBUG_FORMAT`]
+/// when `options.debug` is enabled. Level filtering follows [`StandardOptions`].
+///
+/// With the `color` feature, `options.color` is resolved for stderr using
+/// [`crate::ColorChoiceExt::to_bool_for`]. Automatic color requires stderr to be a
+/// terminal and `NO_COLOR` to be unset or empty; explicit `Always` and `Never`
+/// choices override detection. Without `color`, ANSI output is disabled even if
+/// another dependency enables ANSI support in `tracing-subscriber`.
+///
 /// # Panics
 ///
 /// Panics if a global tracing subscriber has already been installed.
@@ -54,6 +63,14 @@ pub const STDERR_DEBUG_FORMAT: LazyLock<Format<Compact, ()>> =
 /// ```
 #[cfg(feature = "clap")]
 pub fn init_tracing_subscriber(options: &StandardOptions) {
+    #[cfg(feature = "color")]
+    let ansi = {
+        use crate::{ColorChoiceExt, ColorStream};
+        options.color.to_bool_for(ColorStream::Stderr)
+    };
+    #[cfg(not(feature = "color"))]
+    let ansi = false;
+
     tracing_subscriber::fmt()
         .with_writer(std::io::stderr)
         .with_max_level(options)
@@ -62,5 +79,6 @@ pub fn init_tracing_subscriber(options: &StandardOptions) {
         } else {
             STDERR_PLAIN_FORMAT.clone()
         })
+        .with_ansi(ansi)
         .init();
 }

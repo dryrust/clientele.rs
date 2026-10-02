@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `ColorChoiceExt::to_bool_for()` and `ColorStream` for stream-aware automatic
   color detection, preserving `to_bool()` as the stdout shorthand
+### Fixed
+- Honor `StandardOptions.color` for tracing output using stderr detection, and
+  disable ANSI output without `color` even when dependency features enable it
 
 ## 0.4.1 - 2026-10-02
 ### Fixed
