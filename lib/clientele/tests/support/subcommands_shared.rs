@@ -1,6 +1,6 @@
 // This is free and unencumbered software released into the public domain.
 
-use std::{env, path::Path, process::Command};
+use std::{env, fs::OpenOptions, io::Write, path::Path, process::Command};
 use temp_dir::TempDir;
 
 const CHILD_DIR: &str = "CLIENTELE_SUBCOMMANDS_TEST_DIR";
@@ -33,6 +33,43 @@ impl TestFile {
 
 pub static TEST_PREFIX: &str = "clientele-";
 pub const TEST_DIRECTORY: &str = "clientele-directory.bat";
+
+/// Matching prefix that lets hidden-file checks run independently of name filtering.
+pub const HIDDEN_PREFIX: &str = if cfg!(windows) {
+    "clientele-hidden-"
+} else {
+    ".clientele-hidden-"
+};
+const HIDDEN_FILE: &str = if cfg!(windows) {
+    "clientele-hidden-secret.bat"
+} else {
+    ".clientele-hidden-secret"
+};
+#[cfg(windows)]
+const FILE_ATTRIBUTE_HIDDEN: u32 = 0x00000002;
+
+/// Verifies that the matching hidden fixture exists and is otherwise executable.
+pub fn check_hidden_fixture(dir: &Path) -> Result<()> {
+    assert!(HIDDEN_FILE.starts_with(HIDDEN_PREFIX));
+    let metadata = dir.join(HIDDEN_FILE).metadata()?;
+    assert!(metadata.is_file());
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        assert!(HIDDEN_FILE.starts_with('.'));
+        assert_ne!(metadata.permissions().mode() & 0o111, 0);
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::MetadataExt;
+        assert!(!HIDDEN_FILE.starts_with('.'));
+        assert_ne!(metadata.file_attributes() & FILE_ATTRIBUTE_HIDDEN, 0);
+        assert!(env::var("PATHEXT")?
+            .split(';')
+            .any(|ext| ext.eq_ignore_ascii_case(".bat")));
+    }
+    Ok(())
+}
 
 #[allow(unused)]
 pub static TEST_LEVEL: usize = 1;
@@ -156,8 +193,6 @@ pub fn init() -> Result<TempDir> {
 
     #[cfg(unix)]
     for file in TEST_FILES {
-        use std::fs::OpenOptions;
-        use std::io::Write;
         use std::os::unix::fs::OpenOptionsExt;
 
         let content = format!("#!/bin/sh\necho {}", file.content);
@@ -177,6 +212,23 @@ pub fn init() -> Result<TempDir> {
         let content = format!("@echo off\necho {}", file.content);
         std::fs::write(dir.child(name), content)?;
     }
+
+    let mut hidden = OpenOptions::new();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        hidden.mode(0o755);
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+        hidden.attributes(FILE_ATTRIBUTE_HIDDEN);
+    }
+    hidden
+        .write(true)
+        .create_new(true)
+        .open(dir.child(HIDDEN_FILE))?
+        .write_all(b"hidden subcommand fixture")?;
 
     Ok(dir)
 }

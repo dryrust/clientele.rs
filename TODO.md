@@ -24,17 +24,13 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 2f**, covering hidden subcommand candidates.
+**Suggested next leaf: 2g**, covering backup-file subcommand candidates.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
 
 ## 2. Reliable subcommand regression tests (P1)
 
-- [ ] **2f. Cover hidden discovery candidates.**
-  Add isolated lookup/listing fixtures for Unix dotfiles and Windows hidden
-  attributes. Ensure the prefix matches so the tests exercise hidden-file
-  rejection rather than merely rejecting an unrelated filename.
 - [ ] **2g. Cover backup-file discovery candidates.**
   Add a matching executable Unix filename ending in `~` and assert exclusion
   from both lookup and complete listing. Keep Windows extension rules explicit.

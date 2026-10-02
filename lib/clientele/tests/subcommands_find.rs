@@ -5,13 +5,18 @@ use std::path::Path;
 
 #[path = "support/subcommands_shared.rs"]
 mod subcommands_shared;
-use subcommands_shared::{Result, TEST_DIRECTORY, TEST_FILES, TEST_PREFIX};
+use subcommands_shared::{Result, HIDDEN_PREFIX, TEST_DIRECTORY, TEST_FILES, TEST_PREFIX};
 
 fn main() -> Result<()> {
     subcommands_shared::run(test_find)
 }
 
 fn test_find(dir: &Path) -> Result<()> {
+    subcommands_shared::check_hidden_fixture(dir)?;
+    assert!(SubcommandsProvider::find(HIDDEN_PREFIX, "secret").is_none());
+    #[cfg(windows)]
+    assert!(SubcommandsProvider::find(HIDDEN_PREFIX, "secret.bat").is_none());
+
     assert!(dir.join(TEST_DIRECTORY).is_dir());
     assert!(SubcommandsProvider::find(TEST_PREFIX, "directory.bat").is_none());
     #[cfg(windows)]

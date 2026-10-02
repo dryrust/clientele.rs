@@ -7,13 +7,20 @@ use std::path::Path;
 
 #[path = "support/subcommands_shared.rs"]
 mod subcommands_shared;
-use subcommands_shared::{Result, TEST_DIRECTORY, TEST_FILES, TEST_LEVEL, TEST_PREFIX};
+use subcommands_shared::{
+    Result, HIDDEN_PREFIX, TEST_DIRECTORY, TEST_FILES, TEST_LEVEL, TEST_PREFIX,
+};
 
 fn main() -> Result<()> {
     subcommands_shared::run(test_list)
 }
 
 fn test_list(dir: &Path) -> Result<()> {
+    subcommands_shared::check_hidden_fixture(dir)?;
+    assert!(SubcommandsProvider::collect(HIDDEN_PREFIX, usize::MAX)
+        .into_commands()
+        .is_empty());
+
     assert!(dir.join(TEST_DIRECTORY).is_dir());
     for file in TEST_FILES {
         assert!(
