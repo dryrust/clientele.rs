@@ -39,9 +39,6 @@ polish or feature growth. Priorities do not override an explicitly selected task
   - [ ] **8h.subcommands:** `lib/clientele/src/subcommands.rs`: fields, prefix and
     depth rules, environment/platform behavior, result ordering, and lookup
     naming. Review discoverability of the currently doc-hidden public exports.
-- [ ] **8i. Turn ignored examples into executable doctests (P3).**
-  - [ ] **8i.sort:** Make the `SortKeys` field snippet in
-    `lib/clientele/src/options/sort.rs` a complete compilable parser example.
 - [ ] **8j. Fix rustdoc's four bare-URL warnings (P3).**
   Use actual links for the XDG specification references in
   `lib/clientele/src/paths.rs`; verify with `cargo doc`.

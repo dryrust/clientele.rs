@@ -61,10 +61,37 @@ impl core::error::Error for SortSqlError {}
 /// serialization format for arbitrary constructed keys: an empty sequence or
 /// the default string sort displays as `""`, which cannot be parsed back.
 ///
-/// ```rust,ignore
-/// /// Sort resources by the specified keys. (Prefix a key with `-` for descending order.)
-/// #[clap(long, aliases = ["sort-by", "order", "order-by"], value_name = "[+|-]KEY,...", allow_hyphen_values = true)]
-/// sort: Option<SortKeys>,
+/// # Example
+///
+/// Requires `clap` (which enables `std`).
+///
+/// ```
+/// use clientele::{crates::clap::Parser, options::sort::{SortKey, SortKeys}};
+///
+/// #[derive(Parser)]
+/// struct Options {
+///     /// Sort resources by keys; prefix a key with `-` for descending order.
+///     #[arg(
+///         long,
+///         aliases = ["sort-by", "order", "order-by"],
+///         value_name = "[+|-]KEY,...",
+///         allow_hyphen_values = true
+///     )]
+///     sort: Option<SortKeys>,
+/// }
+///
+/// let options = Options::try_parse_from(["demo", "--sort", "-name,+id"])?;
+/// let sort = options.sort.unwrap();
+/// assert_eq!(sort.keys(), &[
+///     SortKey::new("name", true),
+///     SortKey::new("id", false),
+/// ]);
+/// assert_eq!(sort.to_string(), "-name,id");
+///
+/// let alias = Options::try_parse_from(["demo", "--order-by=-name,+id"])?;
+/// assert_eq!(alias.sort, Some(sort));
+/// assert!(Options::try_parse_from(["demo"])?.sort.is_none());
+/// # Ok::<(), clientele::crates::clap::Error>(())
 /// ```
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct SortKeys<T: Clone = String> {
