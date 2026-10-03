@@ -55,9 +55,6 @@ packaged doctests.
   feature prerequisites. Refresh the integration table and placeholder links;
   the tracing conversion is to `LevelFilter`, not the documented `Level`.
   Make the supported `clientele::crates` re-export entry point discoverable.
-- [ ] **9h. Document `parse-datetime` as reserved (P3).**
-  Its feature definition is empty. Clarify the current status without silently
-  removing a public feature or adding an unrequested parser dependency.
 - [ ] **9i. Provide a focused CLI dependency recipe (P3).**
   Show `default-features = false` with `clap,dotenv,argfile,wild`, explaining
   opt-in color/logging support. Verify the recipe as a consumer so lightweight

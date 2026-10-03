@@ -17,6 +17,11 @@
 //! The `color` feature enables ANSI support in Clap and tracing when those
 //! optional dependencies are enabled, without enabling either dependency itself.
 //!
+//! The `parse-datetime` feature is reserved: it currently enables no dependencies
+//! and provides no date/time parsing API or re-export. It is included by `parse`
+//! (and therefore by `all` and the default features), but enabling it alone has
+//! no effect. Applications needing date/time parsing must supply their own parser.
+//!
 //! ```edition2021
 //! # use clientele::*;
 //! ```

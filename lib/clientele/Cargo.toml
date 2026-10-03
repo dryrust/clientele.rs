@@ -102,6 +102,7 @@ getenv = ["dep:getenv"]
 gofer = ["dep:gofer", "known-errors/gofer"]
 parse = ["parse-byteunit", "parse-datetime", "parse-duration"]
 parse-byteunit = ["dep:ubyte"]
+# Reserved: currently provides no date/time parser, re-export, or dependency.
 parse-datetime = []
 parse-duration = ["dep:duration-str"]
 serde = ["dep:serde", "known-errors/serde", "camino?/serde1"]
