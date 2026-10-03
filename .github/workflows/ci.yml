@@ -28,11 +28,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --verbose --locked
     - name: Build examples
-      run: cargo build --verbose --examples
+      run: cargo build --verbose --examples --locked
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --verbose --locked
     - name: Test minimal feature combinations
       run: |
         cargo test --workspace --no-default-features --locked
@@ -56,11 +56,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --verbose --locked
     - name: Build examples
-      run: cargo build --verbose --examples
+      run: cargo build --verbose --examples --locked
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --verbose --locked
     - name: Test all features
       run: cargo test --workspace --all-features --locked
     - name: Test packaged doctests

@@ -58,9 +58,6 @@ tests plus packaged doctests on both systems.
     `SubcommandsProvider::into_iter()` still triggers `should_implement_trait`
     despite owned/borrowed `IntoIterator` implementations; assess its signature
     compatibility before changing it. Recheck counts before enabling gates.
-- [ ] **9e. Use `--locked` consistently in existing CI build/test steps.**
-  Feature-matrix and package checks already use it; the default build, example,
-  and test steps do not.
 - [ ] **9f. Clarify feature documentation (P3).**
   `README.md` calls defaults "all features enabled", but `all` excludes
   `error-stack` and `unstable`. Explain defaults, `all`, `--all-features`, and
