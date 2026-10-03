@@ -29,6 +29,9 @@ enum Command {
 
 /// Runs the CLI, reporting application failures with their sysexits status codes.
 ///
+/// I/O errors retain their operation, filename, and source details for display;
+/// conversion to a sysexits status happens only at this process boundary.
+///
 /// With the `color` feature, `--color` in the expanded arguments controls Clap's
 /// help and error output, including missing-subcommand diagnostics.
 /// With `tracing`, installs the process-wide stderr subscriber after informational
@@ -40,12 +43,12 @@ pub fn main() -> ExitCode {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("Error: {error}");
-            error.as_exit_code()
+            SysexitsError::from(&error).as_exit_code()
         }
     }
 }
 
-fn run() -> Result<(), SysexitsError> {
+fn run() -> std::io::Result<()> {
     // Load environment variables from `.env`:
     clientele::dotenv().ok();
 

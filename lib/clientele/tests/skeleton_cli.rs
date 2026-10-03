@@ -150,14 +150,22 @@ fn main() -> ExitCode {
 
     #[cfg(feature = "argfile")]
     {
-        check(
-            &dir,
-            &["@missing-args.txt"],
-            66,
-            "",
-            "Error: EX_NOINPUT",
-            NO_COLOR_ENV,
-        );
+        std::fs::write(dir.child("invalid-args.txt"), [0xff]).unwrap();
+        for file in ["missing-args.txt", "invalid-args.txt"] {
+            let source = std::fs::read_to_string(dir.child(file)).unwrap_err();
+            let output = check(
+                &dir,
+                &[&format!("@{file}")],
+                clientele::SysexitsError::from(&source) as i32,
+                "",
+                "Error: argument file",
+                NO_COLOR_ENV,
+            );
+            let diagnostic = String::from_utf8(output.stderr).unwrap();
+            assert!(diagnostic.contains(file), "{diagnostic}");
+            // Compare with the native error rather than hard-coding OS wording.
+            assert!(diagnostic.contains(&source.to_string()), "{diagnostic}");
+        }
         std::fs::write(dir.child("args.txt"), "config\n").unwrap();
         check(
             &dir,

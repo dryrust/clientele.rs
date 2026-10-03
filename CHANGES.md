@@ -49,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Callers needing the executable filename should use `Subcommand.path.file_name()`
   instead of relying on the previously prefixed `name` field
 ### Fixed
+- Retain argument-file filenames and I/O causes in skeleton diagnostics while
+  preserving the corresponding sysexits status codes
 - Import the Clap module in derive examples so rustdoc snippets and the skeleton
   compile in downstream packages without a direct Clap dependency
 - Restore release metadata and the original lockfile state when `rake version:bump`

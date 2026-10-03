@@ -38,8 +38,8 @@ cargo run --locked --example skeleton --no-default-features --features clap,dote
    a subscriber already installed panics. Embedded applications can use the
    fallible `try_init_tracing_subscriber` API instead.
 7. Dispatch `config`, or report a missing subcommand after otherwise valid flags.
-   Return application errors through their sysexits status rather than collapsing
-   every error into status 1.
+   Keep I/O errors intact for diagnostics, then select their sysexits status at
+   the process boundary rather than collapsing every error into status 1.
 
 ## Features and options
 
@@ -77,6 +77,10 @@ applications copying it should add their own `tracing` dependency.
 | No arguments, unknown option/subcommand, or invalid Clap value | 2 | Clap usage/diagnostic on stderr |
 | Valid flags without a subcommand, e.g. `--debug` | 64 (`EX_USAGE`) | Missing-subcommand diagnostic on stderr |
 | Missing @argfile, with `argfile` enabled | 66 (`EX_NOINPUT`) | Application error on stderr |
+
+Argument-file errors include the filename, failed operation, and underlying
+I/O cause, including missing files and invalid UTF-8 contents. Exit-code
+classification does not replace that diagnostic with just a sysexits name.
 
 The subprocess regression driver in `lib/clientele/tests/skeleton_cli.rs`
 exercises the actual entry point with isolated environment settings:
