@@ -24,7 +24,7 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 9j**, narrowing release version updates.
+**Suggested next leaf: 9d.strict.iterator**, resolving the Clippy baseline.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -37,16 +37,11 @@ and stable. Ubuntu and Windows also run minimal feature combinations and
 packaged doctests.
 
 - [ ] **9d. Add CI quality gates in small steps.**
-  - [ ] **9d.strict:** Enforce warning-free checks after the relevant baseline
-    warnings are resolved. The compatibility-preserved inherent
-    `SubcommandsProvider::into_iter()` still triggers `should_implement_trait`
-    despite owned/borrowed `IntoIterator` implementations; assess its signature
-    compatibility before changing it. Recheck counts before enabling gates.
-- [ ] **9j. Replace broad version replacement in `Rakefile`.**
-  `version:bump` performs repository-wide replacement of the old version and can
-  rewrite historical changelog entries. Update intended metadata explicitly,
-  synchronize root `Cargo.toml` and `VERSION`, and let Cargo update `Cargo.lock`.
-  Test in an isolated fixture that historical release entries remain intact.
+  - [ ] **9d.strict.iterator:** Resolve the inherent
+    `SubcommandsProvider::into_iter()` warning while preserving calls and the
+    owned/borrowed `IntoIterator` implementations. Assess signature compatibility.
+  - [ ] **9d.strict.gates:** Enforce warning-free Clippy and rustdoc in CI after
+    resolving the iterator warning. Recheck the baseline before enabling gates.
 
 ## 10. Optional CLI feature growth (P3)
 
