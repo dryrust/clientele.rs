@@ -2,7 +2,17 @@
 
 //! Unix PATH-component and Windows missing-environment checks in isolated children.
 
+#[cfg(unix)]
+#[path = "support/subcommands_native.rs"]
+mod subcommands_native;
+
 fn main() {
+    #[cfg(unix)]
+    if std::env::var_os("CLIENTELE_PATH_COMPONENT_TEST_CHILD").is_none()
+        && subcommands_native::run()
+    {
+        return;
+    }
     #[cfg(unix)]
     unix::run();
     #[cfg(windows)]

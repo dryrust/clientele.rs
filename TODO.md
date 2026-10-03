@@ -129,6 +129,10 @@ tests. Cross-compilation establishes build coverage only.
   and `--no-default-features --features std,wild,argfile --locked`, plus defaults.
 
 - [ ] **R2-16 — Cover non-Unicode paths in executable discovery.**
+  **Progress:** `subcommands_path` has an isolated Unix fixture with a non-UTF-8
+  parent, invalid executable filename, and valid neighboring commands. Assertions
+  compare exact OS paths. Known macOS filesystem rejection is reported explicitly;
+  Windows fixtures and supported-filesystem native execution remain.
   **Evidence (coverage gap):** The discovery contract promises to preserve
   non-UTF-8 parent directories while skipping non-UTF-8 filenames, but the
   fixtures in `lib/clientele/tests/support/subcommands_shared.rs` and the four
