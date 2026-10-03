@@ -37,7 +37,7 @@ dependency.
 cargo add clientele
 ```
 
-### Installation in `Cargo.toml` (with all features enabled)
+### Installation in `Cargo.toml` (with default features)
 
 ```toml
 [dependencies]
@@ -50,6 +50,29 @@ clientele = "0.4"
 [dependencies]
 clientele = { version = "0.4", default-features = false, features = ["dotenv"] }
 ```
+
+### Feature selection
+
+- Defaults enable `all` and `std`. The `all` feature is a curated bundle;
+  it excludes `error-stack` and `unstable`.
+- Cargo's `--all-features` enables every feature, including those two opt-ins.
+- `clap` enables `std`. Argument expansion and subcommand discovery require
+  `std`; discovery additionally requires `subcommands`.
+- Native temporary paths require `std`; native home paths also require `dirs`.
+  UTF-8 variants require `camino`. Environment-only and XDG paths require
+  `std,getenv,camino`.
+- Tracing formats require `std,tracing`; subscriber initialization also requires
+  `clap`. `color` enables ANSI support only in already-enabled Clap/tracing
+  dependencies. `unicode` similarly augments an already-enabled Clap.
+- `serde-json` enables `serde`. `parse` groups byte-unit and duration parsers
+  plus the reserved, currently empty `parse-datetime` feature.
+- Disabling defaults does not provide `no_std` support. `error-stack` integration
+  works with or without the `std` feature.
+
+Enabled dependencies are available through [`clientele::crates`], for example
+`clientele::crates::clap::Parser` with `clap`. Use this supported entry point to
+share Clientele's dependency versions. See the [crate rustdoc] for API-specific
+feature requirements.
 
 ## 👉 Examples
 
@@ -88,11 +111,20 @@ Options:
 Crate (Feature) | Version | Usage | Summary
 :--- | :--- | :--- | :---
 [argfile] &nbsp;<sub>(`"argfile"`)</sub> | 0.2 | [![argfile](https://docs.rs/argfile/badge.svg)](https://docs.rs/argfile/) | Enhances [`args_os()`] to expand @argfiles
-[camino] &nbsp;<sub>(`"camino"`)</sub> | 1.1 | [![camino](https://docs.rs/camino/badge.svg)](https://docs.rs/camino/) | Prerequisite for [`paths::*`]
+[camino] &nbsp;<sub>(`"camino"`)</sub> | 1.1 | [![camino](https://docs.rs/camino/badge.svg)](https://docs.rs/camino/) | UTF-8 path types and UTF-8 [`paths::*`] helpers
 [clap] &nbsp;<sub>(`"clap"`)</sub> | 4.5 | [![clap](https://docs.rs/clap/badge.svg)](https://docs.rs/clap/) | Provides [`StandardOptions`]
-[dotenvy] &nbsp;<sub>(`"dotenvy"`)</sub> | 0.15 | [![dotenvy](https://docs.rs/dotenvy/badge.svg)](https://docs.rs/dotenvy/) | Provides [`dotenv()`]
-[getenv] &nbsp;<sub>(`"getenv"`)</sub> | 0.1 | [![getenv](https://docs.rs/getenv/badge.svg)](https://docs.rs/getenv/) | Provides [`envs::*`], prerequisite for [`paths::*`]
-[tracing-core] &nbsp;<sub>(`"tracing"`)</sub> | 0.1 | [![tracing-core](https://docs.rs/tracing-core/badge.svg)](https://docs.rs/tracing-core/) | Implements `Into<tracing_core::Level>` for [`StandardOptions`]
+[dirs] &nbsp;<sub>(`"dirs"`)</sub> | 6.0 | [docs](https://docs.rs/dirs/) | Native home-directory resolution with `std`
+[dotenvy] &nbsp;<sub>(`"dotenv"`)</sub> | 0.15 | [![dotenvy](https://docs.rs/dotenvy/badge.svg)](https://docs.rs/dotenvy/) | Provides [`dotenv()`]
+[duration-str] &nbsp;<sub>(`"parse-duration"`)</sub> | 0.15 | [docs](https://docs.rs/duration-str/) | Duration parser re-export
+[error-stack] &nbsp;<sub>(`"error-stack"`)</sub> | 0.5 | [docs](https://docs.rs/error-stack/) | [`SysexitsError`] report contexts
+[getenv] &nbsp;<sub>(`"getenv"`)</sub> | 0.1 | [![getenv](https://docs.rs/getenv/badge.svg)](https://docs.rs/getenv/) | [`envs::*`] with `std`; environment paths also need `camino`
+[gofer] &nbsp;<sub>(`"gofer"`)</sub> | 0.1 | [docs](https://docs.rs/gofer/) | Fetching and known-error integration
+[serde] &nbsp;<sub>(`"serde"`)</sub> | 1 | [docs](https://docs.rs/serde/) | Serialization integration and re-export
+[serde_json] &nbsp;<sub>(`"serde-json"`)</sub> | 1 | [docs](https://docs.rs/serde_json/) | JSON support; enables `serde`
+[tokio] &nbsp;<sub>(`"tokio"`)</sub> | 1 | [docs](https://docs.rs/tokio/) | Runtime re-export and known-error integration
+[tracing-core] &nbsp;<sub>(`"tracing"`)</sub> | 0.1 | [![tracing-core](https://docs.rs/tracing-core/badge.svg)](https://docs.rs/tracing-core/) | Converts [`StandardOptions`] to `tracing_core::LevelFilter`
+[tracing-subscriber] &nbsp;<sub>(`"tracing"`)</sub> | 0.3 | [docs](https://docs.rs/tracing-subscriber/) | Formats with `std`; initializer also needs `clap`
+[ubyte] &nbsp;<sub>(`"parse-byteunit"`)</sub> | 0.10 | [docs](https://docs.rs/ubyte/) | Byte-unit parser re-export
 [wild] &nbsp;<sub>(`"wild"`)</sub> | 2 | [![wild](https://docs.rs/wild/badge.svg)](https://docs.rs/wild/) | Enhances [`args_os()`] to support globs on Windows
 <img width="220" height="1"/> | <img width="110" height="1"/> | <img width="100" height="1"/> | &nbsp;
 
@@ -119,18 +151,19 @@ git clone https://github.com/dryrust/clientele.rs.git
 [argfile]: https://crates.io/crates/argfile
 [camino]: https://crates.io/crates/camino
 [clap]: https://crates.io/crates/clap
-[dirs]: #
-[duration-str]: #
+[dirs]: https://crates.io/crates/dirs
+[duration-str]: https://crates.io/crates/duration-str
 [dotenvy]: https://crates.io/crates/dotenvy
-[error-stack]: #
+[error-stack]: https://crates.io/crates/error-stack
 [getenv]: https://crates.io/crates/getenv
-[gofer]: #
+[gofer]: https://crates.io/crates/gofer
 [known-errors]: https://crates.io/crates/known-errors
-[serde]: #
-[serde_json]: #
-[tokio]: #
+[serde]: https://crates.io/crates/serde
+[serde_json]: https://crates.io/crates/serde_json
+[tokio]: https://crates.io/crates/tokio
 [tracing-core]: https://crates.io/crates/tracing-core
-[ubyte]: #
+[tracing-subscriber]: https://crates.io/crates/tracing-subscriber
+[ubyte]: https://crates.io/crates/ubyte
 [wild]: https://crates.io/crates/wild
 
 [`StandardOptions`]: https://docs.rs/clientele/latest/clientele/struct.StandardOptions.html
@@ -141,3 +174,5 @@ git clone https://github.com/dryrust/clientele.rs.git
 [`dotenv()`]: https://docs.rs/clientele/latest/clientele/fn.dotenv.html
 [`envs::*`]: https://docs.rs/getenv/latest/getenv/index.html
 [`paths::*`]: https://docs.rs/clientele/latest/clientele/paths/index.html
+[`clientele::crates`]: https://docs.rs/clientele/latest/clientele/crates/index.html
+[crate rustdoc]: https://docs.rs/clientele/latest/clientele/

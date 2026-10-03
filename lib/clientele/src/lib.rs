@@ -80,7 +80,6 @@ mod subcommands;
 #[doc(inline)]
 pub use subcommands::*;
 
-#[doc(hidden)]
 pub mod crates;
 
 mod color;

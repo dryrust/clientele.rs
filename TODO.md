@@ -24,7 +24,7 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 9f**, clarifying feature documentation.
+**Suggested next leaf: 9i**, providing a focused CLI dependency recipe.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -42,12 +42,6 @@ packaged doctests.
     `SubcommandsProvider::into_iter()` still triggers `should_implement_trait`
     despite owned/borrowed `IntoIterator` implementations; assess its signature
     compatibility before changing it. Recheck counts before enabling gates.
-- [ ] **9f. Clarify feature documentation (P3).**
-  `README.md` calls defaults "all features enabled", but `all` excludes
-  `error-stack` and `unstable`. Explain defaults, `all`, `--all-features`, and
-  feature prerequisites. Refresh the integration table and placeholder links;
-  the tracing conversion is to `LevelFilter`, not the documented `Level`.
-  Make the supported `clientele::crates` re-export entry point discoverable.
 - [ ] **9i. Provide a focused CLI dependency recipe (P3).**
   Show `default-features = false` with `clap,dotenv,argfile,wild`, explaining
   opt-in color/logging support. Verify the recipe as a consumer so lightweight

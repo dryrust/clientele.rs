@@ -1,5 +1,18 @@
 // This is free and unencumbered software released into the public domain.
 
+//! Supported entry point for dependency re-exports.
+//!
+//! Each optional crate is available when its corresponding Clientele feature is
+//! enabled. Names generally match the dependency's Rust crate name; `dotenvy`
+//! requires `dotenv`, `duration_str` requires `parse-duration`, `ubyte` requires
+//! `parse-byteunit`, and `tracing_core` requires `tracing`. `dogma` is always
+//! available. Enabling a re-export does not necessarily enable Clientele's
+//! higher-level helpers; consult their feature requirements separately.
+//!
+//! For example, with `clap`, import `clientele::crates::clap::Parser` to use the
+//! same Clap version as Clientele. Only the re-exports listed here are provided;
+//! not every transitive dependency is exposed.
+
 #[cfg(feature = "argfile")]
 pub use argfile;
 
