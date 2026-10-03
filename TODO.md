@@ -24,19 +24,13 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 8c**, implementing idiomatic log-level conversions.
+**Suggested next leaf: 8d**, adding standard subcommand collection interfaces.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
 
 ## 8. API composability and documentation (P2 unless marked P3)
 
-- [ ] **8c. Implement idiomatic log-level conversions.**
-  Replace the explicit `Into<LevelFilter>` implementations in
-  `lib/clientele/src/options.rs` with `From<StandardOptions>` and
-  `From<&StandardOptions>`. Existing `.into()` calls must continue to work.
-  Test the current mapping: verbosity 0/1/2/3+ selects ERROR/WARN/INFO/DEBUG;
-  `debug` selects TRACE regardless of verbosity.
 - [ ] **8d. Add standard subcommand collection interfaces.**
   `SubcommandsProvider` has an inherent `into_iter()` and a `get_commands()`
   returning `&Vec<Subcommand>`. Add owned/borrowed `IntoIterator` support and a
@@ -100,7 +94,7 @@ tests plus packaged doctests on both systems.
   - [ ] **9d.doc:** Add rustdoc verification.
   - [ ] **9d.clippy:** Add Clippy verification.
   - [ ] **9d.strict:** Enforce warning-free checks after the relevant baseline
-    warnings are resolved. See 8c–8d and 8j; recheck counts before enabling gates.
+    warnings are resolved. See 8d and 8j; recheck counts before enabling gates.
 - [ ] **9e. Use `--locked` consistently in existing CI build/test steps.**
   Feature-matrix and package checks already use it; the default build, example,
   and test steps do not.
@@ -232,8 +226,8 @@ done
 ```
 
 Last observed baseline: default tests, relevant minimal builds, all-features
-tests, and packaged doctests pass. Clippy emits 3 warnings (conversion traits
-and the inherent iterator method); rustdoc emits
+tests, and packaged doctests pass. Clippy emits 1 warning (the inherent iterator
+method); rustdoc emits
 4 bare-URL warnings. Earlier runtime probes ran on macOS; Linux/Windows
 cross-compilation results are not substitutes for native behavioral tests.
 Recheck and report failures rather than suppressing them.
