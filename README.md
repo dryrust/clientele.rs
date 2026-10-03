@@ -51,6 +51,46 @@ clientele = "0.4"
 clientele = { version = "0.4", default-features = false, features = ["dotenv"] }
 ```
 
+### Focused CLI dependency
+
+For argument parsing, `.env` loading, @argfiles, and Windows wildcard expansion:
+
+```toml
+[dependencies]
+clientele = { version = "0.4", default-features = false, features = ["clap", "dotenv", "argfile", "wild"] }
+```
+
+`clap` supplies `std`. Load `.env` before expanding arguments, then pass the
+resulting OS strings to Clap:
+
+```no_run
+# #[cfg(all(feature = "clap", feature = "dotenv", feature = "argfile", feature = "wild"))]
+# {
+use clientele::crates::clap::{self, Parser};
+
+#[derive(Parser)]
+struct Options {
+    #[arg(long)]
+    name: Option<String>,
+}
+
+clientele::dotenv().ok();
+let options = Options::parse_from(clientele::args_os()?);
+# }
+# Ok::<(), clientele::SysexitsError>(())
+```
+
+Importing `clap` itself with `self` lets the derive macro resolve its generated
+paths without a separate direct Clap dependency.
+
+This selection avoids Clientele's optional runtime, serialization, and byte-unit
+or duration parser dependencies. Add `color` for colored Clap output. Add `tracing`
+for logging initialization through `clientele::tracing` and `StandardOptions`;
+add `color` as well for colored logs. Logging initialization is explicit, and
+applications emitting events can depend directly on the `tracing` crate.
+Cargo unifies dependency features, so another dependency may enable additional
+Clientele features in the same build.
+
 ### Feature selection
 
 - Defaults enable `all` and `std`. The `all` feature is a curated bundle;

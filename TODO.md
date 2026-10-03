@@ -24,7 +24,7 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 9i**, providing a focused CLI dependency recipe.
+**Suggested next leaf: 9k**, documenting skeleton usage.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -42,10 +42,6 @@ packaged doctests.
     `SubcommandsProvider::into_iter()` still triggers `should_implement_trait`
     despite owned/borrowed `IntoIterator` implementations; assess its signature
     compatibility before changing it. Recheck counts before enabling gates.
-- [ ] **9i. Provide a focused CLI dependency recipe (P3).**
-  Show `default-features = false` with `clap,dotenv,argfile,wild`, explaining
-  opt-in color/logging support. Verify the recipe as a consumer so lightweight
-  applications can avoid unrelated runtime/serialization/parser dependencies.
 - [ ] **9j. Replace broad version replacement in `Rakefile`.**
   `version:bump` performs repository-wide replacement of the old version and can
   rewrite historical changelog entries. Update intended metadata explicitly,
