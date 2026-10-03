@@ -22,6 +22,10 @@
 //! (and therefore by `all` and the default features), but enabling it alone has
 //! no effect. Applications needing date/time parsing must supply their own parser.
 //!
+//! Shell completion generation is available through `clientele::completions` with the
+//! opt-in `completions` feature, which enables `clap` and `std`. It is excluded
+//! from `all` and the default features.
+//!
 //! ```edition2021
 //! # use clientele::*;
 //! ```
@@ -81,6 +85,9 @@ mod subcommands;
 pub use subcommands::*;
 
 pub mod crates;
+
+#[cfg(feature = "completions")]
+pub mod completions;
 
 mod color;
 pub use color::*;

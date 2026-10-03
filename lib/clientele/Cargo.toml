@@ -19,6 +19,10 @@ name = "skeleton"
 required-features = ["std", "clap", "dotenv"]
 
 [[test]]
+name = "completions"
+required-features = ["completions"]
+
+[[test]]
 name = "error_stack"
 required-features = ["error-stack"]
 
@@ -95,6 +99,7 @@ argfile = ["dep:argfile"]
 camino = ["dep:camino"]
 clap = ["dep:clap", "std"]
 color = ["clap?/color", "tracing-subscriber?/ansi"]
+completions = ["clap", "dep:clap_complete"]
 dirs = ["dep:dirs"]
 dotenv = ["dep:dotenvy"]
 error-stack = ["dep:error-stack", "known-errors/error-stack"]
@@ -139,6 +144,7 @@ clap = { version = "4.5", default-features = false, features = [
     "usage",
     "wrap_help",
 ], optional = true }
+clap_complete = { version = "4.6", default-features = false, optional = true }
 dirs = { version = "6.0", default-features = false, optional = true }
 dogma = { version = "0.1.10", default-features = false }
 duration-str = { version = "0.15", default-features = false, optional = true }

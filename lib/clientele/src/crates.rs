@@ -5,7 +5,8 @@
 //! Each optional crate is available when its corresponding Clientele feature is
 //! enabled. Names generally match the dependency's Rust crate name; `dotenvy`
 //! requires `dotenv`, `duration_str` requires `parse-duration`, `ubyte` requires
-//! `parse-byteunit`, and `tracing_core` requires `tracing`. `dogma` is always
+//! `parse-byteunit`, `clap_complete` requires `completions`, and `tracing_core`
+//! requires `tracing`. `dogma` is always
 //! available. Enabling a re-export does not necessarily enable Clientele's
 //! higher-level helpers; consult their feature requirements separately.
 //!
@@ -21,6 +22,9 @@ pub use camino;
 
 #[cfg(feature = "clap")]
 pub use clap;
+
+#[cfg(feature = "completions")]
+pub use clap_complete;
 
 #[cfg(feature = "dirs")]
 pub use dirs;

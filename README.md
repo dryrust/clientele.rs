@@ -94,8 +94,10 @@ Clientele features in the same build.
 ### Feature selection
 
 - Defaults enable `all` and `std`. The `all` feature is a curated bundle;
-  it excludes `error-stack` and `unstable`.
-- Cargo's `--all-features` enables every feature, including those two opt-ins.
+  it excludes `error-stack`, `unstable`, and `completions`.
+- Cargo's `--all-features` enables every feature, including those opt-ins.
+- `completions` enables shell completion generation and implies `clap,std`;
+  see the [completion guide](https://docs.rs/clientele/latest/clientele/completions/).
 - `clap` enables `std`. Argument expansion and subcommand discovery require
   `std`; discovery additionally requires `subcommands`.
 - Native temporary paths require `std`; native home paths also require `dirs`.

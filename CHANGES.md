@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
+- Opt-in `completions` feature and module for static shell completion generation
+  via `clap_complete`, also available through `clientele::crates`
 - Initialize tracing in the skeleton when enabled, honoring verbosity and stderr
   color options and logging `config` dispatch at debug level
 - OSC 8 hyperlink stripping in `strip_ansi()`, retaining visible labels and

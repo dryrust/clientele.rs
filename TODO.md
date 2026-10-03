@@ -24,16 +24,13 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 10a**, adding opt-in shell completions.
+**Suggested next leaf: 10b**, adding opt-in man-page generation.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
 
 ## 10. Optional CLI feature growth (P3)
 
-- [ ] **10a. Add opt-in shell completion generation.**
-  Evaluate `clap_complete`, keep the dependency optional, document the feature and
-  consumer usage, and test generated output against a representative command.
 - [ ] **10b. Add opt-in man-page generation.**
   Evaluate `clap_mangen` in a separate change with the same feature, documentation,
   and consumer-verification discipline.
