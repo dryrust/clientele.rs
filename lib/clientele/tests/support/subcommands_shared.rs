@@ -76,6 +76,15 @@ pub static TEST_LEVEL: usize = 1;
 
 pub static TEST_FILES: &[TestFile] = &[
     TestFile {
+        name: "CLIENTELE-case",
+        command_name: "case",
+        content: "Reject mismatched actual prefix spelling!",
+        unix_mode: 0o755,
+        should_be_listed: false,
+        should_be_found: false,
+        win_ext: "bat",
+    },
+    TestFile {
         name: "clientele-hello",
         command_name: "hello",
         content: "Hello, world!",

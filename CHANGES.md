@@ -59,6 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Callers needing the executable filename should use `Subcommand.path.file_name()`
   instead of relying on the previously prefixed `name` field
 ### Fixed
+- Match subcommand prefixes and logical names against actual filename spelling on
+  case-insensitive filesystems, retaining Windows case-insensitive extension matching
 - Ignore separator-containing Windows `PATHEXT` entries before constructing paths,
   preventing malformed search extensions from panicking during discovery
 - Handle skeleton stdout errors without panicking, treating broken pipes as quiet

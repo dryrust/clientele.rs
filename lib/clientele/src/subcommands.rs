@@ -37,7 +37,9 @@ impl Subcommand {
 /// unreadable directories, and non-UTF-8 filenames are skipped; non-UTF-8 parent
 /// directories are retained in the returned OS paths. Symlinks are followed.
 ///
-/// Prefix matching is literal and case-sensitive, including on Windows. Supply
+/// Prefix and logical-name matching use actual directory-entry spelling and are
+/// literal and case-sensitive, including on Windows (extensions still follow
+/// `PATHEXT`'s case-insensitive rules). Supply
 /// separators yourself: `"demo-"` matches `demo-help`, while `"demo"` also matches
 /// `demonstrate`. An empty prefix is accepted.
 ///
@@ -286,11 +288,9 @@ impl SubcommandsProvider {
         };
 
         for path in std::env::split_paths(&paths) {
-            let path = path.join(command);
-
-            if !path.exists() {
+            let Some(path) = actual_candidate(&path.join(command)) else {
                 continue;
-            }
+            };
 
             if !Self::filter_file(prefix, &path) {
                 continue;
@@ -405,18 +405,20 @@ impl SubcommandsProvider {
 
             // Append executable extensions without replacing dots in the command stem.
             for ext in &exts {
-                let path = path.with_added_extension(ext);
-
-                match path.exists() {
-                    true if Self::filter_file(prefix, &path, None) => return Some(path),
-                    _ => continue,
+                let Some(path) = actual_candidate(&path.with_added_extension(ext)) else {
+                    continue;
+                };
+                if Self::filter_file(prefix, &path, None) {
+                    return Some(path);
                 }
             }
         }
 
         // Explicit filenames are a fallback after the complete logical-stem search.
         for path in std::env::split_paths(&paths) {
-            let path = path.join(command);
+            let Some(path) = actual_candidate(&path.join(command)) else {
+                continue;
+            };
             if path.extension().is_some() && Self::filter_file(prefix, &path, None) {
                 return Some(path);
             }
@@ -424,6 +426,44 @@ impl SubcommandsProvider {
 
         None
     }
+}
+
+// Resolve the filename's spelling without canonicalizing parents or following a
+// symlink to its target name. Constructed paths alone hide case mismatches on
+// case-insensitive filesystems. Keep Windows extension folding, but not stem folding.
+fn actual_candidate(path: &Path) -> Option<PathBuf> {
+    let parent = path.parent()?;
+    let directory = if parent.as_os_str().is_empty() {
+        Path::new(".")
+    } else {
+        parent
+    };
+    let requested = path.file_name()?;
+    std::fs::read_dir(directory)
+        .ok()?
+        .filter_map(Result::ok)
+        .map(|entry| entry.file_name())
+        .filter(|name| {
+            if name == requested {
+                return true;
+            }
+            #[cfg(windows)]
+            {
+                let candidate = Path::new(name);
+                candidate.file_stem() == path.file_stem()
+                    && candidate
+                        .extension()
+                        .and_then(|ext| ext.to_str())
+                        .zip(path.extension().and_then(|ext| ext.to_str()))
+                        .is_some_and(|(left, right)| left.to_lowercase() == right.to_lowercase())
+            }
+            #[cfg(not(windows))]
+            false
+        })
+        // Exact extension spelling wins; otherwise choose deterministically on
+        // filesystems that permit multiple differently cased extensions.
+        .min_by_key(|name| (name != requested, name.clone()))
+        .map(|name| parent.join(name))
 }
 
 // Kept platform-independent under tests so malformed Windows input is covered

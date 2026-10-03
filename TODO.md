@@ -94,6 +94,10 @@ tests. Cross-compilation establishes build coverage only.
   `subcommands_order`, minimally with `std,subcommands` and with defaults.
 
 - [ ] **R2-05 — Enforce consistent prefix matching on case-insensitive filesystems.**
+  **Progress:** Lookup now verifies actual directory-entry spelling, preserving
+  parents and symlink names without canonicalization; Windows extensions still fold
+  case. Shared lookup/listing tests reject an uppercase-only prefix. Cross-directory
+  case-collision coverage and native Windows verification remain.
   **Evidence (reproduced):** On the review machine's case-insensitive macOS
   filesystem, an executable named `DEMO-hello` yielded no entries from
   `collect("demo-", 1)`, while `find("demo-", "hello")` returned it. In
