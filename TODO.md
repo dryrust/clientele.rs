@@ -25,7 +25,7 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 1 open item: R2-22 remains unimplemented (P3).
+**Status:** 1 open item: R2-22 is in progress (P3).
 The original evidence below describes the review snapshot, not the corrected code.
 Progress notes identify the remaining work; do not repeat completed implementation
 steps or treat cross-compilation as native verification.
@@ -58,8 +58,16 @@ tests. Cross-compilation establishes build coverage only.
   commands, dotted exact-file collisions, and nine timed collections after warmup.
   Run `cargo bench -p clientele --bench subcommands --no-default-features
   --features std,subcommands --locked`. Timing is diagnostic, not a CI threshold.
-  Obtain the native baseline before implementing the optimization. R2-03 through
-  R2-05 are now verified; the old `exists` calls were already removed by R2-05.
+  Native baseline at `a9df518`: median 56.585 ms, min 55.714 ms, max 58.987 ms
+  ([stable Windows job](https://github.com/dryrust/clientele.rs/actions/runs/37144251868/job/111264830458)).
+  R2-03 through R2-05 are verified; the old `exists` calls were removed by R2-05.
+  The implementation now reuses parsed variables and lazy directory listings
+  within each call. Added a single-threaded Windows subprocess regression for
+  changing PATH/PATHEXT, removed/new files and directories, missing variables, and
+  retained snapshots. Local default/minimal tests, formatting, Clippy, rustdoc,
+  Windows-target Clippy, and Rust 1.97 Windows-target checks pass. The latter
+  initially lacked the target; installing it resolved the check failure.
+  Native Windows regressions and after-measurements remain to verify.
   **Evidence (source-level performance opportunity):** Windows `collect` scans
   `PATH`, then calls `resolve_command` for every unique name. Each call rereads and
   reparses `PATH` and `PATHEXT`; candidates also incur `exists` before a second

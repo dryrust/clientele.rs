@@ -36,6 +36,8 @@ impl Subcommand {
 /// Each `collect` or `find` call performs a fresh search. Filesystem errors,
 /// unreadable directories, and non-UTF-8 filenames are skipped; non-UTF-8 parent
 /// directories are retained in the returned OS paths. Symlinks are followed.
+/// On Windows, parsed search variables and directory listings are reused only
+/// within a call; subsequent calls observe fresh environment and filesystem state.
 ///
 /// Prefix and logical-name matching use actual directory-entry spelling and are
 /// literal and case-sensitive, including on Windows (extensions still follow
@@ -101,7 +103,16 @@ impl SubcommandsProvider {
     /// There is no implicit separator or nonempty-name requirement: a file named
     /// exactly `prefix` can produce an empty logical name on Unix.
     pub fn collect(prefix: &str, level: usize) -> SubcommandsProvider {
-        let mut commands: Vec<_> = Self::collect_commands(prefix)
+        #[cfg(windows)]
+        let Some(mut search) = WindowsSearch::from_env() else {
+            return SubcommandsProvider { commands: vec![] };
+        };
+        #[cfg(windows)]
+        let paths = search.collect_commands(prefix);
+        #[cfg(not(windows))]
+        let paths = Self::collect_commands(prefix);
+
+        let mut commands: Vec<_> = paths
             .into_iter()
             // Construct public command names.
             .filter_map(|path| Subcommand::from_path(prefix, path))
@@ -122,7 +133,8 @@ impl SubcommandsProvider {
             .filter_map(|mut command| {
                 // Multiple extensions can share a stem in the same directory.
                 // Reuse lookup to honor PATHEXT and logical-stem precedence.
-                command.path = Self::resolve_command(prefix, &format!("{prefix}{}", command.name))?;
+                command.path =
+                    search.resolve_command(prefix, &format!("{prefix}{}", command.name))?;
                 Some(command)
             })
             .collect();
@@ -305,13 +317,8 @@ impl SubcommandsProvider {
 
 #[cfg(windows)]
 impl SubcommandsProvider {
-    fn get_path_exts() -> Option<Vec<String>> {
-        let Ok(exts) = std::env::var("PATHEXT") else {
-            // PATHEXT variable is not set.
-            return None;
-        };
-
-        Some(parse_path_exts(&exts))
+    fn resolve_command(prefix: &str, command: &str) -> Option<PathBuf> {
+        WindowsSearch::from_env()?.resolve_command(prefix, command)
     }
 
     fn filter_file(prefix: &str, path: &Path, exts: Option<&[String]>) -> bool {
@@ -355,32 +362,48 @@ impl SubcommandsProvider {
 
         true
     }
+}
 
-    fn collect_commands(prefix: &str) -> Vec<PathBuf> {
-        let Some(paths) = std::env::var_os("PATH") else {
-            // PATH variable is not set.
-            return vec![];
-        };
+// One environment snapshot and lazily loaded directory listings per public call.
+// Keys are OS strings rather than normalized/canonical paths: distinct PATH
+// spellings must retain their spelling and precedence, even for the same directory.
+#[cfg(windows)]
+struct WindowsSearch {
+    paths: Vec<PathBuf>,
+    exts: Vec<String>,
+    directories: std::collections::HashMap<std::ffi::OsString, Vec<std::ffi::OsString>>,
+}
 
-        let Some(exts) = Self::get_path_exts() else {
-            // PATHEXT variable is not set or invalid.
-            return vec![];
-        };
+#[cfg(windows)]
+impl WindowsSearch {
+    fn from_env() -> Option<Self> {
+        Some(Self {
+            paths: std::env::split_paths(&std::env::var_os("PATH")?).collect(),
+            exts: parse_path_exts(&std::env::var("PATHEXT").ok()?),
+            directories: Default::default(),
+        })
+    }
 
+    fn directory_names(&mut self, directory: &Path) -> &[std::ffi::OsString] {
+        self.directories
+            .entry(directory.as_os_str().to_owned())
+            .or_insert_with(|| {
+                std::fs::read_dir(directory)
+                    .into_iter()
+                    .flatten()
+                    .filter_map(Result::ok)
+                    .map(|entry| entry.file_name())
+                    .collect()
+            })
+    }
+
+    fn collect_commands(&mut self, prefix: &str) -> Vec<PathBuf> {
         let mut result = vec![];
-        for path in std::env::split_paths(&paths) {
-            let Ok(dir) = std::fs::read_dir(path) else {
-                continue;
-            };
-
-            for entry in dir {
-                let Ok(entry) = entry else {
-                    // invalid entry.
-                    continue;
-                };
-
-                let path = entry.path();
-                if Self::filter_file(prefix, &path, Some(&exts)) {
+        for index in 0..self.paths.len() {
+            let directory = self.paths[index].clone();
+            for name in self.directory_names(&directory).to_vec() {
+                let path = directory.join(name);
+                if SubcommandsProvider::filter_file(prefix, &path, Some(&self.exts)) {
                     result.push(path);
                 }
             }
@@ -389,48 +412,58 @@ impl SubcommandsProvider {
         result
     }
 
-    fn resolve_command(prefix: &str, command: &str) -> Option<PathBuf> {
-        let Some(paths) = std::env::var_os("PATH") else {
-            // PATH variable is not set.
-            return None;
-        };
-
-        let Some(exts) = Self::get_path_exts() else {
-            // PATHEXT variable is not set or invalid.
-            return None;
-        };
-
-        for path in std::env::split_paths(&paths) {
-            let path = path.join(command);
+    fn resolve_command(&mut self, prefix: &str, command: &str) -> Option<PathBuf> {
+        for index in 0..self.paths.len() {
+            let path = self.paths[index].join(command);
 
             // Append executable extensions without replacing dots in the command stem.
-            for ext in &exts {
-                let Some(path) = actual_candidate(&path.with_added_extension(ext)) else {
+            for index in 0..self.exts.len() {
+                let candidate = path.with_added_extension(&self.exts[index]);
+                let Some(path) = self.actual_candidate(&candidate) else {
                     continue;
                 };
-                if Self::filter_file(prefix, &path, None) {
+                if SubcommandsProvider::filter_file(prefix, &path, None) {
                     return Some(path);
                 }
             }
         }
 
         // Explicit filenames are a fallback after the complete logical-stem search.
-        for path in std::env::split_paths(&paths) {
-            let Some(path) = actual_candidate(&path.join(command)) else {
+        for index in 0..self.paths.len() {
+            let candidate = self.paths[index].join(command);
+            let Some(path) = self.actual_candidate(&candidate) else {
                 continue;
             };
-            if path.extension().is_some() && Self::filter_file(prefix, &path, None) {
+            if path.extension().is_some() && SubcommandsProvider::filter_file(prefix, &path, None) {
                 return Some(path);
             }
         }
 
         None
     }
+
+    fn actual_candidate(&mut self, path: &Path) -> Option<PathBuf> {
+        let parent = path.parent()?;
+        let directory = if parent.as_os_str().is_empty() {
+            Path::new(".")
+        } else {
+            parent
+        };
+        let requested = path.file_name()?;
+        self.directory_names(directory)
+            .iter()
+            .filter(|name| candidate_matches(path, name))
+            // Exact extension spelling wins; otherwise choose deterministically
+            // if the filesystem permits differently cased extensions.
+            .min_by_key(|name| (name.as_os_str() != requested, *name))
+            .map(|name| parent.join(name))
+    }
 }
 
 // Resolve the filename's spelling without canonicalizing parents or following a
 // symlink to its target name. Constructed paths alone hide case mismatches on
-// case-insensitive filesystems. Keep Windows extension folding, but not stem folding.
+// case-insensitive filesystems.
+#[cfg(unix)]
 fn actual_candidate(path: &Path) -> Option<PathBuf> {
     let parent = path.parent()?;
     let directory = if parent.as_os_str().is_empty() {
@@ -443,27 +476,28 @@ fn actual_candidate(path: &Path) -> Option<PathBuf> {
         .ok()?
         .filter_map(Result::ok)
         .map(|entry| entry.file_name())
-        .filter(|name| {
-            if name == requested {
-                return true;
-            }
-            #[cfg(windows)]
-            {
-                let candidate = Path::new(name);
-                candidate.file_stem() == path.file_stem()
-                    && candidate
-                        .extension()
-                        .and_then(|ext| ext.to_str())
-                        .zip(path.extension().and_then(|ext| ext.to_str()))
-                        .is_some_and(|(left, right)| left.to_lowercase() == right.to_lowercase())
-            }
-            #[cfg(not(windows))]
-            false
-        })
-        // Exact extension spelling wins; otherwise choose deterministically on
-        // filesystems that permit multiple differently cased extensions.
+        .filter(|name| candidate_matches(path, name))
         .min_by_key(|name| (name != requested, name.clone()))
         .map(|name| parent.join(name))
+}
+
+// Keep Windows extension folding, but not stem folding.
+fn candidate_matches(path: &Path, name: &std::ffi::OsStr) -> bool {
+    if path.file_name() == Some(name) {
+        return true;
+    }
+    #[cfg(windows)]
+    {
+        let candidate = Path::new(name);
+        candidate.file_stem() == path.file_stem()
+            && candidate
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .zip(path.extension().and_then(|ext| ext.to_str()))
+                .is_some_and(|(left, right)| left.to_lowercase() == right.to_lowercase())
+    }
+    #[cfg(not(windows))]
+    false
 }
 
 // Kept platform-independent under tests so malformed Windows input is covered
