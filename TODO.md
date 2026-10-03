@@ -25,8 +25,8 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 6 open items: five have implementations/regressions in place but await
-native platform verification (3 P1 and 2 P2); R2-22 remains unimplemented (P3).
+**Status:** 5 open items: four have implementations/regressions in place but await
+native platform verification review (2 P1 and 2 P2); R2-22 remains unimplemented (P3).
 The original evidence below describes the review snapshot, not the corrected code.
 Progress notes identify the remaining work; do not repeat completed implementation
 steps or treat cross-compilation as native verification.
@@ -45,32 +45,13 @@ tests. Cross-compilation establishes build coverage only.
 | --- | --- |
 | Feature gates, dependency re-exports, consumer builds | Standalone-feature builds, weak-feature guards, Serde isolation, and scoped tracing checks pass |
 | Arguments and skeleton CLI | Argument-file contracts pass; native Windows wildcard coverage remains in R2-13 |
-| Executable discovery | Case-sensitive-prefix mismatch reproduced on macOS; Windows extension/identity findings and OS-path coverage gaps; R2-03 through R2-05, R2-16, R2-22 |
+| Executable discovery | R2-03 separator rejection verified on native Windows; remaining identity/prefix findings and OS-path coverage gaps: R2-04, R2-05, R2-16, R2-22 |
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing regressions and the typed `parse_with` callback contract pass |
 | Native/UTF-8/XDG paths and tracing | Path, format, color, global-initialization, and focused feature-combination tests pass locally |
 | Completions, manpages, error-stack, packaging | Isolated-feature tests, all-feature quality gates, and packaged default/minimal doctests pass |
 | CI, Rake, Make, project documentation | Locked Ruby CI coverage, current contributor guidance, and historical attribution are in place |
 
 ## P1 — Correctness and reliability
-
-- [ ] **R2-03 — Reject path separators in Windows `PATHEXT` entries.**
-  **Progress:** Parser rejects both separators with passing host-independent
-  regressions. `subcommands_path` now covers malformed-only and malformed-before-
-  valid lists through lookup and collection, plus explicit-file fallback.
-  Implementation and regression coverage are complete; native Windows execution
-  remains required before closing this item (cross-compilation is not runtime proof).
-  **Evidence (source review plus primitive probe):** In
-  `lib/clientele/src/subcommands.rs`, `parse_path_exts` accepts `.bad/name` and
-  `.bad\name`. `resolve_command` passes the suffix to `Path::with_added_extension`,
-  which panics on a host path separator. The slash panic was reproduced on macOS;
-  both separators need native Windows coverage. A malformed entry before `.BAT`
-  can also affect collection's lookup pass.
-  **Acceptance:** Ignore separator-containing entries before path construction;
-  retain the documented precedence, Unicode, and non-trimming behavior for valid
-  entries. Test malformed-only and malformed-before-valid lists through both
-  `find` and `collect`, as well as the platform-independent parser tests.
-  **Verify:** `cargo test -p clientele --lib --no-default-features --features std,subcommands --locked`;
-  extend and run `subcommands_path` on Windows with the same feature set.
 
 - [ ] **R2-04 — Reconcile Windows dotted-name collection and lookup identity.**
   **Progress:** Lookup now searches logical stems across all of `PATH` before
@@ -396,3 +377,22 @@ implementation after that verification.
   Linux all-target checks with those features passed as well.
 - Raw wildcard scenarios require native Windows; the macOS driver reports this
   explicitly. Native Windows and supporting Unix-filesystem runs remain pending.
+
+### R2-03 native verification on 2026-10-03
+
+Closed R2-03 after reviewing native Windows CI for commit
+`2df1ea64ef0e06757bd6140af34beb75df1985f6` in
+[run 37141180579](https://github.com/dryrust/clientele.rs/actions/runs/37141180579).
+Both [Rust 1.97.0](https://github.com/dryrust/clientele.rs/actions/runs/37141180579/job/111255770523)
+and [stable](https://github.com/dryrust/clientele.rs/actions/runs/37141180579/job/111255770537)
+Windows jobs passed default, minimal `std,subcommands`, and all-feature tests.
+
+- The parser's separator regression passed; the minimal feature suite passed all
+  17 library tests, including precedence, Unicode, and non-trimming coverage.
+- The `subcommands_path` driver exercises `.bad/name`, `.bad\name`, and their
+  combination, both alone and before `.BAT`, through `find` and `collect`; it also
+  checks explicit-file fallback. Its child failures propagate to the CI job.
+- `tests/check_features.py` runs the minimal suite with `--no-default-features
+  --features std,subcommands --locked`; both Windows logs confirm this combination
+  completed successfully. This supplies the native execution missing from the
+  earlier local verification. Other open items require their own evidence review.
