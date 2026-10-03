@@ -5,8 +5,6 @@
 //! Requires `std`; [`args_os`] is re-exported at the crate root. The `wild` and
 //! `argfile` features independently enable the expansion stages described below.
 
-extern crate std;
-
 use std::{ffi::OsString, vec::Vec};
 
 /// Collects the process arguments as owned OS strings, with optional expansion.

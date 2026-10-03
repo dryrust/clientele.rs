@@ -39,9 +39,7 @@
 //! # use clientele::*;
 //! ```
 
-//#![no_std]
 #![deny(unsafe_code)]
-#![allow(unused)]
 
 // Cargo adjusts the README path when packaging the crate.
 #[cfg(doctest)]
@@ -56,9 +54,6 @@ pub use known_errors::sysexits::{SysexitsError, SysexitsResult};
 
 #[cfg(feature = "std")]
 pub use known_errors::{abort, sysexits::exit};
-
-#[doc(hidden)]
-mod prelude;
 
 #[cfg(feature = "std")]
 mod args;

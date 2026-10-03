@@ -8,10 +8,7 @@
 #[cfg(feature = "clap")]
 use crate::StandardOptions;
 use std::sync::LazyLock;
-use tracing_subscriber::fmt::{
-    format::{Compact, Format},
-    time::SystemTime,
-};
+use tracing_subscriber::fmt::format::{Compact, Format};
 
 /// Compact, untimed formatting without event levels or source metadata.
 ///

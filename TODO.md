@@ -25,7 +25,7 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 13 outstanding leaf tasks: 3 P1, 8 P2, and 2 P3. Evidence below
+**Status:** 12 outstanding leaf tasks: 3 P1, 7 P2, and 2 P3. Evidence below
 distinguishes runtime reproductions, source-review findings, coverage gaps, and
 optional extensions.
 
@@ -47,7 +47,7 @@ tests. Cross-compilation establishes build coverage only.
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing implementations and regression tests reviewed; optional typed-parser reuse in R2-21 |
 | Native/UTF-8/XDG paths and tracing | Existing path, format, color, and global-initialization tests pass locally; isolated-feature coverage in R2-14 |
 | Completions, manpages, error-stack, packaging | All-feature MSRV tests and packaged default/minimal doctests pass; isolated-feature and quality gates in R2-14, R2-18 |
-| CI, Rake, Make, project documentation | Missing Ruby CI coverage, suppressed unused warnings, stale guidance/credits; R2-15, R2-17, R2-19, R2-20 |
+| CI, Rake, Make, project documentation | Missing Ruby CI coverage and stale guidance/credits; R2-15, R2-19, R2-20 |
 
 ## P1 — Correctness and reliability
 
@@ -148,18 +148,6 @@ tests. Cross-compilation establishes build coverage only.
   ignore unrepresentable executable names, and agree on valid neighboring entries.
   **Verify:** Native Unix and Windows discovery tests with `std,subcommands`
   alone; compare OS paths directly rather than their lossy display text.
-
-- [ ] **R2-17 — Replace blanket unused-code suppression with precise gates.**
-  **Evidence (reproduced):** `#![allow(unused)]` in `lib/clientele/src/lib.rs`,
-  `lib/clientele/src/prelude.rs`, and the skeleton weakens the otherwise
-  warning-denying checks. A forced-warning build reports unused prelude exports, redundant
-  `extern crate std` declarations, and `time::SystemTime` in
-  `lib/clientele/src/tracing.rs`.
-  **Acceptance:** Remove obsolete imports/private scaffolding and blanket
-  allowances; use narrowly justified feature gates or local allowances only where
-  needed. Keep the documented standard-library requirement and all feature builds.
-  **Verify:** `cargo rustc -p clientele --lib --all-features --locked -- --force-warn unused`,
-  default/minimal/all-feature Clippy, and affected example builds.
 
 - [ ] **R2-18 — Apply warning-denying quality gates to opt-in APIs.**
   **Evidence (CI review):** The quality job runs Clippy and rustdoc with defaults
@@ -372,6 +360,8 @@ Host: aarch64 macOS; stable Rust/Cargo 1.98.1, with Rust 1.97.0 also installed.
   19 doctests).
 - `cargo check -p clientele --all-targets --no-default-features --locked`.
 - Default and all-feature Clippy/rustdoc with the warning-denying commands above.
+- `cargo rustc -p clientele --lib --all-features --locked -- --force-warn unused`
+  is warning-free after removing blanket suppression and unused private scaffolding.
 - `cargo +1.97.0 test --workspace --all-features --locked` (including both
   generators, error-stack, and 21 doctests).
 - All-target isolated-feature checks for the public leaf features,
@@ -393,9 +383,6 @@ Host: aarch64 macOS; stable Rust/Cargo 1.98.1, with Rust 1.97.0 also installed.
 **Failures and limitations:**
 
 - The case-insensitive lookup mismatch remains as described in R2-05.
-- Ordinary quality checks are warning-free with current allowances. A diagnostic
-  `cargo rustc -p clientele --lib --all-features --locked -- --force-warn unused`
-  reports five suppressed warnings; see R2-17.
 - No native Linux/Windows runtime tests were executed during this review. In
   particular, the Windows findings in R2-03/R2-04 are not claimed as native
   reproductions. Recheck and report failures rather than suppressing them.

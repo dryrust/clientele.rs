@@ -71,7 +71,7 @@ pub fn check_hidden_fixture(dir: &Path) -> Result<()> {
     Ok(())
 }
 
-#[allow(unused)]
+#[allow(dead_code)] // Shared with the lookup target, which has no depth limit.
 pub static TEST_LEVEL: usize = 1;
 
 pub static TEST_FILES: &[TestFile] = &[

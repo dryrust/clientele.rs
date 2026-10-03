@@ -8,8 +8,6 @@
 
 pub mod sort;
 
-extern crate std;
-
 use clap::{ArgAction, Args};
 
 /// Common flags for a Clap parser, also re-exported at the crate root.

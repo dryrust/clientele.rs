@@ -1,7 +1,6 @@
 // This is free and unencumbered software released into the public domain.
 
 #![deny(unsafe_code)]
-#![allow(unused)]
 
 use clientele::{
     crates::clap::{self, error::ErrorKind, CommandFactory, FromArgMatches, Parser, Subcommand},
