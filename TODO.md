@@ -25,7 +25,7 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 10 outstanding leaf tasks: 3 P1, 5 P2, and 2 P3. Evidence below
+**Status:** 9 outstanding leaf tasks: 3 P1, 4 P2, and 2 P3. Evidence below
 distinguishes runtime reproductions, source-review findings, coverage gaps, and
 optional extensions.
 
@@ -47,7 +47,7 @@ tests. Cross-compilation establishes build coverage only.
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing implementations and regression tests reviewed; optional typed-parser reuse in R2-21 |
 | Native/UTF-8/XDG paths and tracing | Path, format, color, global-initialization, and focused feature-combination tests pass locally |
 | Completions, manpages, error-stack, packaging | Isolated-feature tests, all-feature quality gates, and packaged default/minimal doctests pass |
-| CI, Rake, Make, project documentation | Missing Ruby CI coverage and stale guidance/credits; R2-15, R2-19, R2-20 |
+| CI, Rake, Make, project documentation | Locked Ruby CI coverage is configured; stale guidance/credits remain in R2-19, R2-20 |
 
 ## P1 — Correctness and reliability
 
@@ -110,15 +110,6 @@ tests. Cross-compilation establishes build coverage only.
   depending on the developer's shell or directory contents.
   **Verify:** Native Windows tests with `--no-default-features --features std,wild --locked`
   and `--no-default-features --features std,wild,argfile --locked`, plus defaults.
-
-- [ ] **R2-15 — Run release-tooling regressions in CI.**
-  **Evidence (coverage gap):** `rake test` currently passes its three tests and
-  52 assertions, but no workflow step runs `tests/version_bump_test.rb`. Rust tests
-  and packaging checks cannot detect regressions in `Rakefile`.
-  **Acceptance:** Set up reproducible Ruby, Rake, and Minitest dependencies in one
-  CI job and execute `rake test`. Keep fixtures isolated/offline and surface failures
-  as job failures, including the existing failed-update rollback/retry regression.
-  **Verify:** `rake test` and the new CI job from a clean checkout.
 
 - [ ] **R2-16 — Cover non-Unicode paths in executable discovery.**
   **Evidence (coverage gap):** The discovery contract promises to preserve
@@ -309,9 +300,16 @@ cargo test -p clientele --no-default-features --features manpages --locked
 cargo check -p clientele --all-targets --no-default-features --features completions,manpages --locked
 ```
 
-For version-bump tooling, `rake test` runs isolated Cargo workspaces and verifies
-historical versions, rollback of partial updates, and retry behavior with present
-and absent lockfiles. CI quality gates also require:
+For version-bump tooling, install the locked development gems and run the isolated
+Cargo fixtures, including rollback of partial updates and absent lockfiles:
+
+```sh
+bundle install
+bundle exec rake test
+```
+
+CI uses Ruby 4.0.6 and `Gemfile.lock`. Frozen bundle installation and all 52 Ruby
+assertions pass locally. Rust quality gates also require:
 
 ```sh
 cargo clippy --workspace --all-targets --locked -- -D warnings

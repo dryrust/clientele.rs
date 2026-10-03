@@ -7,6 +7,21 @@ on:
 env:
   CARGO_TERM_COLOR: always
 jobs:
+  release-tooling:
+    name: Test release tooling
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+    - name: Install Ruby and locked test dependencies
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: "4.0.6"
+        bundler-cache: true
+    - name: Test version bumps and rollback
+      run: bundle exec rake test
   quality:
     name: Check code quality
     runs-on: ubuntu-latest
