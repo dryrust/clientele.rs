@@ -117,6 +117,10 @@ tests. Cross-compilation establishes build coverage only.
 ## P2 — Regression coverage and automation
 
 - [ ] **R2-13 — Exercise Windows wildcard expansion with real raw command lines.**
+  **Progress:** New `args_wild` subprocess target requires `std,wild` and uses
+  Windows `CommandExt::raw_arg` for matching/unmatched, quoted, question-mark, and
+  mixed patterns, including matching filenames containing spaces. Argfile ordering
+  coverage and native Windows execution remain.
   **Evidence (coverage gap):** No existing test exercises `wild::args_os` with a
   wildcard. Passing ordinary strings through `Command::args` alone does not prove
   quoted-versus-unquoted Windows command-line behavior or its ordering with argfiles.

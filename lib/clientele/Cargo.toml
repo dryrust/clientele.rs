@@ -27,6 +27,11 @@ harness = false
 required-features = ["std"]
 
 [[test]]
+name = "args_wild"
+harness = false
+required-features = ["std", "wild"]
+
+[[test]]
 name = "completions"
 required-features = ["completions"]
 
