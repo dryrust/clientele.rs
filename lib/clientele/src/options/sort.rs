@@ -76,7 +76,7 @@ impl core::error::Error for SortSqlError {}
 /// Requires `clap` (which enables `std`).
 ///
 /// ```
-/// use clientele::{crates::clap::Parser, options::sort::{SortKey, SortKeys}};
+/// use clientele::{crates::clap::{self, Parser}, options::sort::{SortKey, SortKeys}};
 ///
 /// #[derive(Parser)]
 /// struct Options {
@@ -110,7 +110,7 @@ impl core::error::Error for SortSqlError {}
 /// implementation is needed only if the resulting keys will be formatted.
 ///
 /// ```
-/// use clientele::{crates::clap::{Parser, ValueEnum}, options::sort::SortKeys};
+/// use clientele::{crates::clap::{self, Parser, ValueEnum}, options::sort::SortKeys};
 ///
 /// #[derive(Clone, Debug, PartialEq, ValueEnum)]
 /// enum Field { Name, CreatedAt }

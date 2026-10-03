@@ -53,6 +53,10 @@ jobs:
         done
     - name: Test all features
       run: cargo test --workspace --all-features --locked
+    - name: Test downstream examples
+      run: |
+        cargo test --manifest-path tests/consumer/Cargo.toml --locked --target-dir target
+        cargo test --manifest-path tests/consumer/Cargo.toml --all-features --locked --target-dir target
     - name: Test packaged doctests
       shell: bash
       run: |

@@ -1,0 +1,23 @@
+[package]
+name = "clientele-consumer"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.97"
+publish = false
+
+# Keep dependency features and the extern prelude independent of library tests.
+[workspace]
+resolver = "2"
+
+[features]
+default = []
+color = ["clientele/color"]
+tracing = ["clientele/tracing", "dep:tracing"]
+
+[dependencies]
+clientele = { path = "../../lib/clientele", default-features = false, features = ["clap", "dotenv"] }
+tracing = { version = "0.1", default-features = false, features = ["std"], optional = true }
+
+[[example]]
+name = "skeleton"
+path = "../../lib/clientele/examples/skeleton/main.rs"

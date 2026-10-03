@@ -9,7 +9,7 @@ use clap::builder::{styling::AnsiColor, Styles};
 /// color policy still determines whether ANSI colors are emitted.
 ///
 /// ```
-/// use clientele::crates::clap::{CommandFactory, Parser};
+/// use clientele::crates::clap::{self, CommandFactory, Parser};
 ///
 /// #[derive(Parser)]
 /// #[cfg_attr(feature = "color", command(styles = clientele::HELP_STYLES))]

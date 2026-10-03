@@ -4,7 +4,7 @@
 #![allow(unused)]
 
 use clientele::{
-    crates::clap::{error::ErrorKind, CommandFactory, FromArgMatches, Parser, Subcommand},
+    crates::clap::{self, error::ErrorKind, CommandFactory, FromArgMatches, Parser, Subcommand},
     StandardOptions, SysexitsError,
 };
 use std::process::ExitCode;

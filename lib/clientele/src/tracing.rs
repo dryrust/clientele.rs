@@ -70,7 +70,7 @@ pub static STDERR_DEBUG_FORMAT: LazyLock<Format<Compact, ()>> =
 /// # Examples
 ///
 /// ```no_run
-/// use clientele::{crates::clap::Parser, tracing::init_tracing_subscriber, StandardOptions};
+/// use clientele::{crates::clap::{self, Parser}, tracing::init_tracing_subscriber, StandardOptions};
 ///
 /// #[derive(Parser)]
 /// struct Options {
@@ -103,7 +103,7 @@ pub fn init_tracing_subscriber(options: &StandardOptions) {
 /// # Examples
 ///
 /// ```no_run
-/// use clientele::{crates::clap::Parser, tracing::try_init_tracing_subscriber, StandardOptions};
+/// use clientele::{crates::clap::{self, Parser}, tracing::try_init_tracing_subscriber, StandardOptions};
 ///
 /// #[derive(Parser)]
 /// struct Options {

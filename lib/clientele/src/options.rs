@@ -52,7 +52,7 @@ use clap::{ArgAction, Args};
 /// # Examples
 ///
 /// ```
-/// use clientele::{crates::clap::{Parser, Subcommand}, StandardOptions};
+/// use clientele::{crates::clap::{self, Parser, Subcommand}, StandardOptions};
 ///
 /// #[derive(Parser)]
 /// struct Options {

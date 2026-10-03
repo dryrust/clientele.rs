@@ -25,7 +25,7 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 19 outstanding leaf tasks: 3 P1, 14 P2, and 2 P3. Evidence below
+**Status:** 18 outstanding leaf tasks: 3 P1, 13 P2, and 2 P3. Evidence below
 distinguishes runtime reproductions, source-review findings, coverage gaps, and
 optional extensions.
 
@@ -41,7 +41,7 @@ tests. Cross-compilation establishes build coverage only.
 
 | Area | Review outcome |
 | --- | --- |
-| Feature gates, dependency re-exports, consumer builds | Unexpected JSON dependency with `serde`; downstream derive examples fail; R2-07, R2-10, R2-11 |
+| Feature gates, dependency re-exports, consumer builds | Unexpected JSON dependency with `serde`; tracing dependency access; R2-10, R2-11 |
 | Arguments and skeleton CLI | Lost error context, broken-pipe panic, expansion coverage gaps; R2-08, R2-09, R2-12, R2-13 |
 | Executable discovery | Case-sensitive-prefix mismatch reproduced on macOS; Windows extension/identity findings and OS-path coverage gaps; R2-03 through R2-05, R2-16, R2-22 |
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing implementations and regression tests reviewed; optional typed-parser reuse in R2-21 |
@@ -98,22 +98,6 @@ tests. Cross-compilation establishes build coverage only.
   case-insensitive macOS, with a case-sensitive-filesystem control where available.
 
 ## P2 — Public API and CLI usability
-
-- [ ] **R2-07 — Make derive examples compile in a downstream-only consumer.**
-  **Evidence (reproduced):** Copying the `StandardOptions` rustdoc example into
-  a standalone crate depending only on Clientele fails with E0433, unresolved
-  `clap`. Importing `clientele::crates::clap::{self, Parser, Subcommand}` fixes it.
-  The same missing module import occurs in `src/clap/help_styles.rs`,
-  `src/options/sort.rs`, `src/tracing.rs`, and `examples/skeleton/main.rs` under
-  `lib/clientele/`. In-package doctests/examples can see the direct Clap dependency,
-  masking this problem. README and generator examples already use `self` correctly.
-  **Acceptance:** Fix the affected imports and add a standalone consumer fixture
-  that cannot obtain Clap through Clientele's package extern prelude. Verify the
-  documented minimal features; the copied skeleton may add its documented direct
-  `tracing` dependency for event macros, but must not need a direct Clap dependency.
-  **Verify:** `cargo test -p clientele --doc --no-default-features --features clap --locked`,
-  plus `cargo check --manifest-path <consumer-fixture>/Cargo.toml` outside the
-  library package and checks for the copied skeleton's required feature set.
 
 - [ ] **R2-08 — Preserve source error context in skeleton diagnostics.**
   **Evidence (reproduced):** A missing `@missing-args.txt` prints only
@@ -398,6 +382,13 @@ For release/dependency checks, retain MSRV and all-features coverage:
 cargo +1.97.0 test --workspace --all-features --locked
 ```
 
+For derive examples and the skeleton in a consumer without a direct Clap dependency:
+
+```sh
+cargo test --manifest-path tests/consumer/Cargo.toml --locked --target-dir target
+cargo test --manifest-path tests/consumer/Cargo.toml --all-features --locked --target-dir target
+```
+
 For optional generators, test each feature independently and together:
 
 ```sh
@@ -446,6 +437,8 @@ Host: aarch64 macOS; stable Rust/Cargo 1.98.1, with Rust 1.97.0 also installed.
   `completions,manpages`.
 - Standalone `gofer` tests on stable and Rust 1.97.0, plus
   `cargo +1.97.0 check -p clientele --lib --no-default-features --features gofer --locked`.
+- Downstream consumer tests above (6 minimal and 9 color/tracing doctests),
+  including all-feature consumer tests on Rust 1.97.0.
 - `cargo package -p clientele --locked --target-dir target` and packaged
   default/no-default-feature doctests (19 and 4 doctests respectively).
 - `rake test` (3 tests, 52 assertions) and
@@ -455,8 +448,7 @@ Host: aarch64 macOS; stable Rust/Cargo 1.98.1, with Rust 1.97.0 also installed.
 
 **Failures and limitations:**
 
-- The downstream derive snippet failed until the `clap` module import was added;
-  case-insensitive lookup and closed-pipe probes exposed the behaviors described
+- Case-insensitive lookup and closed-pipe probes exposed the behaviors described
   in R2-05 and R2-09. Diagnostic context is covered by R2-08.
 - Ordinary quality checks are warning-free with current allowances. A diagnostic
   `cargo rustc -p clientele --lib --all-features --locked -- --force-warn unused`
