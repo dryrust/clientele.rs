@@ -25,8 +25,8 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 3 open items: two have implementations/regressions in place but await
-native platform verification review (2 P2); R2-22 remains unimplemented (P3).
+**Status:** 2 open items: R2-16 awaits native platform verification review (P2);
+R2-22 remains unimplemented (P3).
 The original evidence below describes the review snapshot, not the corrected code.
 Progress notes identify the remaining work; do not repeat completed implementation
 steps or treat cross-compilation as native verification.
@@ -44,7 +44,7 @@ tests. Cross-compilation establishes build coverage only.
 | Area | Review outcome |
 | --- | --- |
 | Feature gates, dependency re-exports, consumer builds | Standalone-feature builds, weak-feature guards, Serde isolation, and scoped tracing checks pass |
-| Arguments and skeleton CLI | Argument-file contracts pass; native Windows wildcard coverage remains in R2-13 |
+| Arguments and skeleton CLI | Argument-file contracts and R2-13 native Windows raw wildcard/argfile ordering tests pass |
 | Executable discovery | R2-03/R2-04 verified on native Windows; R2-05 verified on case-insensitive Windows/macOS and case-sensitive Linux; remaining work: R2-16, R2-22 |
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing regressions and the typed `parse_with` callback contract pass |
 | Native/UTF-8/XDG paths and tracing | Path, format, color, global-initialization, and focused feature-combination tests pass locally |
@@ -52,24 +52,6 @@ tests. Cross-compilation establishes build coverage only.
 | CI, Rake, Make, project documentation | Locked Ruby CI coverage, current contributor guidance, and historical attribution are in place |
 
 ## P2 — Regression coverage and automation
-
-- [ ] **R2-13 — Exercise Windows wildcard expansion with real raw command lines.**
-  **Progress:** New `args_wild` subprocess target requires `std,wild` and uses
-  Windows `CommandExt::raw_arg` for matching/unmatched, quoted, question-mark, and
-  mixed patterns, including matching filenames containing spaces. It also covers
-  raw `@*.args` expansion before argfile loading, quoted argfile paths with spaces,
-  and no re-expansion of direct/nested argfile patterns, with disabled-argfile
-  controls. Both feature sets cross-compile; native Windows execution remains.
-  **Evidence (coverage gap):** No existing test exercises `wild::args_os` with a
-  wildcard. Passing ordinary strings through `Command::args` alone does not prove
-  quoted-versus-unquoted Windows command-line behavior or its ordering with argfiles.
-  **Acceptance:** Add a native Windows subprocess target, gated by `std,wild`,
-  with controlled files and raw/quoted wildcard arguments. Cover matching and
-  unmatched patterns, spaces in filenames, literal quoted patterns, and the rule
-  that wildcards introduced by argfile contents are not expanded again. Avoid
-  depending on the developer's shell or directory contents.
-  **Verify:** Native Windows tests with `--no-default-features --features std,wild --locked`
-  and `--no-default-features --features std,wild,argfile --locked`, plus defaults.
 
 - [ ] **R2-16 — Cover non-Unicode paths in executable discovery.**
   **Progress:** `subcommands_path` has isolated Unix invalid-byte and Windows
@@ -386,3 +368,14 @@ and a case-sensitive filesystem on Linux. Default/all-feature suites passed on
 all three; minimal `std,subcommands` suites also passed on Windows/Linux.
 Fixtures verify literal prefixes and logical names, uppercase Windows extensions,
 reversed/repeated `PATH` precedence, and exact name/path round trips.
+
+### R2-13 native verification on 2026-10-03
+
+Closed R2-13 after reviewing `args_wild` and the successful
+[stable Windows job](https://github.com/dryrust/clientele.rs/actions/runs/37141180579/job/111255770537)
+at `2df1ea64ef0e06757bd6140af34beb75df1985f6`. The default/all-feature logs show
+the native executable running; the feature driver successfully completed both
+`std,wild` and `std,argfile,wild` without defaults. The driver uses `raw_arg`,
+checks quoted/unquoted and unmatched patterns, spaces in matching filenames,
+wildcards before argfile loading, and literal direct/nested argfile patterns.
+All child failures propagate; these Windows branches have no skip path.
