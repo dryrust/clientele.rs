@@ -24,17 +24,10 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 8h.subcommands**, completing subcommand-discovery rustdoc.
+**Suggested next leaf: 9f**, clarifying feature documentation.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
-
-## 8. API composability and documentation (P2 unless marked P3)
-
-- [ ] **8h. Complete public rustdoc, one module per change.**
-  - [ ] **8h.subcommands:** `lib/clientele/src/subcommands.rs`: fields, prefix and
-    depth rules, environment/platform behavior, result ordering, and lookup
-    naming. Review discoverability of the currently doc-hidden public exports.
 
 ## 9. CI, packaging metadata, and release tooling (P2/P3)
 

@@ -75,10 +75,9 @@ pub use options::*;
 pub mod paths;
 
 #[cfg(all(feature = "std", feature = "subcommands"))]
-#[doc(hidden)]
 mod subcommands;
 #[cfg(all(feature = "std", feature = "subcommands"))]
-#[doc(hidden)]
+#[doc(inline)]
 pub use subcommands::*;
 
 #[doc(hidden)]

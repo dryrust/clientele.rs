@@ -12,6 +12,9 @@ pub struct Subcommand {
     /// to lookup. Earlier dots and repeated prefixes are preserved.
     pub name: String,
     /// Resolved executable path, retaining its prefix and any file extension.
+    ///
+    /// Preserves the search path's spelling and can be relative. No
+    /// canonicalization or UTF-8 conversion of parent directories is performed.
     pub path: PathBuf,
 }
 
@@ -29,9 +32,34 @@ impl Subcommand {
 
 /// A collected snapshot of executable subcommands. Requires `std,subcommands`.
 ///
+/// Searches the current environment and filesystem without executing commands.
+/// Each `collect` or `find` call performs a fresh search. Filesystem errors,
+/// unreadable directories, and non-UTF-8 filenames are skipped; non-UTF-8 parent
+/// directories are retained in the returned OS paths. Symlinks are followed.
+///
+/// Prefix matching is literal and case-sensitive, including on Windows. Supply
+/// separators yourself: `"demo-"` matches `demo-help`, while `"demo"` also matches
+/// `demonstrate`. An empty prefix is accepted.
+///
+/// On Unix, eligible files have at least one executable permission bit; dotfiles
+/// and names ending in `~` are excluded. On Windows, files with the hidden
+/// attribute are excluded. Discovery does not guarantee successful execution or
+/// continued existence of a file. See [`Self::collect`] and [`Self::find`] for
+/// environment, extension, ordering, and naming rules.
+///
 /// Collection accessors and iterators preserve [`Self::collect`]'s ordering and
 /// do not rescan the filesystem. Iterate over `&provider` to borrow commands or
 /// over `provider` to consume it and take ownership of the commands.
+///
+/// ```
+/// use clientele::SubcommandsProvider;
+///
+/// let commands = SubcommandsProvider::collect("my-app-", 1);
+/// for command in &commands {
+///     println!("{}: {}", command.name, command.path.display());
+/// }
+/// let owned = commands.into_commands();
+/// ```
 #[derive(Debug, Clone)]
 pub struct SubcommandsProvider {
     commands: Vec<Subcommand>,
@@ -67,6 +95,8 @@ impl SubcommandsProvider {
     /// lists top-level commands and `0` returns none. Any retained occurrence of
     /// the prefix counts toward this depth: `demo-demo-repeat` becomes
     /// `demo-repeat` on Unix and requires a level of at least `2`.
+    /// There is no implicit separator or nonempty-name requirement: a file named
+    /// exactly `prefix` can produce an empty logical name on Unix.
     pub fn collect(prefix: &str, level: usize) -> SubcommandsProvider {
         let mut commands: Vec<_> = Self::collect_commands(prefix)
             .into_iter()
@@ -117,6 +147,12 @@ impl SubcommandsProvider {
     /// final extension on Windows. For example, `find("demo-", "hello")` returns
     /// the logical name `hello`, not `demo-hello`; Windows lookup of `hello.bat`
     /// also returns `hello` when that executable is found.
+    ///
+    /// `name` is appended to `prefix` verbatim, without adding a separator or
+    /// removing a prefix already present in `name`. No collection depth limit
+    /// applies. This is a filesystem lookup, not shell command parsing: quotes,
+    /// variables, and wildcards are not expanded. Supply a logical filename,
+    /// rather than a path, to search directly within each `PATH` directory.
     pub fn find(prefix: &str, name: &str) -> Option<Subcommand> {
         let name = format!("{}{}", prefix, name);
         let path = Self::resolve_command(prefix, &name);
