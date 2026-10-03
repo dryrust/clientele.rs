@@ -25,7 +25,7 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 16 outstanding leaf tasks: 3 P1, 11 P2, and 2 P3. Evidence below
+**Status:** 15 outstanding leaf tasks: 3 P1, 10 P2, and 2 P3. Evidence below
 distinguishes runtime reproductions, source-review findings, coverage gaps, and
 optional extensions.
 
@@ -41,7 +41,7 @@ tests. Cross-compilation establishes build coverage only.
 
 | Area | Review outcome |
 | --- | --- |
-| Feature gates, dependency re-exports, consumer builds | Unexpected JSON dependency with `serde`; tracing dependency access; R2-10, R2-11 |
+| Feature gates, dependency re-exports, consumer builds | Tracing dependency access; R2-11 |
 | Arguments and skeleton CLI | Remaining argument-expansion coverage gaps; R2-12, R2-13 |
 | Executable discovery | Case-sensitive-prefix mismatch reproduced on macOS; Windows extension/identity findings and OS-path coverage gaps; R2-03 through R2-05, R2-16, R2-22 |
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing implementations and regression tests reviewed; optional typed-parser reuse in R2-21 |
@@ -98,19 +98,6 @@ tests. Cross-compilation establishes build coverage only.
   case-insensitive macOS, with a case-sensitive-filesystem control where available.
 
 ## P2 — Public API and CLI usability
-
-- [ ] **R2-10 — Keep JSON integration out of a Serde-only dependency selection.**
-  **Evidence (dependency graph):** `serde = ["dep:serde", "known-errors/serde",
-  "camino?/serde1"]` in `lib/clientele/Cargo.toml` enables `serde_json` through
-  `known-errors/serde -> known-errors/serde-json`, even when Clientele's
-  `serde-json` feature is disabled. The separate JSON feature already forwards
-  `known-errors/serde-json` explicitly.
-  **Acceptance:** Make Serde-only selection omit JSON unless another enabled
-  dependency requires it. Preserve Camino serialization and the explicit
-  `serde-json` integration. Record the compatibility impact on JSON-error
-  conversions previously enabled transitively by `serde` alone.
-  **Verify:** `cargo tree -p clientele --no-default-features --features serde -e normal --locked`;
-  check `serde`, `serde,camino`, `serde-json`, and `std,serde-json` independently.
 
 - [ ] **R2-11 — Expose the tracing formatter dependency through `crates`.**
   **Evidence (API review):** `lib/clientele/src/tracing.rs` exposes types from
@@ -284,6 +271,10 @@ Useful sets: `clap`; `std,subcommands`; `std,getenv,camino`; `std,tracing`;
 `clap,tracing`; `clap,color,tracing`; `error-stack`; `std,error-stack`;
 `gofer`; `std,gofer`.
 Preserve optional-example/test gates in `lib/clientele/Cargo.toml`.
+
+For Serde/JSON isolation and integration, inspect the Serde-only normal dependency
+tree and run `serde_integration` with `serde,camino`, `serde-json`, and
+`std,serde-json` under `--no-default-features --locked`.
 
 For ANSI stripping and its doctests without optional features:
 

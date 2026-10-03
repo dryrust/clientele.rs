@@ -34,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `paths::home_dir()` and `paths::temp_dir()` for native directory resolution,
   with checked `_utf8` variants and independently gated optional dependencies
 ### Changed
+- Keep `serde` independent of JSON dependencies. JSON-error conversions to
+  `SysexitsError` now require `serde-json` rather than being enabled by `serde`
+  alone; default-feature consumers retain JSON integration
 - Remove the redundant inherent `SubcommandsProvider::into_iter()` method in
   favor of its existing prelude trait implementation. Method and associated
   function calls continue to work; their returned iterator now also exposes

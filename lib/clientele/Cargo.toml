@@ -39,6 +39,10 @@ name = "error_stack"
 required-features = ["error-stack"]
 
 [[test]]
+name = "serde_integration"
+required-features = ["serde"]
+
+[[test]]
 name = "subcommands_find"
 harness = false
 required-features = ["std", "subcommands"]
@@ -123,7 +127,7 @@ parse-byteunit = ["dep:ubyte"]
 # Reserved: currently provides no date/time parser, re-export, or dependency.
 parse-datetime = []
 parse-duration = ["dep:duration-str"]
-serde = ["dep:serde", "known-errors/serde", "camino?/serde1"]
+serde = ["dep:serde", "camino?/serde1"]
 serde-json = ["serde", "dep:serde_json", "known-errors/serde-json"]
 std = [
     "clap?/std",

@@ -18,6 +18,11 @@
 //! The `color` feature enables ANSI support in Clap and tracing when those
 //! optional dependencies are enabled, without enabling either dependency itself.
 //!
+//! The `serde` feature exposes Serde and enables serialization for an already
+//! enabled Camino dependency. It does not enable JSON. Select `serde-json` for
+//! the JSON re-export and JSON-error conversions to [`SysexitsError`]; this
+//! feature also enables `serde`.
+//!
 //! The `parse-datetime` feature is reserved: it currently enables no dependencies
 //! and provides no date/time parsing API or re-export. It is included by `parse`
 //! (and therefore by `all` and the default features), but enabling it alone has
