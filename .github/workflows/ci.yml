@@ -48,7 +48,7 @@ jobs:
     - name: Test minimal feature combinations
       run: |
         cargo test --workspace --no-default-features --locked
-        for features in std tracing std,tracing clap clap,tracing clap,dotenv subcommands std,subcommands error-stack std,error-stack; do
+        for features in std tracing std,tracing clap clap,tracing clap,dotenv subcommands std,subcommands error-stack std,error-stack gofer; do
           cargo test --workspace --no-default-features --features "$features" --locked
         done
     - name: Test all features
@@ -105,7 +105,7 @@ jobs:
       shell: bash
       run: |
         cargo test --workspace --no-default-features --locked
-        for features in clap std,tracing clap,tracing clap,color,tracing clap,tracing,tracing-subscriber/ansi clap,dotenv std,subcommands error-stack std,error-stack; do
+        for features in clap std,tracing clap,tracing clap,color,tracing clap,tracing,tracing-subscriber/ansi clap,dotenv std,subcommands error-stack std,error-stack gofer; do
           cargo test --workspace --no-default-features --features "$features" --locked
         done
     - name: Test all features

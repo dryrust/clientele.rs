@@ -8,9 +8,10 @@
 //! The `std` feature gates APIs and dependency integrations; disabling it does not
 //! provide `no_std` support.
 //!
-//! The `clap` feature also enables `std`. With `error-stack`, [`SysexitsError`]
-//! can be used as a report context with or without the `std` feature, including
-//! when default features are disabled.
+//! The `clap` and `gofer` features also enable `std`, as required by their
+//! dependencies. With `error-stack`, [`SysexitsError`] can be used as a report
+//! context with or without the `std` feature, including when default features
+//! are disabled.
 //!
 //! Tracing formats require `std` and `tracing`; the options-based tracing
 //! initializers additionally require `clap`.

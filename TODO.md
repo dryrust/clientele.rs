@@ -25,9 +25,9 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 22 outstanding leaf tasks: 6 P1, 14 P2, and 2 P3. Start with
-**R2-01** for a small, reproduced build fix. Evidence below distinguishes runtime
-reproductions, source-review findings, coverage gaps, and optional extensions.
+**Status:** 21 outstanding leaf tasks: 5 P1, 14 P2, and 2 P3. Evidence below
+distinguishes runtime reproductions, source-review findings, coverage gaps, and
+optional extensions.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -41,7 +41,7 @@ tests. Cross-compilation establishes build coverage only.
 
 | Area | Review outcome |
 | --- | --- |
-| Feature gates, dependency re-exports, consumer builds | Standalone `gofer` failure; unexpected JSON dependency with `serde`; downstream derive examples fail; R2-01, R2-07, R2-10, R2-11 |
+| Feature gates, dependency re-exports, consumer builds | Unexpected JSON dependency with `serde`; downstream derive examples fail; R2-07, R2-10, R2-11 |
 | Arguments and skeleton CLI | Recursive argfile timeout, lost error context, broken-pipe panic, expansion coverage gaps; R2-02, R2-08, R2-09, R2-12, R2-13 |
 | Executable discovery | Case-sensitive-prefix mismatch reproduced on macOS; Windows extension/identity findings and OS-path coverage gaps; R2-03 through R2-05, R2-16, R2-22 |
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing implementations and regression tests reviewed; optional typed-parser reuse in R2-21 |
@@ -50,19 +50,6 @@ tests. Cross-compilation establishes build coverage only.
 | CI, Rake, Make, project documentation | Version-bump rollback failure; missing Ruby CI coverage, suppressed unused warnings, stale guidance/credits; R2-06, R2-15, R2-17, R2-19, R2-20 |
 
 ## P1 — Correctness and reliability
-
-- [ ] **R2-01 — Make the standalone `gofer` feature build.**
-  **Evidence (reproduced):** `cargo check -p clientele --all-targets
-  --no-default-features --features gofer --locked` fails in `gofer` 0.1.8 with
-  `todo!("the 'std' feature is currently required")`. A library-only check also
-  fails on Rust 1.97.0; `std,gofer` passes. In `lib/clientele/Cargo.toml`, `gofer`
-  does not enable `std`, which is the only route to `gofer?/std`.
-  **Acceptance:** Encode the required standard-library support in the feature
-  graph, as already done for `clap`; update feature documentation and add the
-  isolated combination to CI. Retain optional dependency activation and MSRV.
-  **Verify:** Run the failing command above and
-  `cargo +1.97.0 check -p clientele --lib --no-default-features --features gofer --locked`,
-  then the `std,gofer` and default checks.
 
 - [ ] **R2-02 — Return an error for recursive argument-file inclusion.**
   **Evidence (reproduced):** With `std,argfile`, a file `cycle.args` containing
@@ -235,11 +222,11 @@ tests. Cross-compilation establishes build coverage only.
 
 - [ ] **R2-14 — Cover every standalone feature and important weak-feature combination in CI.**
   **Evidence (coverage gap):** `.github/workflows/ci.yml` tests a curated minimal
-  list, but omits standalone `gofer`, `completions`, and `manpages`, among others.
-  Default/all-feature builds mask R2-01 and cannot establish independent generator
-  gates or optional dependency behavior. Path combinations documented below are
+  list, but omits standalone `completions` and `manpages`, among others.
+  Default/all-feature builds cannot establish independent generator gates or
+  optional dependency behavior. Path combinations documented below are
   also absent from the current minimal loops.
-  **Acceptance:** After R2-01, check every public feature independently with
+  **Acceptance:** Check every public feature independently with
   defaults disabled on stable/MSRV. Include library-only builds to avoid
   dev-dependency feature unification, relevant all-target builds, and focused tests
   for `completions`, `manpages`, `std,dirs,camino`, `std,getenv,camino`, and tracing
@@ -363,7 +350,8 @@ Add focused tests for the selected leaf. For feature changes, check affected
 combinations with `cargo check -p clientele --all-targets --no-default-features
 --features <set> --locked`, replacing `<set>` with the applicable feature list.
 Useful sets: `clap`; `std,subcommands`; `std,getenv,camino`; `std,tracing`;
-`clap,tracing`; `clap,color,tracing`; `error-stack`; `std,error-stack`.
+`clap,tracing`; `clap,color,tracing`; `error-stack`; `std,error-stack`;
+`gofer`; `std,gofer`.
 Preserve optional-example/test gates in `lib/clientele/Cargo.toml`.
 
 For ANSI stripping and its doctests without optional features:
@@ -461,7 +449,7 @@ done
 
 Host: aarch64 macOS; stable Rust/Cargo 1.98.1, with Rust 1.97.0 also installed.
 
-**Passed in this review:**
+**Passed in this review and follow-up verification:**
 
 - `cargo fmt --all -- --check`.
 - `cargo test --workspace --locked` (42 library tests, integration targets, and
@@ -470,11 +458,13 @@ Host: aarch64 macOS; stable Rust/Cargo 1.98.1, with Rust 1.97.0 also installed.
 - Default and all-feature Clippy/rustdoc with the warning-denying commands above.
 - `cargo +1.97.0 test --workspace --all-features --locked` (including both
   generators, error-stack, and 21 doctests).
-- All-target isolated-feature checks for the public leaf features other than
-  the failing `gofer` case, plus key pairs/groups including `std,gofer`,
+- All-target isolated-feature checks for the public leaf features,
+  plus key pairs/groups including `std,gofer`,
   `std,argfile,wild`, `std,dirs,camino`, `std,getenv,camino`, `std,tracing`,
   `clap,tracing`, `clap,color,tracing`, `std,error-stack`, and
   `completions,manpages`.
+- Standalone `gofer` tests on stable and Rust 1.97.0, plus
+  `cargo +1.97.0 check -p clientele --lib --no-default-features --features gofer --locked`.
 - `cargo package -p clientele --locked --target-dir target` and packaged
   default/no-default-feature doctests (19 and 4 doctests respectively).
 - `rake test` (2 tests, 30 assertions) and
@@ -484,8 +474,6 @@ Host: aarch64 macOS; stable Rust/Cargo 1.98.1, with Rust 1.97.0 also installed.
 
 **Failures and limitations:**
 
-- Standalone `gofer` fails on stable and MSRV; see R2-01. Default/all-feature
-  success does not establish that every feature works in isolation.
 - The downstream derive snippet failed until the `clap` module import was added;
   cycle, case-insensitive lookup, failed-bump, and closed-pipe probes exposed the
   behaviors described in R2-02, R2-05 through R2-09.

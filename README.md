@@ -100,7 +100,7 @@ Clientele features in the same build.
   see the [completion guide](https://docs.rs/clientele/latest/clientele/completions/).
 - `manpages` independently enables ROFF manual-page generation and implies
   `clap,std`; see the [man-page guide](https://docs.rs/clientele/latest/clientele/manpages/).
-- `clap` enables `std`. Argument expansion and subcommand discovery require
+- `clap` and `gofer` enable `std`. Argument expansion and subcommand discovery require
   `std`; discovery additionally requires `subcommands`.
 - Native temporary paths require `std`; native home paths also require `dirs`.
   UTF-8 variants require `camino`. Environment-only and XDG paths require
