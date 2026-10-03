@@ -179,7 +179,88 @@ fn main() -> ExitCode {
         check(&dir, &["@args.txt"], 64, "", "Usage:", NO_COLOR_ENV);
     }
 
+    for args in [&["config"][..], &["--version"], &["--license"], &["--help"]] {
+        check_closed_output(&dir, args, true, 0);
+    }
+    for (args, code) in [
+        (&[][..], 2),
+        (&["--unknown-option"][..], 2),
+        (&["--debug"][..], 64),
+    ] {
+        check_closed_output(&dir, args, false, code);
+    }
+    #[cfg(feature = "argfile")]
+    check_closed_output(&dir, &["@missing-args.txt"], false, 66);
+
+    // Logging to unavailable stderr must not interrupt successful stdout output.
+    let (reader, writer) = std::io::pipe().unwrap();
+    drop(reader);
+    let output = child_command(&dir, &["--debug", "config"], NO_COLOR_ENV)
+        .stderr(writer)
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{output:?}");
+    assert!(String::from_utf8_lossy(&output.stdout).contains("implementation of the `config`"));
+    assert!(output.stderr.is_empty(), "{output:?}");
+
+    #[cfg(unix)]
+    {
+        use std::{io::Write, os::fd::OwnedFd, os::unix::net::UnixDatagram};
+
+        // An unconnected datagram socket produces a non-BrokenPipe write error.
+        // Unlike a read-only descriptor, it is not silently ignored by stdio's
+        // EBADF handling. No filesystem permissions or disk exhaustion are needed.
+        for (args, close_stderr) in [
+            (&["config"][..], false),
+            (&["config"][..], true),
+            (&["--version"][..], false),
+            (&["--license"][..], false),
+            (&["--help"][..], false),
+        ] {
+            let descriptor = OwnedFd::from(UnixDatagram::unbound().unwrap());
+            let mut output_file = std::fs::File::from(descriptor);
+            let source = output_file.write_all(b"unwritable").unwrap_err();
+            assert_ne!(source.kind(), std::io::ErrorKind::BrokenPipe);
+            let mut command = child_command(&dir, args, NO_COLOR_ENV);
+            command.stdout(output_file);
+            if close_stderr {
+                let (reader, writer) = std::io::pipe().unwrap();
+                drop(reader);
+                command.stderr(writer);
+            }
+            let output = command.output().unwrap();
+            assert_eq!(
+                output.status.code(),
+                Some(clientele::SysexitsError::from(&source) as i32),
+                "{args:?}, closed stderr={close_stderr}: {output:?}",
+            );
+            assert!(output.stdout.is_empty(), "{output:?}");
+            if close_stderr {
+                assert!(output.stderr.is_empty(), "{output:?}");
+            } else {
+                let diagnostic = String::from_utf8(output.stderr).unwrap();
+                assert!(diagnostic.starts_with("Error: "), "{diagnostic}");
+                assert!(diagnostic.contains(&source.to_string()), "{diagnostic}");
+            }
+        }
+    }
+
     ExitCode::SUCCESS
+}
+
+fn check_closed_output(dir: &TempDir, args: &[&str], stdout: bool, code: i32) {
+    let (reader, writer) = std::io::pipe().unwrap();
+    drop(reader); // Close before spawning, so the test cannot race the child's write.
+    let mut command = child_command(dir, args, NO_COLOR_ENV);
+    if stdout {
+        command.stdout(writer);
+    } else {
+        command.stderr(writer);
+    }
+    let output = command.output().unwrap();
+    assert_eq!(output.status.code(), Some(code), "{args:?}: {output:?}");
+    assert!(output.stdout.is_empty(), "{output:?}");
+    assert!(output.stderr.is_empty(), "{output:?}");
 }
 
 fn check(
@@ -190,6 +271,25 @@ fn check(
     stderr: &str,
     color_env: &[(&str, Option<&str>)],
 ) -> Output {
+    let output = child_command(dir, args, color_env)
+        .output()
+        .expect("run skeleton child process");
+    assert_eq!(output.status.code(), Some(code), "{args:?}: {output:?}");
+    for (actual, expected) in [(&output.stdout, stdout), (&output.stderr, stderr)] {
+        let actual = String::from_utf8_lossy(actual);
+        if expected.is_empty() {
+            assert!(actual.is_empty(), "{args:?}: unexpected output {actual:?}");
+        } else {
+            assert!(
+                actual.contains(expected),
+                "{args:?}: expected {expected:?} in {actual:?}"
+            );
+        }
+    }
+    output
+}
+
+fn child_command(dir: &TempDir, args: &[&str], color_env: &[(&str, Option<&str>)]) -> Command {
     let mut command = Command::new(env::current_exe().unwrap());
     command
         .args(args)
@@ -204,20 +304,7 @@ fn check(
             command.env_remove(key);
         }
     }
-    let output = command.output().expect("run skeleton child process");
-    assert_eq!(output.status.code(), Some(code), "{args:?}: {output:?}");
-    for (actual, expected) in [(&output.stdout, stdout), (&output.stderr, stderr)] {
-        let actual = String::from_utf8_lossy(actual);
-        if expected.is_empty() {
-            assert!(actual.is_empty(), "{args:?}: unexpected output {actual:?}");
-        } else {
-            assert!(
-                actual.contains(expected),
-                "{args:?}: expected {expected:?} in {actual:?}"
-            );
-        }
-    }
-    output
+    command
 }
 
 #[cfg(feature = "color")]

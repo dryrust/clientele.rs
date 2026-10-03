@@ -77,10 +77,17 @@ applications copying it should add their own `tracing` dependency.
 | No arguments, unknown option/subcommand, or invalid Clap value | 2 | Clap usage/diagnostic on stderr |
 | Valid flags without a subcommand, e.g. `--debug` | 64 (`EX_USAGE`) | Missing-subcommand diagnostic on stderr |
 | Missing @argfile, with `argfile` enabled | 66 (`EX_NOINPUT`) | Application error on stderr |
+| Closed stdout pipe, including help/version/license output | 0 | Quiet completion |
+| Other stdout I/O failure | Corresponding sysexits status | I/O diagnostic on stderr when available |
 
 Argument-file errors include the filename, failed operation, and underlying
 I/O cause, including missing files and invalid UTF-8 contents. Exit-code
 classification does not replace that diagnostic with just a sysexits name.
+Output uses fallible writes. A downstream reader closing its pipe is treated as
+successful completion; other stdout errors retain their I/O status. If stderr is
+also unavailable, the original application or parsing failure status is preserved
+without attempting to report a secondary error recursively.
+Tracing also suppresses secondary formatting/write-error diagnostics on stderr.
 
 The subprocess regression driver in `lib/clientele/tests/skeleton_cli.rs`
 exercises the actual entry point with isolated environment settings:

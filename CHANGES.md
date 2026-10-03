@@ -49,6 +49,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Callers needing the executable filename should use `Subcommand.path.file_name()`
   instead of relying on the previously prefixed `name` field
 ### Fixed
+- Handle skeleton stdout errors without panicking, treating broken pipes as quiet
+  success and preserving primary failure statuses when stderr is unavailable
+- Disable tracing's secondary formatting/write-error reporter for the stderr
+  subscriber so logging to an unavailable stderr does not panic; require
+  `tracing-subscriber` 0.3.19 for the formatter configuration APIs
 - Retain argument-file filenames and I/O causes in skeleton diagnostics while
   preserving the corresponding sysexits status codes
 - Import the Clap module in derive examples so rustdoc snippets and the skeleton

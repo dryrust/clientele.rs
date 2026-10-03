@@ -25,7 +25,7 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 17 outstanding leaf tasks: 3 P1, 12 P2, and 2 P3. Evidence below
+**Status:** 16 outstanding leaf tasks: 3 P1, 11 P2, and 2 P3. Evidence below
 distinguishes runtime reproductions, source-review findings, coverage gaps, and
 optional extensions.
 
@@ -42,7 +42,7 @@ tests. Cross-compilation establishes build coverage only.
 | Area | Review outcome |
 | --- | --- |
 | Feature gates, dependency re-exports, consumer builds | Unexpected JSON dependency with `serde`; tracing dependency access; R2-10, R2-11 |
-| Arguments and skeleton CLI | Broken-pipe panic and expansion coverage gaps; R2-09, R2-12, R2-13 |
+| Arguments and skeleton CLI | Remaining argument-expansion coverage gaps; R2-12, R2-13 |
 | Executable discovery | Case-sensitive-prefix mismatch reproduced on macOS; Windows extension/identity findings and OS-path coverage gaps; R2-03 through R2-05, R2-16, R2-22 |
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing implementations and regression tests reviewed; optional typed-parser reuse in R2-21 |
 | Native/UTF-8/XDG paths and tracing | Existing path, format, color, and global-initialization tests pass locally; dependency access and isolated-feature coverage in R2-11, R2-14 |
@@ -98,18 +98,6 @@ tests. Cross-compilation establishes build coverage only.
   case-insensitive macOS, with a case-sensitive-filesystem control where available.
 
 ## P2 — Public API and CLI usability
-
-- [ ] **R2-09 — Handle output errors without panicking in the skeleton.**
-  **Evidence (reproduced):** Running `skeleton config` with stdout connected to a
-  pipe whose read end was already closed exits 101 with `failed printing to stdout:
-  Broken pipe`. Its `println!` calls bypass the fallible application error path;
-  the final `eprintln!` can also panic when reporting another output failure.
-  **Acceptance:** Use fallible writes, document the CLI's broken-pipe exit policy,
-  and avoid a panic when either output stream fails. Preserve ordinary help,
-  version/license, config output, and application error statuses. Use a controlled
-  closed pipe in a subprocess test rather than a timing-sensitive shell pipeline.
-  **Verify:** The `skeleton_cli` target with defaults and with
-  `--no-default-features --features clap,dotenv --locked`, plus the closed-pipe case.
 
 - [ ] **R2-10 — Keep JSON integration out of a Serde-only dependency selection.**
   **Evidence (dependency graph):** `serde = ["dep:serde", "known-errors/serde",
@@ -340,12 +328,14 @@ For XDG environment-path regressions:
 cargo test -p clientele --test paths_xdg --no-default-features --features std,getenv,camino --locked
 ```
 
-For skeleton color and argument-file diagnostics, run the existing CLI driver:
+For skeleton color, argument-file diagnostics, closed pipes, and write errors,
+run the existing CLI driver:
 
 ```sh
 cargo test -p clientele --test skeleton_cli --no-default-features --features clap,dotenv --locked
 cargo test -p clientele --test skeleton_cli --no-default-features --features clap,color,dotenv --locked
 cargo test -p clientele --test skeleton_cli --no-default-features --features clap,dotenv,argfile --locked
+cargo test -p clientele --test skeleton_cli --no-default-features --features clap,dotenv,tracing --locked
 cargo run --locked --example skeleton -- config
 ```
 
@@ -436,8 +426,7 @@ Host: aarch64 macOS; stable Rust/Cargo 1.98.1, with Rust 1.97.0 also installed.
 
 **Failures and limitations:**
 
-- Case-insensitive lookup and closed-pipe probes exposed the behaviors described
-  in R2-05 and R2-09.
+- The case-insensitive lookup mismatch remains as described in R2-05.
 - Ordinary quality checks are warning-free with current allowances. A diagnostic
   `cargo rustc -p clientele --lib --all-features --locked -- --force-warn unused`
   reports five suppressed warnings; see R2-17.

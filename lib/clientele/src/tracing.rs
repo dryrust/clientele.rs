@@ -60,6 +60,8 @@ pub static STDERR_DEBUG_FORMAT: LazyLock<Format<Compact, ()>> =
 /// terminal and `NO_COLOR` to be unset or empty; explicit `Always` and `Never`
 /// choices override detection. Without `color`, ANSI output is disabled even if
 /// another dependency enables ANSI support in `tracing-subscriber`.
+/// Formatting and stderr write failures do not produce secondary diagnostics;
+/// this prevents the fallback error reporter from panicking on unavailable stderr.
 ///
 /// # Panics
 ///
@@ -136,5 +138,6 @@ pub fn try_init_tracing_subscriber(
             STDERR_PLAIN_FORMAT.clone()
         })
         .with_ansi(ansi)
+        .log_internal_errors(false)
         .try_init()
 }

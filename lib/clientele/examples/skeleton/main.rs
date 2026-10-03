@@ -7,7 +7,10 @@ use clientele::{
     crates::clap::{self, error::ErrorKind, CommandFactory, FromArgMatches, Parser, Subcommand},
     StandardOptions, SysexitsError,
 };
-use std::process::ExitCode;
+use std::{
+    io::{self, Write},
+    process::ExitCode,
+};
 
 /// Skeleton command-line interface (CLI)
 #[derive(Debug, Parser)]
@@ -31,6 +34,8 @@ enum Command {
 ///
 /// I/O errors retain their operation, filename, and source details for display;
 /// conversion to a sysexits status happens only at this process boundary.
+/// A broken stdout pipe is a quiet success. Other stdout failures use their
+/// sysexits status; failed stderr diagnostics retain the original error status.
 ///
 /// With the `color` feature, `--color` in the expanded arguments controls Clap's
 /// help and error output, including missing-subcommand diagnostics.
@@ -40,15 +45,16 @@ enum Command {
 pub fn main() -> ExitCode {
     // Returning Result directly would turn every application error into status 1.
     match run() {
-        Ok(()) => ExitCode::SUCCESS,
+        Ok(status) => status,
         Err(error) => {
-            eprintln!("Error: {error}");
+            // A secondary diagnostic failure must not hide the original status.
+            let _ = writeln!(io::stderr().lock(), "Error: {error}");
             SysexitsError::from(&error).as_exit_code()
         }
     }
 }
 
-fn run() -> std::io::Result<()> {
+fn run() -> io::Result<ExitCode> {
     // Load environment variables from `.env`:
     clientele::dotenv().ok();
 
@@ -63,22 +69,25 @@ fn run() -> std::io::Result<()> {
     }
 
     // Parse command-line options, retaining the configured command for errors:
-    let matches = command
-        .try_get_matches_from_mut(args)
-        .unwrap_or_else(|error| error.exit());
-    let options = Options::from_arg_matches(&matches)
-        .unwrap_or_else(|error| error.format(&mut command).exit());
+    let matches = match command.try_get_matches_from_mut(args) {
+        Ok(matches) => matches,
+        Err(error) => return print_clap_error(error),
+    };
+    let options = match Options::from_arg_matches(&matches) {
+        Ok(options) => options,
+        Err(error) => return print_clap_error(error.format(&mut command)),
+    };
 
     // Print the program version, if requested:
     if options.flags.version {
-        println!("skeleton {}", env!("CARGO_PKG_VERSION"));
-        return Ok(());
+        write_stdout(format_args!("skeleton {}", env!("CARGO_PKG_VERSION")))?;
+        return Ok(ExitCode::SUCCESS);
     }
 
     // Print the program license, if requested:
     if options.flags.license {
-        println!("This is free and unencumbered software released into the public domain.");
-        return Ok(());
+        write_stdout("This is free and unencumbered software released into the public domain.")?;
+        return Ok(ExitCode::SUCCESS);
     }
 
     // This standalone application owns the global subscriber. Embedded callers
@@ -90,14 +99,37 @@ fn run() -> std::io::Result<()> {
         Some(Command::Config {}) => {
             #[cfg(feature = "tracing")]
             tracing::debug!("Running config subcommand");
-            println!("This is the implementation of the `config` subcommand.");
-            Ok(())
+            write_stdout("This is the implementation of the `config` subcommand.")?;
+            Ok(ExitCode::SUCCESS)
         }
         None => {
-            command
+            let _ = command
                 .error(ErrorKind::MissingSubcommand, "a subcommand is required")
-                .print()?;
-            clientele::exit(SysexitsError::EX_USAGE)
+                .print();
+            Ok(SysexitsError::EX_USAGE.as_exit_code())
         }
+    }
+}
+
+fn print_clap_error(error: clap::Error) -> io::Result<ExitCode> {
+    if error.use_stderr() {
+        // Preserve the parse error's status even when its diagnostic cannot be written.
+        let _ = error.print();
+    } else {
+        // Help/version output follows the same pipe policy as application output.
+        stdout_result(error.print())?;
+    }
+    Ok(ExitCode::from(error.exit_code() as u8))
+}
+
+fn write_stdout(message: impl std::fmt::Display) -> io::Result<()> {
+    let mut output = io::stdout().lock();
+    stdout_result(writeln!(output, "{message}").and_then(|()| output.flush()))
+}
+
+fn stdout_result(result: io::Result<()>) -> io::Result<()> {
+    match result {
+        Err(error) if error.kind() == io::ErrorKind::BrokenPipe => Ok(()),
+        result => result,
     }
 }
