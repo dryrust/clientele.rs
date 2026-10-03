@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
+- Document and test empty, default, and whitespace sort semantics, retaining the
+  one-key default and verbatim whitespace handling for compatibility
 - `SortKey::to_sql_checked()` and `SortKeys::to_sql_checked()` for approved column
   mappings with identifier validation and explicit `SortSqlError` failures
 - `ColorChoiceExt::to_bool_for()` and `ColorStream` for stream-aware automatic

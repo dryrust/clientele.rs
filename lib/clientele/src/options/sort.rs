@@ -31,6 +31,33 @@ impl core::error::Error for SortSqlError {}
 
 /// A sequence of sort keys.
 ///
+/// # Empty and default sorts
+///
+/// [`Self::empty()`] contains no keys and renders as an empty string, including
+/// in SQL. In contrast, `Default` selects one ascending `T::default()` key;
+/// it does not mean "no sorting". For `String`, that key is the empty string:
+/// the sequence displays as `""`, but [`Self::is_empty()`] is false and raw
+/// [`Self::to_sql()`] produces `" ASC"`, which is not a valid ordering fragment.
+/// Checked rendering requires an approved column mapping even for this key.
+/// This default is retained for compatibility with typed default sort keys.
+///
+/// Constructors and `From<Vec<SortKey<T>>>` preserve all supplied keys without
+/// validation. Emptiness describes the number of keys, not their contents.
+///
+/// # Parsing and formatting
+///
+/// String parsing requires comma-separated, nonempty keys, each optionally
+/// prefixed by one `+` (ascending) or `-` (descending). An empty expression,
+/// empty component, bare direction prefix, or repeated direction prefix is an
+/// error. Whitespace is preserved verbatim, including whitespace-only keys;
+/// it is neither trimmed nor rejected. Typed Clap parsing uses the same syntax
+/// and passes the unchanged key text to `clap::ValueEnum` for validation.
+///
+/// String formatting separates keys with commas and prefixes descending keys
+/// with `-`; it omits ascending `+` prefixes and preserves whitespace. It is not
+/// a serialization format for arbitrary constructed keys: an empty sequence or
+/// the default string sort displays as `""`, which cannot be parsed back.
+///
 /// ```rust,ignore
 /// /// Sort resources by the specified keys. (Prefix a key with `-` for descending order.)
 /// #[clap(long, aliases = ["sort-by", "order", "order-by"], value_name = "[+|-]KEY,...", allow_hyphen_values = true)]
@@ -62,16 +89,21 @@ impl<T: Clone + Default> Default for SortKeys<T> {
 }
 
 impl<T: Clone> SortKeys<T> {
+    /// Creates a sequence with no keys, unlike the one-key `Default` sort.
     pub fn empty() -> Self {
         Self { keys: vec![] }
     }
 
+    /// Clones the supplied keys in order without validating their contents.
+    /// An empty slice creates an empty sequence.
     pub fn new(keys: &[SortKey<T>]) -> Self {
         Self {
             keys: keys.to_owned(),
         }
     }
 
+    /// Returns whether the sequence contains zero keys.
+    /// A sequence containing an empty or whitespace-only string key is not empty.
     pub fn is_empty(&self) -> bool {
         self.keys.is_empty()
     }
@@ -155,6 +187,10 @@ impl core::fmt::Display for SortKeys {
 }
 
 /// A sort key.
+///
+/// `Default` selects `T::default()` in ascending order. Construction does not
+/// validate the key; empty and whitespace-only strings are permitted. String
+/// formatting preserves the key verbatim, prefixed by `-` only when descending.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct SortKey<T: Clone = String> {
     key: T,
@@ -180,6 +216,8 @@ impl<T: Clone + Default> Default for SortKey<T> {
 }
 
 impl<T: Clone> SortKey<T> {
+    /// Creates a key without validation or whitespace normalization.
+    /// `descending` selects descending order when true, ascending otherwise.
     pub fn new(key: impl Into<T>, descending: bool) -> Self {
         Self {
             key: key.into(),
@@ -208,6 +246,8 @@ impl<T: Clone> SortKey<T> {
     /// Expressions, quotes, whitespace, wildcards, and empty components are
     /// rejected. Columns are not quoted or normalized; the application must
     /// choose names valid in its SQL dialect, including avoiding reserved words.
+    /// Empty or whitespace-only keys may be mapped to approved columns, but
+    /// returning their raw text as the column fails validation.
     ///
     /// # Errors
     ///
@@ -417,6 +457,124 @@ mod tests {
     }
 
     #[test]
+    fn empty_constructors_select_no_sort_keys() {
+        for sort in [
+            SortKeys::<String>::empty(),
+            SortKeys::new(&[]),
+            SortKeys::from(vec![]),
+        ] {
+            assert!(sort.is_empty());
+            assert!(sort.keys().is_empty());
+            assert_eq!(sort.to_string(), "");
+            assert_eq!(sort.to_sql(), "");
+            assert_eq!(
+                sort.to_sql_checked(|_| panic!("empty sort must not call the mapping")),
+                Ok(String::new())
+            );
+            assert!(sort.to_string().parse::<SortKeys>().is_err());
+        }
+    }
+
+    #[test]
+    fn default_string_sort_selects_one_empty_ascending_key() {
+        let key = SortKey::<String>::default();
+        assert_eq!(key.key(), "");
+        assert!(key.ascending());
+        assert!(!key.descending());
+        assert_eq!(key.to_string(), "");
+
+        let sort = SortKeys::<String>::default();
+        assert!(!sort.is_empty());
+        assert_eq!(sort.keys(), &[key]);
+        assert_ne!(sort, SortKeys::empty());
+        assert_eq!(sort.to_string(), "");
+        assert_eq!(sort.to_sql(), " ASC");
+        assert!(sort.to_string().parse::<SortKeys>().is_err());
+        assert_eq!(
+            sort.to_sql_checked(|_| None),
+            Err(SortSqlError::UnmappedKey)
+        );
+        assert_eq!(
+            sort.to_sql_checked(|key| Some(key.as_str())),
+            Err(SortSqlError::InvalidColumn {
+                column: String::new(),
+            })
+        );
+        assert_eq!(
+            sort.to_sql_checked(|key| {
+                assert!(key.is_empty());
+                Some("users.id")
+            }),
+            Ok("users.id ASC".to_owned())
+        );
+    }
+
+    #[test]
+    fn default_typed_sort_selects_the_types_default_key() {
+        #[derive(Clone, Debug, Default, PartialEq)]
+        enum DefaultColumn {
+            #[default]
+            Id,
+        }
+
+        let sort = SortKeys::<DefaultColumn>::default();
+        assert!(!sort.is_empty());
+        assert_eq!(sort.keys(), &[SortKey::new(DefaultColumn::Id, false)]);
+        assert_eq!(
+            sort.to_sql_checked(|key| match key {
+                DefaultColumn::Id => Some("users.id"),
+            }),
+            Ok("users.id ASC".to_owned())
+        );
+    }
+
+    #[test]
+    fn preserves_whitespace_in_constructed_and_parsed_keys() {
+        for text in [" ", "\t\n", "\u{2003}", " name", "name ", " -name"] {
+            for descending in [false, true] {
+                let key = SortKey::<String>::new(text, descending);
+                let constructed = SortKeys::new(core::slice::from_ref(&key));
+                assert_eq!(constructed, SortKeys::from(vec![key]));
+                let input = format!("{}{text}", if descending { "-" } else { "+" });
+                let parsed = input.parse::<SortKeys>().unwrap();
+                assert_eq!(parsed, constructed);
+                assert!(!parsed.is_empty());
+                let display = format!("{}{text}", if descending { "-" } else { "" });
+                assert_eq!(parsed.to_string(), display);
+                assert_eq!(display.parse::<SortKeys>().unwrap(), parsed);
+                assert_eq!(
+                    parsed.to_sql_checked(|key| Some(key.as_str())),
+                    Err(SortSqlError::InvalidColumn {
+                        column: text.to_owned(),
+                    })
+                );
+                assert_eq!(
+                    parsed.to_sql_checked(|key| {
+                        assert_eq!(key, text);
+                        Some("users.name")
+                    }),
+                    Ok(format!(
+                        "users.name {}",
+                        if descending { "DESC" } else { "ASC" }
+                    ))
+                );
+                assert!(EnumArgs::try_parse_from(["my-program", "--sort", &input]).is_err());
+            }
+        }
+
+        let sort = "name, +id,- ".parse::<SortKeys>().unwrap();
+        assert_eq!(
+            sort,
+            SortKeys::new(&[
+                SortKey::new("name", false),
+                SortKey::new(" +id", false),
+                SortKey::new(" ", true),
+            ])
+        );
+        assert_eq!(sort.to_string(), "name, +id,- ");
+    }
+
+    #[test]
     fn renders_checked_enum_sort_keys() {
         let args = EnumArgs::try_parse_from(["my-program", "--sort=-name,+id,handle"]).unwrap();
         let sort = args.sort.unwrap();
@@ -533,16 +691,6 @@ mod tests {
                 format!("{column} DESC")
             );
         }
-    }
-
-    #[test]
-    fn checked_empty_sort_does_not_call_the_mapping() {
-        assert_eq!(
-            SortKeys::<String>::empty()
-                .to_sql_checked(|_| panic!("empty sort must not call the mapping"))
-                .unwrap(),
-            ""
-        );
     }
 
     #[test]

@@ -24,22 +24,10 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 3b**, specifying empty, default, and whitespace sort behavior.
+**Suggested next leaf: 8a**, adding fallible tracing initialization.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
-
-## 3. Checked sort-to-SQL rendering and invariants (P1)
-
-File: [options/sort.rs](lib/clientele/src/options/sort.rs).
-
-- [ ] **3b. Specify valid empty/default/whitespace behavior.**
-  `SortKeys::<String>::default()` contains one empty key: it displays as an empty
-  string but `is_empty()` is false, and SQL rendering yields ` ASC`. Parsing an
-  empty string fails, while a whitespace-only key succeeds. Document the intended
-  invariants and distinguish `empty()` from a default sort. Test constructors,
-  parsing, formatting, and checked rendering; assess compatibility before
-  changing existing defaults or accepting/trimming/rejecting whitespace.
 
 ## 8. API composability and documentation (P2 unless marked P3)
 
