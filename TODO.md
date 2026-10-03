@@ -52,8 +52,11 @@ tests. Cross-compilation establishes build coverage only.
 ## P1 — Correctness and reliability
 
 - [ ] **R2-03 — Reject path separators in Windows `PATHEXT` entries.**
-  **Progress:** Parser rejects both separators with host-independent regressions;
-  Windows lookup/listing subprocess coverage remains.
+  **Progress:** Parser rejects both separators with passing host-independent
+  regressions. `subcommands_path` now covers malformed-only and malformed-before-
+  valid lists through lookup and collection, plus explicit-file fallback.
+  Implementation and regression coverage are complete; native Windows execution
+  remains required before closing this item (cross-compilation is not runtime proof).
   **Evidence (source review plus primitive probe):** In
   `lib/clientele/src/subcommands.rs`, `parse_path_exts` accepts `.bad/name` and
   `.bad\name`. `resolve_command` passes the suffix to `Path::with_added_extension`,

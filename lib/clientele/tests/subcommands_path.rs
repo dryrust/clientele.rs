@@ -22,8 +22,28 @@ mod windows {
     /// Checks each missing search variable independently, plus a populated control.
     pub fn run() {
         if let Ok(case) = env::var(CHILD_MODE) {
-            assert!(matches!(case.as_str(), "present" | "PATH" | "PATHEXT"));
             let dir = PathBuf::from(env::args_os().nth(1).expect("fixture directory"));
+            if case.starts_with("malformed-") {
+                let expected = (case == "malformed-valid").then_some(Subcommand {
+                    name: "hello".into(),
+                    path: dir.join("clientele-hello.bat"),
+                });
+                assert_eq!(SubcommandsProvider::find("clientele-", "hello"), expected);
+                assert_eq!(
+                    SubcommandsProvider::collect("clientele-", 1).into_commands(),
+                    expected.into_iter().collect::<Vec<_>>()
+                );
+                // An invalid-only list still permits an explicit filename lookup.
+                assert_eq!(
+                    SubcommandsProvider::find("clientele-", "hello.bat"),
+                    Some(Subcommand {
+                        name: "hello".into(),
+                        path: dir.join("clientele-hello.bat"),
+                    })
+                );
+                return;
+            }
+            assert!(matches!(case.as_str(), "present" | "PATH" | "PATHEXT"));
             // Verify the requested absence, including that the other variable is set.
             for (variable, value) in [
                 ("PATH", dir.as_os_str()),
@@ -84,6 +104,23 @@ mod windows {
                 .output()
                 .expect("run Windows search-environment child");
             assert!(output.status.success(), "{case}: {output:?}");
+        }
+
+        for malformed in [".bad/name", ".bad\\name", ".bad/name;.bad\\name"] {
+            for (case, extensions) in [
+                ("malformed-only", malformed.to_string()),
+                ("malformed-valid", format!("{malformed};.BAT")),
+            ] {
+                let output = Command::new(env::current_exe().unwrap())
+                    .arg(&fixture_dir)
+                    .current_dir(&fixture_dir)
+                    .env(CHILD_MODE, case)
+                    .env("PATH", &fixture_dir)
+                    .env("PATHEXT", &extensions)
+                    .output()
+                    .unwrap();
+                assert!(output.status.success(), "{extensions:?}: {output:?}");
+            }
         }
     }
 }
