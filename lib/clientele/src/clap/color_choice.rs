@@ -1,5 +1,11 @@
 // This is free and unencumbered software released into the public domain.
 
+//! Color-policy queries and a pre-parse scan for Clap's help and diagnostics.
+//!
+//! Requires `clap` (which enables `std`). These APIs are re-exported at the crate
+//! root and remain available without `color`. They resolve preferences; callers
+//! are responsible for applying the result to their output renderer.
+
 use clap::ColorChoice;
 use std::ffi::OsString;
 
@@ -18,11 +24,16 @@ pub enum ColorStream {
 ///
 /// Available with the `clap` feature; querying the policy does not require the
 /// `color` feature.
+/// Implemented for [`ColorChoice`]. Wrapper types can implement
+/// [`Self::as_color_choice`] and inherit the stream-aware default methods.
+/// Queries inspect current stream/environment state on each call; they do not
+/// change terminal settings or configure Clap or tracing output.
 pub trait ColorChoiceExt {
     /// Returns whether color should be enabled for standard output.
     ///
     /// Equivalent to [`Self::to_bool_for`] with [`ColorStream::Stdout`], including
     /// its `NO_COLOR` policy and explicit-choice precedence.
+    /// For diagnostics written to stderr, use `to_bool_for(ColorStream::Stderr)`.
     fn to_bool(&self) -> bool {
         self.to_bool_for(ColorStream::Stdout)
     }
@@ -65,6 +76,9 @@ pub trait ColorChoiceExt {
     }
 
     /// Borrows the underlying Clap color choice.
+    ///
+    /// Implementors return the policy used by the default query methods. This
+    /// method does not perform terminal detection or read environment variables.
     fn as_color_choice(&self) -> &ColorChoice;
 }
 
@@ -102,6 +116,27 @@ fn color_enabled(
 /// Scanning stops at `--`. A separated value is taken only from the immediately
 /// following argument, even if it is not valid UTF-8. Invalid or missing values
 /// leave the previous choice unchanged, starting from [`ColorChoice::Auto`].
+/// The last valid value wins. Only `auto`, `always`, and `never` are accepted,
+/// case-sensitively. Unrelated arguments are ignored without converting their
+/// native OS representation to UTF-8.
+///
+/// Requires `clap`, without requiring `color`. This is a best-effort pre-scan,
+/// not argument validation: let the full Clap parser report invalid options.
+/// It does not inspect terminal status or environment variables. Feed its result
+/// to `clap::Command::color` before parsing when `color` is enabled; use
+/// [`ColorChoiceExt`] when a renderer instead needs a stream-specific boolean
+/// policy.
+///
+/// ```
+/// use clientele::{color_choice, crates::clap::{ColorChoice, Command}};
+/// use std::ffi::OsString;
+///
+/// let args = ["demo", "--color=never"].map(OsString::from);
+/// let choice = color_choice(&args);
+/// assert_eq!(choice, ColorChoice::Never);
+/// #[cfg(feature = "color")]
+/// let command = Command::new("demo").color(choice);
+/// ```
 pub fn color_choice(args: &[OsString]) -> ColorChoice {
     let mut choice = ColorChoice::Auto;
     let mut args = args.iter().take_while(|arg| arg.as_os_str() != "--");
