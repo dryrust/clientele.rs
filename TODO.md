@@ -40,11 +40,8 @@ polish or feature growth. Priorities do not override an explicitly selected task
 
 CI file: [.github/workflows/ci.yml](.github/workflows/ci.yml). It currently covers
 Ubuntu and Windows, minimal feature combinations on Ubuntu, and all-features
-tests plus packaged doctests on both systems.
+tests plus packaged doctests on both systems, using Rust 1.97.0 and stable.
 
-- [ ] **9a. Select Rust toolchains explicitly in CI.**
-  Test MSRV 1.97 and current stable instead of relying on the runner's installed
-  compiler. Include representative minimal and all-features configurations.
 - [ ] **9b. Add native macOS CI coverage.**
   Run behavioral tests on this supported platform, including subprocess fixtures.
 - [ ] **9c. Extend critical minimal-feature checks to Windows.**

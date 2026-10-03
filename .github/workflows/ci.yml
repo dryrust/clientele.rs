@@ -13,8 +13,10 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-    - name: Install quality tools
-      run: rustup component add rustfmt clippy
+    - name: Install stable Rust and quality tools
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
     - name: Check formatting
       run: cargo fmt --all -- --check
     - name: Check documentation
@@ -22,11 +24,19 @@ jobs:
     - name: Check Clippy
       run: cargo clippy --workspace --all-targets --locked
   build-ubuntu:
-    name: Build on Ubuntu
+    name: Build on Ubuntu (${{ matrix.toolchain }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain: ["1.97.0", "stable"]
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.toolchain }}
     - name: Build
       run: cargo build --verbose --locked
     - name: Build examples
@@ -50,11 +60,19 @@ jobs:
           cargo test --manifest-path "$manifest" --target-dir target --doc --no-default-features --locked
         done
   build-windows:
-    name: Build on Windows
+    name: Build on Windows (${{ matrix.toolchain }})
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain: ["1.97.0", "stable"]
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.toolchain }}
     - name: Build
       run: cargo build --verbose --locked
     - name: Build examples
