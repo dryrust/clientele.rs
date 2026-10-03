@@ -96,8 +96,10 @@ tests. Cross-compilation establishes build coverage only.
 - [ ] **R2-05 — Enforce consistent prefix matching on case-insensitive filesystems.**
   **Progress:** Lookup now verifies actual directory-entry spelling, preserving
   parents and symlink names without canonicalization; Windows extensions still fold
-  case. Shared lookup/listing tests reject an uppercase-only prefix. Cross-directory
-  case-collision coverage and native Windows verification remain.
+  case. Shared lookup/listing tests reject an uppercase-only prefix; isolated order
+  tests cover differently cased prefixes and logical names in reversed/repeated
+  `PATH` directories, including uppercase Windows extensions. Tests pass on the
+  case-insensitive macOS host; native Windows and case-sensitive controls remain.
   **Evidence (reproduced):** On the review machine's case-insensitive macOS
   filesystem, an executable named `DEMO-hello` yielded no entries from
   `collect("demo-", 1)`, while `find("demo-", "hello")` returned it. In
@@ -344,7 +346,8 @@ Host: aarch64 macOS; stable Rust/Cargo 1.98.1, with Rust 1.97.0 also installed.
 
 **Failures and limitations:**
 
-- The case-insensitive lookup mismatch remains as described in R2-05.
+- The R2-05 case-insensitive lookup mismatch is fixed and its regressions pass on
+  macOS; native Windows and case-sensitive control runs remain outstanding.
 - No native Linux/Windows runtime tests were executed during this review. In
   particular, the Windows findings in R2-03/R2-04 are not claimed as native
   reproductions. Recheck and report failures rather than suppressing them.

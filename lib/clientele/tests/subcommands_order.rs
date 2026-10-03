@@ -8,7 +8,17 @@ use temp_dir::TempDir;
 
 const CHILD_MODE: &str = "CLIENTELE_SUBCOMMAND_ORDER_CHILD";
 
+#[path = "support/subcommands_case.rs"]
+mod subcommands_case;
+
 fn main() {
+    if env::var_os(CHILD_MODE).is_none()
+        && env::var_os("CLIENTELE_DOTTED_COLLISION_CHILD").is_none()
+        && subcommands_case::run()
+    {
+        return;
+    }
+
     #[cfg(windows)]
     if env::var_os(CHILD_MODE).is_none() && windows_collisions() {
         return;
