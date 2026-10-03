@@ -35,8 +35,8 @@ class VersionBumpTest < Minitest::Test
     end
   end
 
-  def bump(dir)
-    Open3.capture2e(RbConfig.ruby, '-S', 'rake', 'version:bump', chdir: dir)
+  def bump(dir, *options)
+    Open3.capture2e(RbConfig.ruby, '-S', 'rake', *options, 'version:bump', chdir: dir)
   end
 
   def test_bumps_only_release_metadata_and_cargo_lock
@@ -68,6 +68,46 @@ class VersionBumpTest < Minitest::Test
         originals.each do |name, original|
           assert_equal original, File.binread(File.join(dir, name)), name
         end
+      end
+    end
+  end
+
+  def test_rolls_back_cargo_failure_and_allows_a_single_bump_on_retry
+    [true, false].each do |lockfile_exists|
+      with_workspace do |dir|
+        File.delete(File.join(dir, 'Cargo.lock')) unless lockfile_exists
+        originals = %w[Cargo.toml VERSION Cargo.lock CHANGES.md].to_h do |name|
+          path = File.join(dir, name)
+          [name, File.exist?(path) ? File.binread(path) : nil]
+        end
+        # Override only the external command in this subprocess, including a
+        # partial lockfile write before Cargo's simulated nonzero exit.
+        File.write(File.join(dir, 'fail_cargo.rb'), <<~RUBY)
+          module Rake::FileUtilsExt
+            def sh(*command)
+              raise 'unexpected command' unless command == %w[cargo update --workspace --offline]
+              File.binwrite('Cargo.lock', "partial Cargo update\\n")
+              raise 'simulated Cargo failure'
+            end
+          end
+        RUBY
+        output, status = bump(dir, '-r', './fail_cargo.rb')
+        refute status.success?, output
+        assert_includes output, 'simulated Cargo failure'
+        originals.each do |name, original|
+          path = File.join(dir, name)
+          if original.nil?
+            refute File.exist?(path), "#{name} should remain absent"
+          else
+            assert_equal original, File.binread(path), name
+          end
+        end
+
+        output, status = bump(dir)
+        assert status.success?, output
+        assert_equal "0.4.10\n", File.read(File.join(dir, 'VERSION'))
+        output, status = Open3.capture2e('cargo', 'check', '--locked', '--offline', chdir: dir)
+        assert status.success?, output
       end
     end
   end

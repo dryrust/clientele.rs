@@ -25,7 +25,7 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 20 outstanding leaf tasks: 4 P1, 14 P2, and 2 P3. Evidence below
+**Status:** 19 outstanding leaf tasks: 3 P1, 14 P2, and 2 P3. Evidence below
 distinguishes runtime reproductions, source-review findings, coverage gaps, and
 optional extensions.
 
@@ -47,7 +47,7 @@ tests. Cross-compilation establishes build coverage only.
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing implementations and regression tests reviewed; optional typed-parser reuse in R2-21 |
 | Native/UTF-8/XDG paths and tracing | Existing path, format, color, and global-initialization tests pass locally; dependency access and isolated-feature coverage in R2-11, R2-14 |
 | Completions, manpages, error-stack, packaging | All-feature MSRV tests and packaged default/minimal doctests pass; isolated-feature and quality gates in R2-14, R2-18 |
-| CI, Rake, Make, project documentation | Version-bump rollback failure; missing Ruby CI coverage, suppressed unused warnings, stale guidance/credits; R2-06, R2-15, R2-17, R2-19, R2-20 |
+| CI, Rake, Make, project documentation | Missing Ruby CI coverage, suppressed unused warnings, stale guidance/credits; R2-15, R2-17, R2-19, R2-20 |
 
 ## P1 — Correctness and reliability
 
@@ -96,19 +96,6 @@ tests. Cross-compilation establishes build coverage only.
   different `PATH` directories and verify returned logical names/path precedence.
   **Verify:** Extend the discovery subprocess tests; run on native Windows and
   case-insensitive macOS, with a case-sensitive-filesystem control where available.
-
-- [ ] **R2-06 — Roll back a version bump when Cargo fails.**
-  **Evidence (reproduced):** `Rakefile` writes `Cargo.toml` and `VERSION` before
-  running `cargo update --workspace --offline`. In an isolated workspace with a
-  missing member, the task failed but advanced both files from 0.4.1 to 0.4.2,
-  leaving `Cargo.lock` at 0.4.1. Existing `tests/version_bump_test.rb` covers
-  validation failures before writing, not failure of the Cargo operation.
-  **Acceptance:** Restore the original metadata and lockfile state on Cargo
-  failure, including an initially absent lockfile, and return failure to Rake.
-  Add a deterministic failure fixture and ensure a retry consumes only one patch
-  version. Preserve historical text and unrelated locked dependency versions.
-  **Verify:** `rake test`, including the new rollback regression and the existing
-  successful-bump/validation cases; do not exercise failure against the real workspace.
 
 ## P2 — Public API and CLI usability
 
@@ -222,12 +209,12 @@ tests. Cross-compilation establishes build coverage only.
   require the corresponding CI jobs to pass on their native runners.
 
 - [ ] **R2-15 — Run release-tooling regressions in CI.**
-  **Evidence (coverage gap):** `rake test` currently passes its two tests and
-  30 assertions, but no workflow step runs `tests/version_bump_test.rb`. Rust tests
+  **Evidence (coverage gap):** `rake test` currently passes its three tests and
+  52 assertions, but no workflow step runs `tests/version_bump_test.rb`. Rust tests
   and packaging checks cannot detect regressions in `Rakefile`.
   **Acceptance:** Set up reproducible Ruby, Rake, and Minitest dependencies in one
   CI job and execute `rake test`. Keep fixtures isolated/offline and surface failures
-  as job failures. The rollback test from R2-06 must run automatically once added.
+  as job failures, including the existing failed-update rollback/retry regression.
   **Verify:** `rake test` and the new CI job from a clean checkout.
 
 - [ ] **R2-16 — Cover non-Unicode paths in executable discovery.**
@@ -420,7 +407,8 @@ cargo check -p clientele --all-targets --no-default-features --features completi
 ```
 
 For version-bump tooling, `rake test` runs isolated Cargo workspaces and verifies
-that historical versions are preserved. CI quality gates also require:
+historical versions, rollback of partial updates, and retry behavior with present
+and absent lockfiles. CI quality gates also require:
 
 ```sh
 cargo clippy --workspace --all-targets --locked -- -D warnings
@@ -460,7 +448,7 @@ Host: aarch64 macOS; stable Rust/Cargo 1.98.1, with Rust 1.97.0 also installed.
   `cargo +1.97.0 check -p clientele --lib --no-default-features --features gofer --locked`.
 - `cargo package -p clientele --locked --target-dir target` and packaged
   default/no-default-feature doctests (19 and 4 doctests respectively).
-- `rake test` (2 tests, 30 assertions) and
+- `rake test` (3 tests, 52 assertions) and
   `cargo run --locked --example skeleton -- config`.
 - `cargo check -p clientele --all-targets --all-features --locked --target <target>`
   for `aarch64-unknown-linux-gnu` and `x86_64-pc-windows-msvc`.
@@ -468,8 +456,8 @@ Host: aarch64 macOS; stable Rust/Cargo 1.98.1, with Rust 1.97.0 also installed.
 **Failures and limitations:**
 
 - The downstream derive snippet failed until the `clap` module import was added;
-  case-insensitive lookup, failed-bump, and closed-pipe probes exposed the
-  behaviors described in R2-05 through R2-09.
+  case-insensitive lookup and closed-pipe probes exposed the behaviors described
+  in R2-05 and R2-09. Diagnostic context is covered by R2-08.
 - Ordinary quality checks are warning-free with current allowances. A diagnostic
   `cargo rustc -p clientele --lib --all-features --locked -- --force-warn unused`
   reports five suppressed warnings; see R2-17.
