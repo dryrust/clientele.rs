@@ -39,11 +39,10 @@ polish or feature growth. Priorities do not override an explicitly selected task
 ## 9. CI, packaging metadata, and release tooling (P2/P3)
 
 CI file: [.github/workflows/ci.yml](.github/workflows/ci.yml). It currently covers
-Ubuntu and Windows, minimal feature combinations on Ubuntu, and all-features
-tests plus packaged doctests on both systems, using Rust 1.97.0 and stable.
+Ubuntu, macOS, and Windows with default and all-features tests on Rust 1.97.0
+and stable. Ubuntu also runs minimal feature combinations; Ubuntu and Windows
+run packaged doctests.
 
-- [ ] **9b. Add native macOS CI coverage.**
-  Run behavioral tests on this supported platform, including subprocess fixtures.
 - [ ] **9c. Extend critical minimal-feature checks to Windows.**
   Cover supported `clap`, tracing, subcommands, and `error-stack` combinations;
   Windows-specific behavioral tests must run natively.

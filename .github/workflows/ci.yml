@@ -59,6 +59,26 @@ jobs:
           cargo test --manifest-path "$manifest" --target-dir target --doc --locked
           cargo test --manifest-path "$manifest" --target-dir target --doc --no-default-features --locked
         done
+  build-macos:
+    name: Build on macOS (${{ matrix.toolchain }})
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain: ["1.97.0", "stable"]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.toolchain }}
+    - name: Build examples
+      run: cargo build --verbose --examples --locked
+    - name: Run tests
+      run: cargo test --workspace --locked
+    - name: Test all features
+      run: cargo test --workspace --all-features --locked
   build-windows:
     name: Build on Windows (${{ matrix.toolchain }})
     runs-on: windows-latest
