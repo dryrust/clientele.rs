@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
+- OSC 8 hyperlink stripping in `strip_ansi()`, retaining visible labels and
+  supporting BEL and ST terminators while preserving malformed controls
 - `Display` support for typed `SortKey<T>` and `SortKeys<T>` when `T` implements
   `Display`, retaining string output, direction prefixes, and comma separators.
   Constructor calls relying on formatting to infer `String` now need an explicit

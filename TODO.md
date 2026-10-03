@@ -24,20 +24,13 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 8g**, extending ANSI stripping to OSC hyperlinks.
+**Suggested next leaf: 8h.args**, completing argument-expansion rustdoc.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
 
 ## 8. API composability and documentation (P2 unless marked P3)
 
-- [ ] **8g. Extend ANSI stripping to OSC hyperlinks (P3).**
-  `strip_ansi()` currently preserves unsupported non-CSI escapes, including OSC
-  hyperlinks. Extend its documented contract to preserve the visible label while
-  removing supported controls; cover BEL and ST terminators and document
-  malformed-input behavior. Keep malformed/truncated CSI and unsupported escape
-  preservation intact. Evaluate any parser dependency against the crate's feature
-  policy.
 - [ ] **8h. Complete public rustdoc, one module per change.**
   - [ ] **8h.args:** `lib/clientele/src/args.rs`: features, return values, I/O
     errors, OS-string preservation, Windows glob expansion before @argfiles.
