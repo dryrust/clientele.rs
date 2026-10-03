@@ -24,18 +24,13 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 8d**, adding standard subcommand collection interfaces.
+**Suggested next leaf: 8e**, supporting formatting typed sort keys.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
 
 ## 8. API composability and documentation (P2 unless marked P3)
 
-- [ ] **8d. Add standard subcommand collection interfaces.**
-  `SubcommandsProvider` has an inherent `into_iter()` and a `get_commands()`
-  returning `&Vec<Subcommand>`. Add owned/borrowed `IntoIterator` support and a
-  slice-based accessor while preserving existing methods. Test iteration order,
-  borrowing, and ownership; keep discovery behavior changes separate.
 - [ ] **8e. Support formatting typed sort keys.**
   `SortKey` and `SortKeys` implement `Display` only for string keys, although Clap
   parsing supports typed `ValueEnum` keys. Generalize formatting for suitable
@@ -94,7 +89,10 @@ tests plus packaged doctests on both systems.
   - [ ] **9d.doc:** Add rustdoc verification.
   - [ ] **9d.clippy:** Add Clippy verification.
   - [ ] **9d.strict:** Enforce warning-free checks after the relevant baseline
-    warnings are resolved. See 8d and 8j; recheck counts before enabling gates.
+    warnings are resolved. See 8j. The compatibility-preserved inherent
+    `SubcommandsProvider::into_iter()` still triggers `should_implement_trait`
+    despite owned/borrowed `IntoIterator` implementations; assess its signature
+    compatibility before changing it. Recheck counts before enabling gates.
 - [ ] **9e. Use `--locked` consistently in existing CI build/test steps.**
   Feature-matrix and package checks already use it; the default build, example,
   and test steps do not.
@@ -164,9 +162,11 @@ For sort parsing, checked SQL rendering, and their doctests with minimal feature
 cargo test -p clientele --no-default-features --features clap --locked
 ```
 
-For subcommand lookup/listing regressions with only their required features:
+For subcommand collection interfaces and lookup/listing regressions with only
+their required features:
 
 ```sh
+cargo test -p clientele --lib --no-default-features --features std,subcommands --locked
 cargo test -p clientele --test subcommands_find --test subcommands_list --no-default-features --features std,subcommands --locked
 cargo test -p clientele --test subcommands_path --no-default-features --features std,subcommands --locked
 cargo test -p clientele --test subcommands_order --no-default-features --features std,subcommands --locked

@@ -27,6 +27,11 @@ impl Subcommand {
     }
 }
 
+/// A collected snapshot of executable subcommands. Requires `std,subcommands`.
+///
+/// Collection accessors and iterators preserve [`Self::collect`]'s ordering and
+/// do not rescan the filesystem. Iterate over `&provider` to borrow commands or
+/// over `provider` to consume it and take ownership of the commands.
 #[derive(Debug, Clone)]
 pub struct SubcommandsProvider {
     commands: Vec<Subcommand>,
@@ -120,20 +125,54 @@ impl SubcommandsProvider {
 }
 
 impl SubcommandsProvider {
+    /// Borrows commands in collection order without consuming the provider.
     pub fn iter(&self) -> impl Iterator<Item = &Subcommand> {
         self.commands.iter()
     }
 
+    /// Consumes the provider and yields owned commands in collection order.
+    ///
+    /// Retained for compatibility; generic consumers and `for` loops can also
+    /// use the [`IntoIterator`] implementation.
     pub fn into_iter(self) -> impl Iterator<Item = Subcommand> {
-        self.commands.into_iter()
+        IntoIterator::into_iter(self)
     }
 
+    /// Borrows the collected commands as a slice in collection order.
+    pub fn commands(&self) -> &[Subcommand] {
+        &self.commands
+    }
+
+    /// Borrows the backing vector in collection order.
+    ///
+    /// Retained for compatibility; prefer [`Self::commands`] for slice access.
     pub fn get_commands(&self) -> &Vec<Subcommand> {
         &self.commands
     }
 
+    /// Consumes the provider and returns its commands in collection order.
     pub fn into_commands(self) -> Vec<Subcommand> {
         self.commands
+    }
+}
+
+/// Consumes the provider and yields each command without cloning it.
+impl IntoIterator for SubcommandsProvider {
+    type Item = Subcommand;
+    type IntoIter = std::vec::IntoIter<Subcommand>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.commands.into_iter()
+    }
+}
+
+/// Borrows each command in collection order, leaving the provider available.
+impl<'a> IntoIterator for &'a SubcommandsProvider {
+    type Item = &'a Subcommand;
+    type IntoIter = std::slice::Iter<'a, Subcommand>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.commands.iter()
     }
 }
 
@@ -364,7 +403,84 @@ fn parse_path_exts(value: &str) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_path_exts;
+    use super::{parse_path_exts, Subcommand, SubcommandsProvider};
+
+    fn collection_fixture() -> SubcommandsProvider {
+        // Construct a snapshot directly so collection-interface tests need no
+        // filesystem fixtures or process-global environment changes.
+        SubcommandsProvider {
+            commands: vec![
+                Subcommand {
+                    name: "alpha".to_owned(),
+                    path: "demo-alpha".into(),
+                },
+                Subcommand {
+                    name: "zeta".to_owned(),
+                    path: "demo-zeta".into(),
+                },
+            ],
+        }
+    }
+
+    #[test]
+    fn borrowed_iteration_and_slice_access_preserve_the_snapshot() {
+        let provider = collection_fixture();
+        let slice = provider.commands();
+        let legacy: &Vec<Subcommand> = provider.get_commands();
+        assert!(std::ptr::eq(slice, legacy.as_slice()));
+
+        let mut borrowed = Vec::new();
+        for command in &provider {
+            borrowed.push(command);
+        }
+        assert_eq!(borrowed.len(), slice.len());
+        for (command, stored) in borrowed.into_iter().zip(slice) {
+            assert!(std::ptr::eq(command, stored));
+        }
+        assert_eq!(
+            provider
+                .iter()
+                .map(|command| command.name.as_str())
+                .collect::<Vec<_>>(),
+            ["alpha", "zeta"]
+        );
+        // Borrowing leaves the provider available for subsequent ownership transfer.
+        assert_eq!(provider.into_commands(), collection_fixture().commands);
+    }
+
+    #[test]
+    fn owned_iteration_supports_generic_consumers_and_legacy_calls() {
+        fn collect_commands(commands: impl IntoIterator<Item = Subcommand>) -> Vec<Subcommand> {
+            commands.into_iter().collect()
+        }
+
+        let provider = collection_fixture();
+        let name_storage = provider.commands()[0].name.as_ptr();
+        let owned = collect_commands(provider);
+        assert_eq!(owned, collection_fixture().into_commands());
+        assert_eq!(
+            owned[0].name.as_ptr(),
+            name_storage,
+            "commands must be moved"
+        );
+        assert_eq!(collection_fixture().into_iter().collect::<Vec<_>>(), owned);
+        let mut names = Vec::new();
+        for command in collection_fixture() {
+            names.push(command.name);
+        }
+        assert_eq!(names, ["alpha", "zeta"]);
+    }
+
+    #[test]
+    fn empty_collections_have_empty_views_and_iterators() {
+        let provider = SubcommandsProvider { commands: vec![] };
+        assert!(provider.commands().is_empty());
+        assert!(provider.get_commands().is_empty());
+        assert!(provider.iter().next().is_none());
+        assert!(IntoIterator::into_iter(&provider).next().is_none());
+        assert!(provider.clone().into_iter().next().is_none());
+        assert!(IntoIterator::into_iter(provider).next().is_none());
+    }
 
     #[test]
     fn ignores_empty_and_missing_dot_entries() {

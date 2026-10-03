@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
+- Owned and borrowed `IntoIterator` support and a `commands()` slice accessor for
+  `SubcommandsProvider`, preserving the existing collection methods and ordering
 - `From<StandardOptions>` and `From<&StandardOptions>` conversions to tracing
   `LevelFilter`, retaining `.into()` support and the existing verbosity mapping
 - `tracing::try_init_tracing_subscriber()` for fallible global subscriber setup,
