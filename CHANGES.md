@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
+- `SortKeys::parse_with()` for typed, stateful, or borrowed-key parsing outside
+  a Clap invocation, sharing the existing direction syntax and first-error behavior
 - Re-export `tracing_subscriber` through `clientele::crates` with `tracing`,
   supporting custom and scoped subscribers using Clientele's dependency version
 - Opt-in `manpages` feature and module for ROFF manual-page generation via

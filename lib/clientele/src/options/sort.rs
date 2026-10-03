@@ -59,9 +59,10 @@ impl core::error::Error for SortSqlError {}
 /// it is neither trimmed nor rejected. Typed Clap parsing uses the same syntax
 /// and passes the unchanged key text to `clap::ValueEnum` for validation.
 /// Parsing returns a `String` error at the first invalid component, with no
-/// partial result. Typed parsing is case-sensitive and also rejects names that
+/// partial result. Clap's typed parsing is case-sensitive and also rejects names that
 /// the enum does not accept. `FromStr` is implemented only for string keys;
-/// typed keys use Clap's value parser instead.
+/// typed keys can use Clap's value parser or [`Self::parse_with`] with an
+/// application-defined key parser.
 ///
 /// Formatting is available when `T` implements [`core::fmt::Display`]. It uses
 /// each key's display text, separates keys with commas, and prefixes descending
@@ -165,6 +166,71 @@ impl<T: Clone> SortKeys<T> {
         Self {
             keys: keys.to_owned(),
         }
+    }
+
+    /// Parses a sort expression using an application-defined key parser.
+    ///
+    /// Requires `clap` (which enables `std`), but neither a CLI invocation nor
+    /// `T: clap::ValueEnum`. Uses the same comma/direction grammar as string
+    /// `FromStr`. Calls `parse_key` in input order with the direction prefix
+    /// removed and whitespace preserved. Returned keys may borrow from `input`.
+    ///
+    /// # Errors
+    ///
+    /// Returns the first syntax error or the callback's error unchanged, with
+    /// no partial result. Invalid components are rejected before calling the
+    /// callback, and later components are not visited. Earlier callback side
+    /// effects are not undone.
+    ///
+    /// ```
+    /// use clientele::options::sort::{SortKey, SortKeys};
+    ///
+    /// #[derive(Clone, Debug, PartialEq)]
+    /// enum Field { Name, Updated }
+    ///
+    /// let sort = SortKeys::parse_with("-updated,+name", |key| match key {
+    ///     "name" => Ok(Field::Name),
+    ///     "updated" => Ok(Field::Updated),
+    ///     _ => Err(format!("unknown field: {key}")),
+    /// })?;
+    /// assert_eq!(sort.keys(), &[
+    ///     SortKey::new(Field::Updated, true),
+    ///     SortKey::new(Field::Name, false),
+    /// ]);
+    /// # Ok::<(), String>(())
+    /// ```
+    pub fn parse_with<'a>(
+        input: &'a str,
+        mut parse_key: impl FnMut(&'a str) -> Result<T, String>,
+    ) -> Result<Self, String> {
+        if input.is_empty() {
+            return Err("sort expression must contain at least one key".to_owned());
+        }
+
+        let keys = input
+            .split(',')
+            .map(|key| {
+                let (descending, key) = match key.as_bytes().first() {
+                    Some(b'-') => (true, &key[1..]),
+                    Some(b'+') => (false, &key[1..]),
+                    _ => (false, key),
+                };
+
+                if key.is_empty() {
+                    return Err("sort keys must not be empty".to_owned());
+                }
+                if key.starts_with('+') || key.starts_with('-') {
+                    return Err(format!("invalid sort key: {key}"));
+                }
+
+                Ok(SortKey {
+                    key: parse_key(key)?,
+                    descending,
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(Self { keys })
     }
 
     /// Returns whether the sequence contains zero keys.
@@ -380,50 +446,16 @@ fn is_sql_column(column: &str) -> bool {
     })
 }
 
-fn parse_sort_keys<T: Clone>(
-    input: &str,
-    parse_key: impl Fn(&str) -> Result<T, String>,
-) -> Result<SortKeys<T>, String> {
-    if input.is_empty() {
-        return Err("sort expression must contain at least one key".to_owned());
-    }
-
-    let keys = input
-        .split(',')
-        .map(|key| {
-            let (descending, key) = match key.as_bytes().first() {
-                Some(b'-') => (true, &key[1..]),
-                Some(b'+') => (false, &key[1..]),
-                _ => (false, key),
-            };
-
-            if key.is_empty() {
-                return Err("sort keys must not be empty".to_owned());
-            }
-            if key.starts_with('+') || key.starts_with('-') {
-                return Err(format!("invalid sort key: {key}"));
-            }
-
-            Ok(SortKey {
-                key: parse_key(key)?,
-                descending,
-            })
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-
-    Ok(SortKeys { keys })
-}
-
 impl FromStr for SortKeys {
     type Err = String;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        parse_sort_keys(input, |key| Ok(key.to_owned()))
+        Self::parse_with(input, |key| Ok(key.to_owned()))
     }
 }
 
 fn parse_value_enum_sort_keys<T: clap::ValueEnum>(input: &str) -> Result<SortKeys<T>, String> {
-    parse_sort_keys(input, |key| <T as clap::ValueEnum>::from_str(key, false))
+    SortKeys::parse_with(input, |key| <T as clap::ValueEnum>::from_str(key, false))
 }
 
 impl<T> clap::builder::ValueParserFactory for SortKeys<T>
@@ -444,6 +476,52 @@ mod tests {
     use super::{SortKey, SortKeys, SortSqlError};
     use alloc::{borrow::ToOwned, format, vec};
     use clap::{Parser, ValueEnum};
+
+    #[test]
+    fn custom_parsing_supports_borrowed_keys_without_value_enum() {
+        let input = "-name,+id, ".to_owned();
+        let sort = SortKeys::<&str>::parse_with(&input, Ok).unwrap();
+        assert_eq!(
+            sort.keys(),
+            &[
+                SortKey::new("name", true),
+                SortKey::new("id", false),
+                SortKey::new(" ", false),
+            ]
+        );
+    }
+
+    #[test]
+    fn custom_parsing_preserves_text_and_stops_at_the_first_callback_error() {
+        let mut visited = Vec::new();
+        let result = SortKeys::parse_with(" name ,+id,-stop,later", |key| {
+            visited.push(key);
+            if key == "stop" {
+                Err("application rejected this key".to_owned())
+            } else {
+                Ok(key.len())
+            }
+        });
+        assert_eq!(result, Err("application rejected this key".to_owned()));
+        assert_eq!(visited, [" name ", "id", "stop"]);
+    }
+
+    #[test]
+    fn custom_parsing_rejects_invalid_components_before_calling_the_parser() {
+        for input in ["", ",", "+", "-", "++name", "--name", "+-name", "-+name"] {
+            assert!(SortKeys::<String>::parse_with(input, |_| {
+                panic!("invalid syntax must not reach the key parser")
+            })
+            .is_err());
+        }
+        let mut visited = Vec::new();
+        let result = SortKeys::parse_with("name,,later", |key| {
+            visited.push(key);
+            Ok(key.to_owned())
+        });
+        assert_eq!(result, Err("sort keys must not be empty".to_owned()));
+        assert_eq!(visited, ["name"]);
+    }
 
     #[derive(Parser, Debug)]
     struct Args {

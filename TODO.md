@@ -25,7 +25,7 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 8 outstanding leaf tasks: 3 P1, 3 P2, and 2 P3. Evidence below
+**Status:** 7 outstanding leaf tasks: 3 P1, 3 P2, and 1 P3. Evidence below
 distinguishes runtime reproductions, source-review findings, coverage gaps, and
 optional extensions.
 
@@ -44,7 +44,7 @@ tests. Cross-compilation establishes build coverage only.
 | Feature gates, dependency re-exports, consumer builds | Standalone-feature builds, weak-feature guards, Serde isolation, and scoped tracing checks pass |
 | Arguments and skeleton CLI | Argument-file contracts pass; native Windows wildcard coverage remains in R2-13 |
 | Executable discovery | Case-sensitive-prefix mismatch reproduced on macOS; Windows extension/identity findings and OS-path coverage gaps; R2-03 through R2-05, R2-16, R2-22 |
-| Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing implementations and regression tests reviewed; optional typed-parser reuse in R2-21 |
+| Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing regressions and the typed `parse_with` callback contract pass |
 | Native/UTF-8/XDG paths and tracing | Path, format, color, global-initialization, and focused feature-combination tests pass locally |
 | Completions, manpages, error-stack, packaging | Isolated-feature tests, all-feature quality gates, and packaged default/minimal doctests pass |
 | CI, Rake, Make, project documentation | Locked Ruby CI coverage and current sysexits attribution are in place; contributor guidance remains in R2-19 |
@@ -139,18 +139,6 @@ tests. Cross-compilation establishes build coverage only.
   baseline below; run `git diff --check`.
 
 ## P3 — Targeted API and performance extensions
-
-- [ ] **R2-21 — Expose reusable typed sort parsing outside a Clap invocation.**
-  **Evidence (API opportunity):** In `lib/clientele/src/options/sort.rs`,
-  `parse_sort_keys` already accepts a key parser, but it is private. Only
-  `SortKeys<String>` implements `FromStr`; typed consumers of config/environment
-  values must duplicate the comma/direction grammar or construct a Clap invocation.
-  **Acceptance:** Add an explicit typed parsing constructor accepting a key
-  parser, reusing the existing grammar and first-error behavior. Preserve string
-  `FromStr`, typed `ValueEnum` parsing, whitespace handling, and default semantics.
-  Document an example with a typed key that does not implement `ValueEnum`.
-  **Verify:** `cargo test -p clientele --no-default-features --features clap --locked`,
-  including mixed directions, invalid components, and custom key-parser errors.
 
 - [ ] **R2-22 — Reuse a per-call search context during Windows collection.**
   **Evidence (source-level performance opportunity):** Windows `collect` scans
