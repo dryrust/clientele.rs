@@ -24,21 +24,10 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 9d.strict.gates**, enforcing the clean warning baseline.
+**Suggested next leaf: 10a**, adding opt-in shell completions.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
-
-## 9. CI, packaging metadata, and release tooling (P2/P3)
-
-CI file: [.github/workflows/ci.yml](.github/workflows/ci.yml). It currently covers
-Ubuntu, macOS, and Windows with default and all-features tests on Rust 1.97.0
-and stable. Ubuntu and Windows also run minimal feature combinations and
-packaged doctests.
-
-- [ ] **9d. Add CI quality gates in small steps.**
-  - [ ] **9d.strict.gates:** Enforce warning-free Clippy and rustdoc in CI after
-    resolving the iterator warning. Recheck the baseline before enabling gates.
 
 ## 10. Optional CLI feature growth (P3)
 
