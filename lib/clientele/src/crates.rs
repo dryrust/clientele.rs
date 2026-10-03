@@ -32,6 +32,12 @@ pub use clap_mangen;
 #[cfg(feature = "dirs")]
 pub use dirs;
 
+/// Dogma 0.3, with default features disabled. Clientele's `std` and `unstable`
+/// features forward to Dogma's corresponding features.
+///
+/// To enable additional Dogma APIs, add a direct Dogma 0.3 dependency with the
+/// desired features. Types from older Dogma versions used by other dependencies
+/// are distinct from those in this re-export.
 pub use dogma;
 
 #[cfg(feature = "dotenv")]

@@ -38,6 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `paths::home_dir()` and `paths::temp_dir()` for native directory resolution,
   with checked `_utf8` variants and independently gated optional dependencies
 ### Changed
+- Update the `clientele::crates::dogma` re-export to Dogma 0.3.0. Downstream
+  callers enabling Dogma's optional APIs must replace `enums`/`structs` paths
+  with `uri` or top-level exports, use the `maybe_`-prefixed `Maybe*` trait
+  methods, and use `Iri::to_uri()` to percent-encode Unicode for the now-distinct,
+  ASCII-only URI types. Dogma 0.1 types exposed by `getenv` and `gofer` remain
+  distinct from the upgraded re-export
 - Adopt Rust 2024 and Cargo resolver 3, retaining the Rust 1.97 minimum version
 - Reuse parsed search variables and directory listings within each Windows
   subcommand discovery call, avoiding repeated directory scans during collection
