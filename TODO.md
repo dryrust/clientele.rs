@@ -25,8 +25,8 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 4 open items: three have implementations/regressions in place but await
-native platform verification review (1 P1 and 2 P2); R2-22 remains unimplemented (P3).
+**Status:** 3 open items: two have implementations/regressions in place but await
+native platform verification review (2 P2); R2-22 remains unimplemented (P3).
 The original evidence below describes the review snapshot, not the corrected code.
 Progress notes identify the remaining work; do not repeat completed implementation
 steps or treat cross-compilation as native verification.
@@ -45,34 +45,11 @@ tests. Cross-compilation establishes build coverage only.
 | --- | --- |
 | Feature gates, dependency re-exports, consumer builds | Standalone-feature builds, weak-feature guards, Serde isolation, and scoped tracing checks pass |
 | Arguments and skeleton CLI | Argument-file contracts pass; native Windows wildcard coverage remains in R2-13 |
-| Executable discovery | R2-03 separator rejection and R2-04 dotted-name identity verified on native Windows; remaining prefix findings and OS-path coverage gaps: R2-05, R2-16, R2-22 |
+| Executable discovery | R2-03/R2-04 verified on native Windows; R2-05 verified on case-insensitive Windows/macOS and case-sensitive Linux; remaining work: R2-16, R2-22 |
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing regressions and the typed `parse_with` callback contract pass |
 | Native/UTF-8/XDG paths and tracing | Path, format, color, global-initialization, and focused feature-combination tests pass locally |
 | Completions, manpages, error-stack, packaging | Isolated-feature tests, all-feature quality gates, and packaged default/minimal doctests pass |
 | CI, Rake, Make, project documentation | Locked Ruby CI coverage, current contributor guidance, and historical attribution are in place |
-
-## P1 — Correctness and reliability
-
-- [ ] **R2-05 — Enforce consistent prefix matching on case-insensitive filesystems.**
-  **Progress:** Lookup now verifies actual directory-entry spelling, preserving
-  parents and symlink names without canonicalization; Windows extensions still fold
-  case. Shared lookup/listing tests reject an uppercase-only prefix; isolated order
-  tests cover differently cased prefixes and logical names in reversed/repeated
-  `PATH` directories, including uppercase Windows extensions. Tests pass on the
-  case-insensitive macOS host; native Windows and case-sensitive controls remain.
-  **Evidence (reproduced):** On the review machine's case-insensitive macOS
-  filesystem, an executable named `DEMO-hello` yielded no entries from
-  `collect("demo-", 1)`, while `find("demo-", "hello")` returned it. In
-  `lib/clientele/src/subcommands.rs`, listing checks directory-entry spelling,
-  but lookup checks the constructed candidate path's spelling rather than the
-  actual filename.
-  The public contract says prefix matching is literal and case-sensitive.
-  **Acceptance:** Make both operations apply the same prefix policy to actual
-  filenames. Preserve the documented case-sensitive policy unless an explicit
-  compatibility decision replaces it. Include case-colliding candidates in
-  different `PATH` directories and verify returned logical names/path precedence.
-  **Verify:** Extend the discovery subprocess tests; run on native Windows and
-  case-insensitive macOS, with a case-sensitive-filesystem control where available.
 
 ## P2 — Regression coverage and automation
 
@@ -395,3 +372,17 @@ recorded R2-03 verification in this file.
 - The compatibility decision is documented in `SubcommandsProvider::find` and
   `CHANGES.md`: search logical stems across all of `PATH` before exact-filename
   fallback, so `report.v1.bat` wins over `report.v1` even in a later directory.
+
+### R2-05 native verification on 2026-10-03
+
+Closed R2-05 using [CI run 37141180579](https://github.com/dryrust/clientele.rs/actions/runs/37141180579)
+at `2df1ea64ef0e06757bd6140af34beb75df1985f6`; source and tests are unchanged.
+Reviewed successful stable jobs for
+[Windows](https://github.com/dryrust/clientele.rs/actions/runs/37141180579/job/111255770537),
+[macOS](https://github.com/dryrust/clientele.rs/actions/runs/37141180579/job/111255770602),
+and [Linux](https://github.com/dryrust/clientele.rs/actions/runs/37141180579/job/111255770629).
+The case-collision driver reported case-insensitive filesystems on Windows/macOS
+and a case-sensitive filesystem on Linux. Default/all-feature suites passed on
+all three; minimal `std,subcommands` suites also passed on Windows/Linux.
+Fixtures verify literal prefixes and logical names, uppercase Windows extensions,
+reversed/repeated `PATH` precedence, and exact name/path round trips.
