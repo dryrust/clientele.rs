@@ -25,8 +25,8 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 5 open items: four have implementations/regressions in place but await
-native platform verification review (2 P1 and 2 P2); R2-22 remains unimplemented (P3).
+**Status:** 4 open items: three have implementations/regressions in place but await
+native platform verification review (1 P1 and 2 P2); R2-22 remains unimplemented (P3).
 The original evidence below describes the review snapshot, not the corrected code.
 Progress notes identify the remaining work; do not repeat completed implementation
 steps or treat cross-compilation as native verification.
@@ -45,36 +45,13 @@ tests. Cross-compilation establishes build coverage only.
 | --- | --- |
 | Feature gates, dependency re-exports, consumer builds | Standalone-feature builds, weak-feature guards, Serde isolation, and scoped tracing checks pass |
 | Arguments and skeleton CLI | Argument-file contracts pass; native Windows wildcard coverage remains in R2-13 |
-| Executable discovery | R2-03 separator rejection verified on native Windows; remaining identity/prefix findings and OS-path coverage gaps: R2-04, R2-05, R2-16, R2-22 |
+| Executable discovery | R2-03 separator rejection and R2-04 dotted-name identity verified on native Windows; remaining prefix findings and OS-path coverage gaps: R2-05, R2-16, R2-22 |
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing regressions and the typed `parse_with` callback contract pass |
 | Native/UTF-8/XDG paths and tracing | Path, format, color, global-initialization, and focused feature-combination tests pass locally |
 | Completions, manpages, error-stack, packaging | Isolated-feature tests, all-feature quality gates, and packaged default/minimal doctests pass |
 | CI, Rake, Make, project documentation | Locked Ruby CI coverage, current contributor guidance, and historical attribution are in place |
 
 ## P1 — Correctness and reliability
-
-- [ ] **R2-04 — Reconcile Windows dotted-name collection and lookup identity.**
-  **Progress:** Lookup now searches logical stems across all of `PATH` before
-  explicit-file fallback. Shared lookup/listing fixtures include the same-directory
-  `report.v1`/`report.v1.bat` collision. `subcommands_order` additionally covers
-  reversed/repeated directories, extension precedence, recognized-extension stems,
-  and explicit fallback. Implementation and tests cross-compile; native Windows
-  verification remains before closing this item.
-  **Evidence (source review):** In `lib/clientele/src/subcommands.rs`, Windows
-  `collect` derives a name, then replaces only `command.path` through
-  `resolve_command`. With `PATHEXT=.BAT` and both
-  `demo-report.v1` and `demo-report.v1.bat` present, collection can retain the name
-  `report.v1` but select the exact file `demo-report.v1`. `find("demo-",
-  "report.v1")` then derives `report` from that same path. This violates the
-  documented shared naming rules and the round-trip expectation in
-  `lib/clientele/tests/subcommands_list.rs`.
-  **Acceptance:** Define and implement a consistent policy for the ambiguity
-  between a dotted logical stem and an explicit filename. Every collected entry
-  must round-trip through lookup with the same name and path; retain deterministic
-  ordering/deduplication and record any change to exact-file precedence. Test the
-  collision in one directory and across differently ordered `PATH` directories.
-  **Verify:** Native Windows runs of `subcommands_find`, `subcommands_list`, and
-  `subcommands_order`, minimally with `std,subcommands` and with defaults.
 
 - [ ] **R2-05 — Enforce consistent prefix matching on case-insensitive filesystems.**
   **Progress:** Lookup now verifies actual directory-entry spelling, preserving
@@ -396,3 +373,25 @@ Windows jobs passed default, minimal `std,subcommands`, and all-feature tests.
   --features std,subcommands --locked`; both Windows logs confirm this combination
   completed successfully. This supplies the native execution missing from the
   earlier local verification. Other open items require their own evidence review.
+
+### R2-04 native verification on 2026-10-03
+
+Closed R2-04 after reviewing the implementation, collision fixtures, and native
+Windows logs for commit `2df1ea64ef0e06757bd6140af34beb75df1985f6` in
+[run 37141180579](https://github.com/dryrust/clientele.rs/actions/runs/37141180579).
+The current source and tests match that commit; the intervening change only
+recorded R2-03 verification in this file.
+
+- Both [Rust 1.97.0](https://github.com/dryrust/clientele.rs/actions/runs/37141180579/job/111255770523)
+  and [stable](https://github.com/dryrust/clientele.rs/actions/runs/37141180579/job/111255770537)
+  executed `subcommands_find`, `subcommands_list`, and `subcommands_order`
+  successfully with defaults and all features. Their feature-driver logs also
+  confirm the minimal `std,subcommands` suite completed successfully.
+- Shared fixtures cover the same-directory `report.v1`/`report.v1.bat` collision.
+  The order driver covers reversed/repeated `PATH` directories, `.BAT`/`.CMD`
+  precedence, `.V1` as a recognized extension, `task.bat`/`task.bat.bat` ambiguity,
+  explicit-file fallback, sorted/deduplicated listings, and name/path round trips.
+  Child failures propagate to the parent test and CI job.
+- The compatibility decision is documented in `SubcommandsProvider::find` and
+  `CHANGES.md`: search logical stems across all of `PATH` before exact-filename
+  fallback, so `report.v1.bat` wins over `report.v1` even in a later directory.
