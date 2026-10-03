@@ -68,9 +68,11 @@ pub fn run() -> bool {
         filename.push(EXTENSION);
         let path = directory.join(&filename);
         fs::write(&path, "fixture").unwrap();
-        assert!(fs::read_dir(&directory)
-            .unwrap()
-            .any(|entry| entry.unwrap().file_name() == filename));
+        assert!(
+            fs::read_dir(&directory)
+                .unwrap()
+                .any(|entry| entry.unwrap().file_name() == filename)
+        );
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;

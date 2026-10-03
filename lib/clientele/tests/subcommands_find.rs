@@ -5,7 +5,7 @@ use std::path::Path;
 
 #[path = "support/subcommands_shared.rs"]
 mod subcommands_shared;
-use subcommands_shared::{Result, HIDDEN_PREFIX, TEST_DIRECTORY, TEST_FILES, TEST_PREFIX};
+use subcommands_shared::{HIDDEN_PREFIX, Result, TEST_DIRECTORY, TEST_FILES, TEST_PREFIX};
 
 fn main() -> Result<()> {
     subcommands_shared::run(test_find)

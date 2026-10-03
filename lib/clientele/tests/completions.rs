@@ -1,7 +1,7 @@
 use clientele::{
-    completions::{generate, generate_to, Shell},
-    crates::clap::{self, CommandFactory, Parser, Subcommand, ValueEnum},
     StandardOptions,
+    completions::{Shell, generate, generate_to},
+    crates::clap::{self, CommandFactory, Parser, Subcommand, ValueEnum},
 };
 
 #[derive(Parser)]
@@ -64,11 +64,13 @@ fn writes_a_completion_file_and_reports_missing_directories() {
     assert!(script.contains("--verbose"));
     assert!(script.contains("--format"));
     assert!(script.contains("config"));
-    assert!(generate_to(
-        Shell::Bash,
-        &mut Options::command(),
-        "demo-cli",
-        directory.child("missing"),
-    )
-    .is_err());
+    assert!(
+        generate_to(
+            Shell::Bash,
+            &mut Options::command(),
+            "demo-cli",
+            directory.child("missing"),
+        )
+        .is_err()
+    );
 }

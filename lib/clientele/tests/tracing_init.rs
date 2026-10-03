@@ -3,9 +3,9 @@
 //! Runs each global-subscriber initialization scenario in a fresh process.
 
 use clientele::{
+    StandardOptions,
     crates::clap::Parser,
     tracing::{init_tracing_subscriber, try_init_tracing_subscriber},
-    StandardOptions,
 };
 use std::{env, process::Command};
 

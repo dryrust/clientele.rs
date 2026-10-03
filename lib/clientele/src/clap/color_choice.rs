@@ -64,7 +64,7 @@ pub trait ColorChoiceExt {
     fn to_bool_for(&self, stream: ColorStream) -> bool {
         use std::{
             env,
-            io::{stderr, stdout, IsTerminal},
+            io::{IsTerminal, stderr, stdout},
         };
         color_enabled(
             self.as_color_choice(),
@@ -155,7 +155,7 @@ pub fn color_choice(args: &[OsString]) -> ColorChoice {
 
 #[cfg(test)]
 mod tests {
-    use super::{color_choice, color_enabled, ColorChoice, ColorChoiceExt, ColorStream, OsString};
+    use super::{ColorChoice, ColorChoiceExt, ColorStream, OsString, color_choice, color_enabled};
 
     #[test]
     fn auto_detects_each_stream_independently() {

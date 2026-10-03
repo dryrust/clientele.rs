@@ -4,7 +4,7 @@
 
 #[cfg(feature = "std")]
 use clientele::crates::error_stack::ResultExt;
-use clientele::{crates::error_stack::Report, SysexitsError, SysexitsResult};
+use clientele::{SysexitsError, SysexitsResult, crates::error_stack::Report};
 
 #[test]
 fn sysexits_errors_can_be_report_contexts() {

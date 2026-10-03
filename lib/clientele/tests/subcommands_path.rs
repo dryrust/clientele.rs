@@ -2,6 +2,8 @@
 
 //! Unix PATH-component and Windows missing-environment checks in isolated children.
 
+#![deny(unsafe_code)]
+
 #[cfg(any(unix, windows))]
 #[path = "support/subcommands_native.rs"]
 mod subcommands_native;
@@ -34,8 +36,8 @@ mod windows {
     pub fn run() {
         if let Ok(case) = env::var(CHILD_MODE) {
             let dir = PathBuf::from(env::args_os().nth(1).expect("fixture directory"));
-            if case == "refresh" {
-                check_refresh(&dir);
+            if case.starts_with("refresh-") {
+                check_refresh(&dir, &case);
                 return;
             }
             if case.starts_with("malformed-") {
@@ -150,27 +152,31 @@ mod windows {
                 .unwrap();
             }
         }
-        let output = Command::new(env::current_exe().unwrap())
-            .arg(&fixture_dir)
-            .env(CHILD_MODE, "refresh")
-            .env(
-                "PATH",
-                env::join_paths([
-                    fixture_dir.join("first"),
-                    fixture_dir.join("second"),
-                    fixture_dir.join("first"),
-                ])
-                .unwrap(),
-            )
-            .env("PATHEXT", ".BAT;.CMD")
-            .output()
-            .unwrap();
-        assert!(output.status.success(), "refresh: {output:?}");
+        // Configure each environment before spawning; Rust 2024 makes mutation
+        // of the running process's environment unsafe, even in a test child.
+        for (case, directories, extensions) in [
+            ("refresh-bat", ["first", "second", "first"], ".BAT;.CMD"),
+            ("refresh-cmd", ["first", "second", "first"], ".CMD;.BAT"),
+            ("refresh-files", ["second", "first", "second"], ".CMD;.BAT"),
+            ("refresh-late", ["late", "late", "late"], ".BAT"),
+        ] {
+            let output = Command::new(env::current_exe().unwrap())
+                .arg(&fixture_dir)
+                .env(CHILD_MODE, case)
+                .env(
+                    "PATH",
+                    env::join_paths(directories.map(|name| fixture_dir.join(name))).unwrap(),
+                )
+                .env("PATHEXT", extensions)
+                .output()
+                .unwrap();
+            assert!(output.status.success(), "{case}: {output:?}");
+        }
     }
 
-    // This harness-free child is single-threaded; mutations never reach the
-    // parent or another test. Exercise public calls repeatedly in one process.
-    fn check_refresh(dir: &std::path::Path) {
+    // Filesystem changes between calls still exercise cache freshness in the
+    // same process; environment variants are isolated in separate children.
+    fn check_refresh(dir: &std::path::Path, case: &str) {
         let check = |path: Option<PathBuf>| {
             let expected = path.map(|path| Subcommand {
                 name: "hello".into(),
@@ -181,45 +187,32 @@ mod windows {
             assert_eq!(SubcommandsProvider::find("clientele-", "hello"), expected);
             listing
         };
-        let first_bat = dir.join("first/clientele-hello.bat");
-        let snapshot = check(Some(first_bat.clone()));
-        env::set_var("PATHEXT", ".CMD;.BAT");
-        check(Some(dir.join("first/clientele-hello.cmd")));
-        env::set_var(
-            "PATH",
-            env::join_paths([dir.join("second"), dir.join("first"), dir.join("second")]).unwrap(),
-        );
-        let second_cmd = dir.join("second/clientele-hello.cmd");
-        let second_bat = dir.join("second/clientele-hello.bat");
-        check(Some(second_cmd.clone()));
-        fs::remove_file(second_cmd).unwrap();
-        check(Some(second_bat.clone()));
-        fs::remove_file(second_bat).unwrap();
-        check(Some(dir.join("first/clientele-hello.cmd")));
-
-        env::set_var("PATHEXT", ".bad/name");
-        check(None);
-        assert_eq!(
-            SubcommandsProvider::find("clientele-", "hello.bat")
-                .unwrap()
-                .path,
-            first_bat
-        );
-        env::remove_var("PATHEXT");
-        check(None);
-        assert!(SubcommandsProvider::find("clientele-", "hello.bat").is_none());
-
-        let late = dir.join("late");
-        env::set_var("PATHEXT", ".BAT");
-        env::set_var("PATH", &late);
-        check(None);
-        fs::create_dir(&late).unwrap();
-        let late_bat = late.join("clientele-hello.bat");
-        fs::write(&late_bat, "new fixture").unwrap();
-        check(Some(late_bat));
-        env::remove_var("PATH");
-        check(None);
-        assert_eq!(snapshot.commands()[0].path, first_bat);
+        match case {
+            "refresh-bat" | "refresh-cmd" => {
+                let extension = case.strip_prefix("refresh-").unwrap();
+                check(Some(dir.join(format!("first/clientele-hello.{extension}"))));
+            }
+            "refresh-files" => {
+                let second_cmd = dir.join("second/clientele-hello.cmd");
+                let second_bat = dir.join("second/clientele-hello.bat");
+                let snapshot = check(Some(second_cmd.clone()));
+                fs::remove_file(&second_cmd).unwrap();
+                check(Some(second_bat.clone()));
+                fs::remove_file(second_bat).unwrap();
+                check(Some(dir.join("first/clientele-hello.cmd")));
+                assert_eq!(snapshot.commands()[0].path, second_cmd);
+            }
+            "refresh-late" => {
+                let snapshot = check(None);
+                let late = dir.join("late");
+                fs::create_dir(&late).unwrap();
+                let late_bat = late.join("clientele-hello.bat");
+                fs::write(&late_bat, "new fixture").unwrap();
+                check(Some(late_bat));
+                assert!(snapshot.commands().is_empty());
+            }
+            _ => panic!("unknown refresh case: {case}"),
+        }
     }
 }
 

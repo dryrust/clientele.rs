@@ -2,7 +2,7 @@
 
 ## Project map
 - Work within this project; do not inspect parent directories.
-- Rust 2021 workspace; one library, `lib/clientele`, providing CLI utilities and
+- Rust 2024 workspace; one library, `lib/clientele`, providing CLI utilities and
   dependency re-exports. Declared MSRV: Rust 1.97. Targets: Linux, macOS, Windows.
 - `Cargo.toml`: workspace metadata. `lib/clientele/Cargo.toml`: features/dependencies.
 - Under `lib/clientele/src/`: `lib.rs` defines exports/module gates; `crates.rs`

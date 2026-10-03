@@ -1,7 +1,7 @@
 use clientele::{
+    StandardOptions,
     crates::clap::{self, CommandFactory, Parser, Subcommand},
     manpages::Man,
-    StandardOptions,
 };
 use std::io::{self, Write};
 

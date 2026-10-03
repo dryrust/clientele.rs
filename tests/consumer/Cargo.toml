@@ -1,13 +1,13 @@
 [package]
 name = "clientele-consumer"
 version = "0.0.0"
-edition = "2021"
+edition = "2024"
 rust-version = "1.97"
 publish = false
 
 # Keep dependency features and the extern prelude independent of library tests.
 [workspace]
-resolver = "2"
+resolver = "3"
 
 [features]
 default = ["cli"]

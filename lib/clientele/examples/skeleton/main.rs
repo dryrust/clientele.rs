@@ -3,8 +3,8 @@
 #![deny(unsafe_code)]
 
 use clientele::{
-    crates::clap::{self, error::ErrorKind, CommandFactory, FromArgMatches, Parser, Subcommand},
     StandardOptions, SysexitsError,
+    crates::clap::{self, CommandFactory, FromArgMatches, Parser, Subcommand, error::ErrorKind},
 };
 use std::{
     io::{self, Write},

@@ -45,4 +45,4 @@
 //! The complete upstream API is also available at
 //! [`crate::crates::clap_complete`].
 
-pub use clap_complete::{generate, generate_to, Generator, Shell};
+pub use clap_complete::{Generator, Shell, generate, generate_to};

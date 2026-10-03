@@ -14,7 +14,7 @@ class VersionBumpTest < Minitest::Test
       File.write(File.join(dir, 'Cargo.toml'), <<~TOML)
         [workspace]
         members = ["library"]
-        resolver = "2"
+        resolver = "3"
 
         [workspace.package]
         version = "0.4.9" # release version
@@ -25,7 +25,7 @@ class VersionBumpTest < Minitest::Test
         [package]
         name = "version-fixture"
         version.workspace = true
-        edition = "2021"
+        edition = "2024"
       TOML
       File.write(File.join(dir, 'library', 'src', 'lib.rs'), '')
       File.write(File.join(dir, 'CHANGES.md'), "## 0.4.9\nHistorical release.\n")

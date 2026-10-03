@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `paths::home_dir()` and `paths::temp_dir()` for native directory resolution,
   with checked `_utf8` variants and independently gated optional dependencies
 ### Changed
+- Adopt Rust 2024 and Cargo resolver 3, retaining the Rust 1.97 minimum version
 - Reuse parsed search variables and directory listings within each Windows
   subcommand discovery call, avoiding repeated directory scans during collection
   while keeping subsequent calls fresh

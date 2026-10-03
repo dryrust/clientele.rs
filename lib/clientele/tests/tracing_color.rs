@@ -4,7 +4,7 @@
 //! isolated in a child process. This harness-free target accepts ordinary CLI
 //! arguments in child mode, following the skeleton CLI fixture.
 
-use clientele::{crates::clap::Parser, tracing::init_tracing_subscriber, StandardOptions};
+use clientele::{StandardOptions, crates::clap::Parser, tracing::init_tracing_subscriber};
 use std::{env, process::Command};
 
 const CHILD_MODE: &str = "CLIENTELE_TRACING_TEST_CHILD";

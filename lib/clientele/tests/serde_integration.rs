@@ -3,7 +3,7 @@
 #[cfg(feature = "camino")]
 #[test]
 fn camino_supports_serde_without_json() {
-    use clientele::crates::serde::{de::value, Deserialize, Serialize};
+    use clientele::crates::serde::{Deserialize, Serialize, de::value};
 
     fn assert_serializable<T: Serialize>() {}
     assert_serializable::<clientele::Utf8PathBuf>();
@@ -15,7 +15,7 @@ fn camino_supports_serde_without_json() {
 #[cfg(feature = "serde-json")]
 #[test]
 fn json_errors_keep_their_sysexits_integration() {
-    use clientele::{crates::serde_json, SysexitsError};
+    use clientele::{SysexitsError, crates::serde_json};
 
     let error = serde_json::from_str::<bool>("invalid JSON").unwrap_err();
     assert_eq!(SysexitsError::from(&error), SysexitsError::EX_DATAERR);

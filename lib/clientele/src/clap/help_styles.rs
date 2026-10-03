@@ -1,6 +1,6 @@
 // This is free and unencumbered software released into the public domain.
 
-use clap::builder::{styling::AnsiColor, Styles};
+use clap::builder::{Styles, styling::AnsiColor};
 
 /// Help output styling matching the color palette used by Clap v3.
 ///

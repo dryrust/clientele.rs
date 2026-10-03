@@ -509,10 +509,12 @@ mod tests {
     #[test]
     fn custom_parsing_rejects_invalid_components_before_calling_the_parser() {
         for input in ["", ",", "+", "-", "++name", "--name", "+-name", "-+name"] {
-            assert!(SortKeys::<String>::parse_with(input, |_| {
-                panic!("invalid syntax must not reach the key parser")
-            })
-            .is_err());
+            assert!(
+                SortKeys::<String>::parse_with(input, |_| {
+                    panic!("invalid syntax must not reach the key parser")
+                })
+                .is_err()
+            );
         }
         let mut visited = Vec::new();
         let result = SortKeys::parse_with("name,,later", |key| {

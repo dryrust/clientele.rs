@@ -64,9 +64,11 @@ pub fn check_hidden_fixture(dir: &Path) -> Result<()> {
         use std::os::windows::fs::MetadataExt;
         assert!(!HIDDEN_FILE.starts_with('.'));
         assert_ne!(metadata.file_attributes() & FILE_ATTRIBUTE_HIDDEN, 0);
-        assert!(env::var("PATHEXT")?
-            .split(';')
-            .any(|ext| ext.eq_ignore_ascii_case(".bat")));
+        assert!(
+            env::var("PATHEXT")?
+                .split(';')
+                .any(|ext| ext.eq_ignore_ascii_case(".bat"))
+        );
     }
     Ok(())
 }

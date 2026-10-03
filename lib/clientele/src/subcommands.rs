@@ -514,7 +514,7 @@ fn parse_path_exts(value: &str) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_path_exts, Subcommand, SubcommandsProvider};
+    use super::{Subcommand, SubcommandsProvider, parse_path_exts};
 
     fn collection_fixture() -> SubcommandsProvider {
         // Construct a snapshot directly so collection-interface tests need no

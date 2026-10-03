@@ -3,7 +3,7 @@
 //! Checks XDG home overrides and fallbacks with an isolated environment in each
 //! child process. The harness-free child prints its resolved path, if any.
 
-use clientele::{paths, Utf8Path};
+use clientele::{Utf8Path, paths};
 use std::{
     env,
     ffi::{OsStr, OsString},

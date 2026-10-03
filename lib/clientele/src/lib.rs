@@ -35,7 +35,7 @@
 //! independent opt-in `manpages` feature, also enabling `clap` and `std` and
 //! excluded from `all` and defaults.
 //!
-//! ```edition2021
+//! ```edition2024
 //! # use clientele::*;
 //! ```
 

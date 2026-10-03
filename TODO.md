@@ -11,7 +11,7 @@ items from the previous review have not been reopened.
 
 ## Working method
 
-- Follow [AGENTS.md](AGENTS.md). This is a Rust 2021 library workspace with MSRV
+- Follow [AGENTS.md](AGENTS.md). This is a Rust 2024 library workspace with MSRV
   1.97 and Linux, macOS, and Windows targets.
 - Work in small, atomic changes: choose **one unchecked leaf item**, interpret
   the request narrowly, and keep section headings as groups of independent
