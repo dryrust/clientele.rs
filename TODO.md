@@ -25,7 +25,7 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 11 outstanding leaf tasks: 3 P1, 6 P2, and 2 P3. Evidence below
+**Status:** 10 outstanding leaf tasks: 3 P1, 5 P2, and 2 P3. Evidence below
 distinguishes runtime reproductions, source-review findings, coverage gaps, and
 optional extensions.
 
@@ -41,12 +41,12 @@ tests. Cross-compilation establishes build coverage only.
 
 | Area | Review outcome |
 | --- | --- |
-| Feature gates, dependency re-exports, consumer builds | Serde isolation and scoped tracing consumer checks pass; broader feature coverage in R2-14 |
+| Feature gates, dependency re-exports, consumer builds | Standalone-feature builds, weak-feature guards, Serde isolation, and scoped tracing checks pass |
 | Arguments and skeleton CLI | Argument-file contracts pass; native Windows wildcard coverage remains in R2-13 |
 | Executable discovery | Case-sensitive-prefix mismatch reproduced on macOS; Windows extension/identity findings and OS-path coverage gaps; R2-03 through R2-05, R2-16, R2-22 |
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing implementations and regression tests reviewed; optional typed-parser reuse in R2-21 |
-| Native/UTF-8/XDG paths and tracing | Existing path, format, color, and global-initialization tests pass locally; isolated-feature coverage in R2-14 |
-| Completions, manpages, error-stack, packaging | All-feature quality gates and packaged default/minimal doctests pass; isolated-feature coverage in R2-14 |
+| Native/UTF-8/XDG paths and tracing | Path, format, color, global-initialization, and focused feature-combination tests pass locally |
+| Completions, manpages, error-stack, packaging | Isolated-feature tests, all-feature quality gates, and packaged default/minimal doctests pass |
 | CI, Rake, Make, project documentation | Missing Ruby CI coverage and stale guidance/credits; R2-15, R2-19, R2-20 |
 
 ## P1 — Correctness and reliability
@@ -110,22 +110,6 @@ tests. Cross-compilation establishes build coverage only.
   depending on the developer's shell or directory contents.
   **Verify:** Native Windows tests with `--no-default-features --features std,wild --locked`
   and `--no-default-features --features std,wild,argfile --locked`, plus defaults.
-
-- [ ] **R2-14 — Cover every standalone feature and important weak-feature combination in CI.**
-  **Evidence (coverage gap):** `.github/workflows/ci.yml` tests a curated minimal
-  list, but omits standalone `completions` and `manpages`, among others.
-  Default/all-feature builds cannot establish independent generator gates or
-  optional dependency behavior. Path combinations documented below are
-  also absent from the current minimal loops.
-  **Acceptance:** Check every public feature independently with
-  defaults disabled on stable/MSRV. Include library-only builds to avoid
-  dev-dependency feature unification, relevant all-target builds, and focused tests
-  for `completions`, `manpages`, `std,dirs,camino`, `std,getenv,camino`, and tracing
-  ANSI enabled through the dependency without Clientele's `color`. Retain native
-  platform testing for platform behavior; keep the matrix focused rather than
-  attempting every possible feature power set.
-  **Verify:** Reproduce each added matrix command locally where supported and
-  require the corresponding CI jobs to pass on their native runners.
 
 - [ ] **R2-15 — Run release-tooling regressions in CI.**
   **Evidence (coverage gap):** `rake test` currently passes its three tests and
@@ -220,6 +204,14 @@ Useful sets: `clap`; `std,subcommands`; `std,getenv,camino`; `std,tracing`;
 `clap,tracing`; `clap,color,tracing`; `error-stack`; `std,error-stack`;
 `gofer`; `std,gofer`.
 Preserve optional-example/test gates in `lib/clientele/Cargo.toml`.
+
+CI's manifest-driven feature driver checks library-only and all-target builds for
+every declared feature, then runs focused tests and weak-feature dependency guards:
+
+```sh
+python3 tests/check_features.py
+python3 tests/check_features.py --toolchain 1.97.0
+```
 
 For Serde/JSON isolation and integration, inspect the Serde-only normal dependency
 tree and run `serde_integration` with `serde,camino`, `serde-json`, and

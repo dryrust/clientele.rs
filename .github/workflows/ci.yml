@@ -51,12 +51,12 @@ jobs:
       run: cargo build --verbose --examples --locked
     - name: Run tests
       run: cargo test --verbose --locked
-    - name: Test minimal feature combinations
-      run: |
-        cargo test --workspace --no-default-features --locked
-        for features in std tracing std,tracing clap clap,tracing clap,dotenv subcommands std,subcommands error-stack std,error-stack gofer; do
-          cargo test --workspace --no-default-features --features "$features" --locked
-        done
+    - name: Install Python for feature checks
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+    - name: Check standalone features and focused combinations
+      run: python tests/check_features.py
     - name: Test all features
       run: cargo test --workspace --all-features --locked
     - name: Test downstream examples
@@ -112,13 +112,12 @@ jobs:
       run: cargo build --verbose --examples --locked
     - name: Run tests
       run: cargo test --verbose --locked
-    - name: Test minimal feature combinations
-      shell: bash
-      run: |
-        cargo test --workspace --no-default-features --locked
-        for features in clap std,tracing clap,tracing clap,color,tracing clap,tracing,tracing-subscriber/ansi clap,dotenv std,subcommands error-stack std,error-stack gofer; do
-          cargo test --workspace --no-default-features --features "$features" --locked
-        done
+    - name: Install Python for feature checks
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+    - name: Check standalone features and focused combinations
+      run: python tests/check_features.py
     - name: Test all features
       run: cargo test --workspace --all-features --locked
     - name: Test packaged doctests
