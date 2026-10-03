@@ -25,8 +25,7 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 2 open items: R2-16 awaits native platform verification review (P2);
-R2-22 remains unimplemented (P3).
+**Status:** 1 open item: R2-22 remains unimplemented (P3).
 The original evidence below describes the review snapshot, not the corrected code.
 Progress notes identify the remaining work; do not repeat completed implementation
 steps or treat cross-compilation as native verification.
@@ -45,32 +44,11 @@ tests. Cross-compilation establishes build coverage only.
 | --- | --- |
 | Feature gates, dependency re-exports, consumer builds | Standalone-feature builds, weak-feature guards, Serde isolation, and scoped tracing checks pass |
 | Arguments and skeleton CLI | Argument-file contracts and R2-13 native Windows raw wildcard/argfile ordering tests pass |
-| Executable discovery | R2-03/R2-04 verified on native Windows; R2-05 verified on case-insensitive Windows/macOS and case-sensitive Linux; remaining work: R2-16, R2-22 |
+| Executable discovery | R2-03/R2-04 verified on Windows; R2-05 on Windows/macOS/Linux; R2-16 non-Unicode fixtures on Windows/Linux; remaining work: R2-22 |
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing regressions and the typed `parse_with` callback contract pass |
 | Native/UTF-8/XDG paths and tracing | Path, format, color, global-initialization, and focused feature-combination tests pass locally |
 | Completions, manpages, error-stack, packaging | Isolated-feature tests, all-feature quality gates, and packaged default/minimal doctests pass |
 | CI, Rake, Make, project documentation | Locked Ruby CI coverage, current contributor guidance, and historical attribution are in place |
-
-## P2 — Regression coverage and automation
-
-- [ ] **R2-16 — Cover non-Unicode paths in executable discovery.**
-  **Progress:** `subcommands_path` has isolated Unix invalid-byte and Windows
-  unpaired-surrogate fixtures with non-Unicode parents, invalid executable names,
-  and valid neighbors. Assertions compare exact OS paths, including explicit Windows
-  filename lookup. Linux/Windows targets cross-compile. The local macOS filesystem
-  rejects the fixture with EILSEQ (reported skip); native runs on supporting Unix
-  and Windows filesystems remain before closing this item.
-  **Evidence (coverage gap):** The discovery contract promises to preserve
-  non-UTF-8 parent directories while skipping non-UTF-8 filenames, but the
-  fixtures in `lib/clientele/tests/support/subcommands_shared.rs` and the four
-  discovery targets use only UTF-8 paths. Color/native-path tests do not cover
-  discovery.
-  **Acceptance:** Add isolated fixtures using platform-native non-Unicode path
-  components where the filesystem supports them. Assert that both lookup and
-  listing preserve the exact `PathBuf` through a non-Unicode `PATH` directory,
-  ignore unrepresentable executable names, and agree on valid neighboring entries.
-  **Verify:** Native Unix and Windows discovery tests with `std,subcommands`
-  alone; compare OS paths directly rather than their lossy display text.
 
 ## P3 — Targeted API and performance extensions
 
@@ -379,3 +357,17 @@ the native executable running; the feature driver successfully completed both
 checks quoted/unquoted and unmatched patterns, spaces in matching filenames,
 wildcards before argfile loading, and literal direct/nested argfile patterns.
 All child failures propagate; these Windows branches have no skip path.
+
+### R2-16 native verification on 2026-10-03
+
+Closed R2-16 after reviewing `support/subcommands_native.rs` and the successful
+[stable Windows](https://github.com/dryrust/clientele.rs/actions/runs/37141180579/job/111255770537)
+and [stable Linux](https://github.com/dryrust/clientele.rs/actions/runs/37141180579/job/111255770629)
+jobs at `2df1ea64ef0e06757bd6140af34beb75df1985f6`. Both ran `subcommands_path`
+with defaults/all features and completed the minimal `std,subcommands` suite.
+Neither log contains the fixture's unsupported-filesystem message, confirming
+the native-path checks ran rather than skipped. Fixtures use invalid Unix bytes
+or an unpaired Windows surrogate, compare exact `PathBuf` values through a
+non-Unicode `PATH` parent, skip invalid executable names, and find valid neighbors.
+Windows also checks explicit filename lookup. The macOS EILSEQ skip remains an
+expected filesystem limitation, now covered by the native Linux execution.
