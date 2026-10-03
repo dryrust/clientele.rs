@@ -25,7 +25,7 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 7 outstanding leaf tasks: 3 P1, 3 P2, and 1 P3. Evidence below
+**Status:** 6 outstanding leaf tasks: 3 P1, 2 P2, and 1 P3. Evidence below
 distinguishes runtime reproductions, source-review findings, coverage gaps, and
 optional extensions.
 
@@ -47,7 +47,7 @@ tests. Cross-compilation establishes build coverage only.
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing regressions and the typed `parse_with` callback contract pass |
 | Native/UTF-8/XDG paths and tracing | Path, format, color, global-initialization, and focused feature-combination tests pass locally |
 | Completions, manpages, error-stack, packaging | Isolated-feature tests, all-feature quality gates, and packaged default/minimal doctests pass |
-| CI, Rake, Make, project documentation | Locked Ruby CI coverage and current sysexits attribution are in place; contributor guidance remains in R2-19 |
+| CI, Rake, Make, project documentation | Locked Ruby CI coverage, current contributor guidance, and historical attribution are in place |
 
 ## P1 — Correctness and reliability
 
@@ -124,20 +124,6 @@ tests. Cross-compilation establishes build coverage only.
   **Verify:** Native Unix and Windows discovery tests with `std,subcommands`
   alone; compare OS paths directly rather than their lossy display text.
 
-## P2 — Project documentation
-
-- [ ] **R2-19 — Refresh contributor guidance to match the current project.**
-  **Evidence (documentation review):** `AGENTS.md` still says the Rake version
-  task broadly replaces historical versions and that Clippy/rustdoc have existing
-  warnings. The task now updates specific metadata, and ordinary warning-denying
-  quality checks pass. Its project map/bundle description also omits the new
-  generator modules, opt-in exclusions, and Ruby release tests.
-  **Acceptance:** Correct these facts, list current opt-in/module/test coverage,
-  and keep baseline caveats tied to reproducible commands. Retain the existing
-  editing, MSRV, environment-isolation, and verification rules.
-  **Verify:** Cross-check against `Rakefile`, the manifests, workflow, and the
-  baseline below; run `git diff --check`.
-
 ## P3 — Targeted API and performance extensions
 
 - [ ] **R2-22 — Reuse a per-call search context during Windows collection.**
@@ -162,8 +148,8 @@ Run relevant checks from the repository root as required by `AGENTS.md`:
 cargo fmt --all -- --check
 cargo test --workspace --locked
 cargo check -p clientele --all-targets --no-default-features --locked
-cargo clippy --workspace --all-targets --locked
-cargo doc --workspace --no-deps --locked
+cargo clippy --workspace --all-targets --locked -- -D warnings
+RUSTDOCFLAGS='-D warnings' cargo doc --workspace --no-deps --locked
 ```
 
 Add focused tests for the selected leaf. For feature changes, check affected
@@ -316,14 +302,15 @@ Host: aarch64 macOS; stable Rust/Cargo 1.98.1, with Rust 1.97.0 also installed.
 **Passed in this review and follow-up verification:**
 
 - `cargo fmt --all -- --check`.
-- `cargo test --workspace --locked` (42 library tests, integration targets, and
-  19 doctests).
+- `cargo test --workspace --locked` (45 library tests, integration targets, and
+  21 doctests).
 - `cargo check -p clientele --all-targets --no-default-features --locked`.
 - Default and all-feature Clippy/rustdoc with the warning-denying commands above.
 - `cargo rustc -p clientele --lib --all-features --locked -- --force-warn unused`
   is warning-free after removing blanket suppression and unused private scaffolding.
 - `cargo +1.97.0 test --workspace --all-features --locked` (including both
-  generators, error-stack, and 21 doctests).
+  generators, error-stack, and 23 doctests).
+- The manifest-driven feature checks passed locally on stable and Rust 1.97.0.
 - All-target isolated-feature checks for the public leaf features,
   plus key pairs/groups including `std,gofer`,
   `std,argfile,wild`, `std,dirs,camino`, `std,getenv,camino`, `std,tracing`,
@@ -331,11 +318,11 @@ Host: aarch64 macOS; stable Rust/Cargo 1.98.1, with Rust 1.97.0 also installed.
   `completions,manpages`.
 - Standalone `gofer` tests on stable and Rust 1.97.0, plus
   `cargo +1.97.0 check -p clientele --lib --no-default-features --features gofer --locked`.
-- Downstream consumer tests above (6 minimal and 9 color/tracing doctests),
+- Downstream consumer tests above (7 minimal and 10 color/tracing doctests),
   including all-feature consumer tests on Rust 1.97.0.
 - `cargo package -p clientele --locked --target-dir target` and packaged
-  default/no-default-feature doctests (19 and 4 doctests respectively).
-- `rake test` (3 tests, 52 assertions) and
+  default/no-default-feature doctests (21 and 4 doctests respectively).
+- `bundle exec rake test` (3 tests, 52 assertions) and
   `cargo run --locked --example skeleton -- config`.
 - `cargo check -p clientele --all-targets --all-features --locked --target <target>`
   for `aarch64-unknown-linux-gnu` and `x86_64-pc-windows-msvc`.
