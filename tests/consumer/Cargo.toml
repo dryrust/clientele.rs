@@ -10,14 +10,20 @@ publish = false
 resolver = "2"
 
 [features]
-default = []
+default = ["cli"]
+cli = ["clientele/clap", "clientele/dotenv"]
 color = ["clientele/color"]
-tracing = ["clientele/tracing", "dep:tracing"]
+tracing = ["clientele/std", "clientele/tracing", "dep:tracing"]
 
 [dependencies]
-clientele = { path = "../../lib/clientele", default-features = false, features = ["clap", "dotenv"] }
+clientele = { path = "../../lib/clientele", default-features = false }
 tracing = { version = "0.1", default-features = false, features = ["std"], optional = true }
 
 [[example]]
 name = "skeleton"
 path = "../../lib/clientele/examples/skeleton/main.rs"
+required-features = ["cli"]
+
+[[example]]
+name = "scoped_tracing"
+required-features = ["tracing"]

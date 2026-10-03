@@ -6,7 +6,7 @@
 //! enabled. Names generally match the dependency's Rust crate name; `dotenvy`
 //! requires `dotenv`, `duration_str` requires `parse-duration`, `ubyte` requires
 //! `parse-byteunit`, `clap_complete` requires `completions`, `clap_mangen` requires
-//! `manpages`, and `tracing_core` requires `tracing`. `dogma` is always
+//! `manpages`, and `tracing_core` and `tracing_subscriber` require `tracing`. `dogma` is always
 //! available. Enabling a re-export does not necessarily enable Clientele's
 //! higher-level helpers; consult their feature requirements separately.
 //!
@@ -60,6 +60,28 @@ pub use tokio;
 
 #[cfg(feature = "tracing")]
 pub use tracing_core;
+
+/// Subscriber construction and formatting APIs, available with `tracing`.
+///
+/// With `std,tracing`, reuse Clientele's formats in a thread-local subscriber
+/// without Clap or process-wide initialization:
+///
+/// ```
+/// # #[cfg(feature = "std")]
+/// # {
+/// use clientele::{crates::{tracing_core, tracing_subscriber}, tracing::STDERR_PLAIN_FORMAT};
+///
+/// let subscriber = tracing_subscriber::fmt()
+///     .event_format(STDERR_PLAIN_FORMAT.clone())
+///     .with_ansi(false)
+///     .with_writer(std::io::sink)
+///     .finish();
+/// let dispatch = tracing_core::Dispatch::new(subscriber);
+/// let _guard = tracing_core::dispatcher::set_default(&dispatch);
+/// # }
+/// ```
+#[cfg(feature = "tracing")]
+pub use tracing_subscriber;
 
 #[cfg(feature = "parse-byteunit")]
 pub use ubyte;

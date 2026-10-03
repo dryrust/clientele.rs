@@ -25,7 +25,7 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 15 outstanding leaf tasks: 3 P1, 10 P2, and 2 P3. Evidence below
+**Status:** 14 outstanding leaf tasks: 3 P1, 9 P2, and 2 P3. Evidence below
 distinguishes runtime reproductions, source-review findings, coverage gaps, and
 optional extensions.
 
@@ -41,11 +41,11 @@ tests. Cross-compilation establishes build coverage only.
 
 | Area | Review outcome |
 | --- | --- |
-| Feature gates, dependency re-exports, consumer builds | Tracing dependency access; R2-11 |
+| Feature gates, dependency re-exports, consumer builds | Serde isolation and scoped tracing consumer checks pass; broader feature coverage in R2-14 |
 | Arguments and skeleton CLI | Remaining argument-expansion coverage gaps; R2-12, R2-13 |
 | Executable discovery | Case-sensitive-prefix mismatch reproduced on macOS; Windows extension/identity findings and OS-path coverage gaps; R2-03 through R2-05, R2-16, R2-22 |
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing implementations and regression tests reviewed; optional typed-parser reuse in R2-21 |
-| Native/UTF-8/XDG paths and tracing | Existing path, format, color, and global-initialization tests pass locally; dependency access and isolated-feature coverage in R2-11, R2-14 |
+| Native/UTF-8/XDG paths and tracing | Existing path, format, color, and global-initialization tests pass locally; isolated-feature coverage in R2-14 |
 | Completions, manpages, error-stack, packaging | All-feature MSRV tests and packaged default/minimal doctests pass; isolated-feature and quality gates in R2-14, R2-18 |
 | CI, Rake, Make, project documentation | Missing Ruby CI coverage, suppressed unused warnings, stale guidance/credits; R2-15, R2-17, R2-19, R2-20 |
 
@@ -96,20 +96,6 @@ tests. Cross-compilation establishes build coverage only.
   different `PATH` directories and verify returned logical names/path precedence.
   **Verify:** Extend the discovery subprocess tests; run on native Windows and
   case-insensitive macOS, with a case-sensitive-filesystem control where available.
-
-## P2 — Public API and CLI usability
-
-- [ ] **R2-11 — Expose the tracing formatter dependency through `crates`.**
-  **Evidence (API review):** `lib/clientele/src/tracing.rs` exposes types from
-  `tracing_subscriber`, but `lib/clientele/src/crates.rs` re-exports only
-  `tracing_core` under `tracing`. Consumers naming those format types or composing
-  their own subscriber must introduce another direct dependency despite the
-  documented dependency sharing entry point.
-  **Acceptance:** Add the feature-gated `tracing_subscriber` re-export and document
-  its feature-name mapping. Show a downstream consumer using the shared formats
-  with a locally scoped/custom subscriber through that re-export.
-  **Verify:** A standalone consumer with only `std,tracing`; rustdoc and
-  `cargo check -p clientele --all-targets --no-default-features --features std,tracing --locked`.
 
 ## P2 — Regression coverage and automation
 
@@ -356,6 +342,7 @@ For derive examples and the skeleton in a consumer without a direct Clap depende
 ```sh
 cargo test --manifest-path tests/consumer/Cargo.toml --locked --target-dir target
 cargo test --manifest-path tests/consumer/Cargo.toml --all-features --locked --target-dir target
+cargo run --manifest-path tests/consumer/Cargo.toml --no-default-features --features tracing --example scoped_tracing --locked --target-dir target
 ```
 
 For optional generators, test each feature independently and together:

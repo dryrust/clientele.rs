@@ -2,9 +2,12 @@ use std::{env, fs, path::PathBuf};
 
 fn main() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../lib/clientele/src");
-    let mut files = vec!["clap/help_styles.rs", "options.rs", "options/sort.rs"];
-    if env::var_os("CARGO_FEATURE_TRACING").is_some() {
-        files.push("tracing.rs");
+    let mut files = vec![];
+    if env::var_os("CARGO_FEATURE_CLI").is_some() {
+        files.extend(["clap/help_styles.rs", "options.rs", "options/sort.rs"]);
+        if env::var_os("CARGO_FEATURE_TRACING").is_some() {
+            files.push("tracing.rs");
+        }
     }
     let mut examples = String::new();
     for file in files {
