@@ -1,8 +1,5 @@
 # Clientele enhancement backlog
 
-Note: the next release is going to be 0.5.0, meaning backwards
-incompatibility does not need to be strictly preserved.
-
 Review snapshot: 2026-10-03. This file records project review history and
 verification evidence, with enough context to continue future reviews.
 Task IDs are stable and may contain gaps. Recheck the relevant code before

@@ -5,69 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.5.0 - 2026-10-03
 ### Added
-- `SortKeys::parse_with()` for typed, stateful, or borrowed-key parsing outside
-  a Clap invocation, sharing the existing direction syntax and first-error behavior
-- Re-export `tracing_subscriber` through `clientele::crates` with `tracing`,
-  supporting custom and scoped subscribers using Clientele's dependency version
 - Opt-in `manpages` feature and module for ROFF manual-page generation via
   `clap_mangen`, independently of shell completions
 - Opt-in `completions` feature and module for static shell completion generation
   via `clap_complete`, also available through `clientele::crates`
+- Re-export `tracing_subscriber` through `clientele::crates` with `tracing`,
+  supporting custom and scoped subscribers using Clientele's dependency version
+- `From<StandardOptions>` and `From<&StandardOptions>` conversions to tracing
+  `LevelFilter`, retaining `.into()` support and the existing verbosity mapping
+- `tracing::try_init_tracing_subscriber()` for fallible global subscriber setup,
+  preserving the existing initializer's panic behavior
 - Initialize tracing in the skeleton when enabled, honoring verbosity and stderr
   color options and logging `config` dispatch at debug level
-- OSC 8 hyperlink stripping in `strip_ansi()`, retaining visible labels and
-  supporting BEL and ST terminators while preserving malformed controls
+- `ColorChoiceExt::to_bool_for()` and `ColorStream` for stream-aware automatic
+  color detection, preserving `to_bool()` as the stdout shorthand
+- `paths::home_dir()` and `paths::temp_dir()` for native directory resolution,
+  with checked `_utf8` variants and independently gated optional dependencies
+- `SortKey::to_sql_checked()` and `SortKeys::to_sql_checked()` for approved column
+  mappings with identifier validation and explicit `SortSqlError` failures
+- `SortKeys::parse_with()` for typed, stateful, or borrowed-key parsing outside
+  a Clap invocation, sharing the existing direction syntax and first-error behavior
 - `Display` support for typed `SortKey<T>` and `SortKeys<T>` when `T` implements
   `Display`, retaining string output, direction prefixes, and comma separators.
   Constructor calls relying on formatting to infer `String` now need an explicit
   key type, such as `SortKey::<String>::new(...)`
 - Owned and borrowed `IntoIterator` support and a `commands()` slice accessor for
   `SubcommandsProvider`, preserving the existing collection methods and ordering
-- `From<StandardOptions>` and `From<&StandardOptions>` conversions to tracing
-  `LevelFilter`, retaining `.into()` support and the existing verbosity mapping
-- `tracing::try_init_tracing_subscriber()` for fallible global subscriber setup,
-  preserving the existing initializer's panic behavior
+- OSC 8 hyperlink stripping in `strip_ansi()`, retaining visible labels and
+  supporting BEL and ST terminators while preserving malformed controls
 - Document and test empty, default, and whitespace sort semantics, retaining the
   one-key default and verbatim whitespace handling for compatibility
-- `SortKey::to_sql_checked()` and `SortKeys::to_sql_checked()` for approved column
-  mappings with identifier validation and explicit `SortSqlError` failures
-- `ColorChoiceExt::to_bool_for()` and `ColorStream` for stream-aware automatic
-  color detection, preserving `to_bool()` as the stdout shorthand
-- `paths::home_dir()` and `paths::temp_dir()` for native directory resolution,
-  with checked `_utf8` variants and independently gated optional dependencies
 ### Changed
+- Adopt Rust 2024 and Cargo resolver 3, retaining the Rust 1.97 minimum version
+- Keep `serde` independent of JSON dependencies. JSON-error conversions to
+  `SysexitsError` now require `serde-json` rather than being enabled by `serde`
+  alone; default-feature consumers retain JSON integration
 - Update the `clientele::crates::dogma` re-export to Dogma 0.3.0. Downstream
   callers enabling Dogma's optional APIs must replace `enums`/`structs` paths
   with `uri` or top-level exports, use the `maybe_`-prefixed `Maybe*` trait
   methods, and use `Iri::to_uri()` to percent-encode Unicode for the now-distinct,
   ASCII-only URI types. Dogma 0.1 types exposed by `getenv` and `gofer` remain
   distinct from the upgraded re-export
-- Adopt Rust 2024 and Cargo resolver 3, retaining the Rust 1.97 minimum version
 - Reuse parsed search variables and directory listings within each Windows
   subcommand discovery call, avoiding repeated directory scans during collection
   while keeping subsequent calls fresh
 - Search Windows subcommand logical stems across `PATH` before falling back to
   explicit filenames, so dotted collected names round-trip through lookup. A
   `report.v1.bat` candidate now wins over `report.v1`, including in a later directory
-- Keep `serde` independent of JSON dependencies. JSON-error conversions to
-  `SysexitsError` now require `serde-json` rather than being enabled by `serde`
-  alone; default-feature consumers retain JSON integration
 - Remove the redundant inherent `SubcommandsProvider::into_iter()` method in
   favor of its existing prelude trait implementation. Method and associated
   function calls continue to work; their returned iterator now also exposes
   exact-length and double-ended iteration
-- `tracing::STDERR_PLAIN_FORMAT` and `STDERR_DEBUG_FORMAT` are shared static
-  `LazyLock` values instead of constants. Existing `.clone()` calls still yield
-  owned formats with the same output; callers moving or consuming a `LazyLock`
-  must instead clone its inner format
 - Sort collected subcommands by logical name and return each exact name once,
   selecting executables by `PATH` and Windows lookup/`PATHEXT` precedence
 - `SubcommandsProvider::find()` now returns the same prefix-free logical name as
   listing, also omitting the final Windows extension for explicit-name lookups.
   Callers needing the executable filename should use `Subcommand.path.file_name()`
   instead of relying on the previously prefixed `name` field
+- `tracing::STDERR_PLAIN_FORMAT` and `STDERR_DEBUG_FORMAT` are shared static
+  `LazyLock` values instead of constants. Existing `.clone()` calls still yield
+  owned formats with the same output; callers moving or consuming a `LazyLock`
+  must instead clone its inner format
 ### Fixed
 - Match subcommand prefixes and logical names against actual filename spelling on
   case-insensitive filesystems, retaining Windows case-insensitive extension matching

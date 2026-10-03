@@ -1,33 +1,46 @@
 # Clientele.rs
 
 [![License](https://img.shields.io/badge/license-Public%20Domain-blue.svg)](https://unlicense.org)
-[![Compatibility](https://img.shields.io/badge/rust-1.97%2B-blue)](https://blog.rust-lang.org/2026/07/09/Rust-1.97.0/)
-[![Package](https://img.shields.io/crates/v/clientele)](https://crates.io/crates/clientele)
-[![Documentation](https://docs.rs/clientele/badge.svg)](https://docs.rs/clientele/)
+[![Compatibility](https://img.shields.io/badge/rust-1.97%2B-blue)](https://endoflife.date/rust)
+[![Package on Crates.io](https://img.shields.io/crates/v/clientele)](https://crates.io/crates/clientele)
+[![Documentation](https://img.shields.io/docsrs/clientele?label=docs.rs)](https://docs.rs/clientele)
 
 **Clientele** makes it easy to write superb command-line utilities in Rust
 that follow consistent best practices on all target platforms including Linux,
 macOS, and Windows. It packages and re-exports [clap], [camino],
-[dotenvy], [wild], [argfile], and [getenv] into a single easy
-dependency.
+[dotenvy], [wild], [argfile], and [getenv] into a single easy dependency.
+
+<sub>
+
+[[Features](#-features)] |
+[[Prerequisites](#%EF%B8%8F-prerequisites)] |
+[[Installation](#%EF%B8%8F-installation)] |
+[[Examples](#-examples)] |
+[[Reference](#-reference)] |
+[[Development](#%E2%80%8D-development)]
+
+</sub>
 
 ## ✨ Features
 
-- Showcases how to structure a CLI program in Rust (see the [examples](#-examples)).
+- Reusable [clap] flags for color, debugging, verbosity, license, and version.
 - Loads environment variables from `.env` files (using the [dotenvy] crate).
 - Provides convenience getters for common variables (using the [getenv] crate).
 - Expands wildcard arguments (globs) on Windows (using the [wild] crate).
 - Expands @argfiles similarly to [`javac`] or Python (using the [argfile] crate).
-- Defines a standard set of essential CLI options (using the [clap] crate).
 - Provides the [`Utf8Path`] and [`Utf8PathBuf`] types (using the [camino] crate).
 - Recommends use of the [`sysexits.h(3)`] exit codes (see [known-errors]).
-- Supports opting out of any feature using comprehensive feature flags.
-- Adheres to the Rust API Guidelines in its [naming conventions].
-- 100% free and unencumbered public domain software.
+- Dependency re-exports and error conversions to `sysexits.h` exit codes.
+- External subcommand discovery with sorted, deduplicated `PATH` listings.
+- Stream-aware color detection, styled help, and ANSI/OSC hyperlink stripping.
+- Tracing formats and fallible subscriber initialization, honoring CLI options.
+- Opt-in shell completion and man-page generation from [clap] definitions.
+- Showcases how to structure a CLI program in Rust (see the [examples](#-examples)).
+- Supports opting out of any feature using comprehensive [feature flags].
 
 ## 🛠️ Prerequisites
 
-- [Rust](https://rust-lang.org) 1.97+
+- [Rust] 1.97+ (Rust 2024 edition)
 
 ## ⬇️ Installation
 
@@ -37,33 +50,34 @@ dependency.
 cargo add clientele
 ```
 
-### Installation in `Cargo.toml` (with default features)
+<details>
+<summary>Configuration in <code>Cargo.toml</code></summary>
+
+Default feature bundle:
 
 ```toml
 [dependencies]
-clientele = "0.4"
+clientele = "0.5"
 ```
 
-### Installation in `Cargo.toml` (with only specific features enabled)
+Focused CLI dependency:
 
 ```toml
 [dependencies]
-clientele = { version = "0.4", default-features = false, features = ["dotenv"] }
+clientele = { version = "0.5", default-features = false, features = ["clap", "dotenv", "argfile", "wild"] }
 ```
 
-### Focused CLI dependency
+- Add `color` for colored help; `tracing` for logging setup.
+- Add `completions` or `manpages` for generators.
+- Cargo unifies features across dependencies.
 
-For argument parsing, `.env` loading, @argfiles, and Windows wildcard expansion:
+</details>
 
-```toml
-[dependencies]
-clientele = { version = "0.4", default-features = false, features = ["clap", "dotenv", "argfile", "wild"] }
-```
+## 👉 Examples
 
-`clap` supplies `std`. Load `.env` before expanding arguments, then pass the
-resulting OS strings to Clap:
+### Parsing Arguments
 
-```no_run
+```rust,no_run
 # #[cfg(all(feature = "clap", feature = "dotenv", feature = "argfile", feature = "wild"))]
 # {
 use clientele::crates::clap::{self, Parser};
@@ -80,103 +94,91 @@ let options = Options::parse_from(clientele::args_os()?);
 # Ok::<(), clientele::SysexitsError>(())
 ```
 
-Importing `clap` itself with `self` lets the derive macro resolve its generated
-paths without a separate direct Clap dependency.
-
-This selection avoids Clientele's optional runtime, serialization, and byte-unit
-or duration parser dependencies. Add `color` for colored Clap output. Add `tracing`
-for logging initialization through `clientele::tracing` and `StandardOptions`;
-add `color` as well for colored logs. Logging initialization is explicit, and
-applications emitting events can depend directly on the `tracing` crate.
-Cargo unifies dependency features, so another dependency may enable additional
-Clientele features in the same build.
-
-### Feature selection
-
-- Defaults enable `all` and `std`. The `all` feature is a curated bundle;
-  it excludes `error-stack`, `unstable`, `completions`, and `manpages`.
-- Cargo's `--all-features` enables every feature, including those opt-ins.
-- `completions` enables shell completion generation and implies `clap,std`;
-  see the [completion guide](https://docs.rs/clientele/latest/clientele/completions/).
-- `manpages` independently enables ROFF manual-page generation and implies
-  `clap,std`; see the [man-page guide](https://docs.rs/clientele/latest/clientele/manpages/).
-- `clap` and `gofer` enable `std`. Argument expansion and subcommand discovery require
-  `std`; discovery additionally requires `subcommands`.
-- Native temporary paths require `std`; native home paths also require `dirs`.
-  UTF-8 variants require `camino`. Environment-only and XDG paths require
-  `std,getenv,camino`.
-- Tracing formats require `std,tracing`; subscriber initialization also requires
-  `clap`. `color` enables ANSI support only in already-enabled Clap/tracing
-  dependencies. `unicode` similarly augments an already-enabled Clap.
-- `serde-json` enables `serde`. `parse` groups byte-unit and duration parsers
-  plus the reserved, currently empty `parse-datetime` feature.
-- Disabling defaults does not provide `no_std` support. `error-stack` integration
-  works with or without the `std` feature.
-
-Enabled dependencies are available through [`clientele::crates`], for example
-`clientele::crates::clap::Parser` with `clap`. Use this supported entry point to
-share Clientele's dependency versions. See the [crate rustdoc] for API-specific
-feature requirements.
-
-## 👉 Examples
-
-See [`examples/skeleton/main.rs`] for a complete example.
-
-### Importing the Library
-
-```rust
-use clientele::*;
-```
-
 ### Running the Example
 
+The [skeleton] demonstrates standard flags, color, tracing, sysexits, and
+broken-pipe handling:
+
 ```bash
-cargo run --example skeleton
+cargo run --example skeleton -- --help
+cargo run --example skeleton -- -vvv config
 ```
 
 ## 📚 Reference
 
-### Options
+[docs.rs/clientele](https://docs.rs/clientele)
 
-#### [`StandardOptions`]
+### Standard Options
 
-```text
-Options:
-      --color <COLOR>  Set the color output mode [default: auto] [possible values: auto, always, never]
-  -d, --debug          Enable debugging output
-      --license        Show license information
-  -v, --verbose...     Enable verbose output (may be repeated for more verbosity)
-  -V, --version        Print version information
-  -h, --help           Print help
-```
+Flatten [`StandardOptions`] into a Clap parser; applications handle the recorded flags.
 
-### Integrations
+| Flag | Default | Purpose |
+| --- | --- | --- |
+| `--color <auto\|always\|never>` | `auto` | Output color policy (requires `color`) |
+| `-d`, `--debug` | Off | Debug output; tracing level TRACE |
+| `-v`, `--verbose...` | `0` | Tracing levels ERROR → WARN → INFO → DEBUG |
+| `--license` | Off | Request license information |
+| `-V`, `--version` | Off | Request version information |
 
-Crate (Feature) | Version | Usage | Summary
-:--- | :--- | :--- | :---
-[argfile] &nbsp;<sub>(`"argfile"`)</sub> | 0.2 | [![argfile](https://docs.rs/argfile/badge.svg)](https://docs.rs/argfile/) | Enhances [`args_os()`] to expand @argfiles
-[camino] &nbsp;<sub>(`"camino"`)</sub> | 1.1 | [![camino](https://docs.rs/camino/badge.svg)](https://docs.rs/camino/) | UTF-8 path types and UTF-8 [`paths::*`] helpers
-[clap] &nbsp;<sub>(`"clap"`)</sub> | 4.5 | [![clap](https://docs.rs/clap/badge.svg)](https://docs.rs/clap/) | Provides [`StandardOptions`]
-[dirs] &nbsp;<sub>(`"dirs"`)</sub> | 6.0 | [docs](https://docs.rs/dirs/) | Native home-directory resolution with `std`
-[dotenvy] &nbsp;<sub>(`"dotenv"`)</sub> | 0.15 | [![dotenvy](https://docs.rs/dotenvy/badge.svg)](https://docs.rs/dotenvy/) | Provides [`dotenv()`]
-[duration-str] &nbsp;<sub>(`"parse-duration"`)</sub> | 0.15 | [docs](https://docs.rs/duration-str/) | Duration parser re-export
-[error-stack] &nbsp;<sub>(`"error-stack"`)</sub> | 0.5 | [docs](https://docs.rs/error-stack/) | [`SysexitsError`] report contexts
-[getenv] &nbsp;<sub>(`"getenv"`)</sub> | 0.1 | [![getenv](https://docs.rs/getenv/badge.svg)](https://docs.rs/getenv/) | [`envs::*`] with `std`; environment paths also need `camino`
-[gofer] &nbsp;<sub>(`"gofer"`)</sub> | 0.1 | [docs](https://docs.rs/gofer/) | Fetching and known-error integration
-[serde] &nbsp;<sub>(`"serde"`)</sub> | 1 | [docs](https://docs.rs/serde/) | Serialization integration and re-export
-[serde_json] &nbsp;<sub>(`"serde-json"`)</sub> | 1 | [docs](https://docs.rs/serde_json/) | JSON support; enables `serde`
-[tokio] &nbsp;<sub>(`"tokio"`)</sub> | 1 | [docs](https://docs.rs/tokio/) | Runtime re-export and known-error integration
-[tracing-core] &nbsp;<sub>(`"tracing"`)</sub> | 0.1 | [![tracing-core](https://docs.rs/tracing-core/badge.svg)](https://docs.rs/tracing-core/) | Converts [`StandardOptions`] to `tracing_core::LevelFilter`
-[tracing-subscriber] &nbsp;<sub>(`"tracing"`)</sub> | 0.3 | [docs](https://docs.rs/tracing-subscriber/) | Formats with `std`; initializer also needs `clap`
-[ubyte] &nbsp;<sub>(`"parse-byteunit"`)</sub> | 0.10 | [docs](https://docs.rs/ubyte/) | Byte-unit parser re-export
-[wild] &nbsp;<sub>(`"wild"`)</sub> | 2 | [![wild](https://docs.rs/wild/badge.svg)](https://docs.rs/wild/) | Enhances [`args_os()`] to support globs on Windows
-<img width="220" height="1"/> | <img width="110" height="1"/> | <img width="100" height="1"/> | &nbsp;
+### Feature Flags
+
+| Feature(s) | Effect |
+| --- | --- |
+| `default` | `all` + `std` |
+| `all` | All functionality below except the opt-ins; not Cargo's `--all-features` |
+| `std` | Argument, path, and exit helpers; dependency standard-library support |
+| `clap` | Standard options and sort keys; enables `std` |
+| `argfile`, `wild` | Enhance `args_os()`; requires `std` |
+| `dotenv`, `getenv` | `.env` loading; environment getters (`std,getenv`) |
+| `dirs`, `camino` | Native/UTF-8 paths; XDG helpers need `std,getenv,camino`; see [`paths::*`] |
+| `subcommands` | Executable discovery; requires `std` |
+| `color`, `unicode` | Color for enabled Clap/tracing dependencies; Unicode for enabled Clap |
+| `tracing` | Formats with `std`; options-based initialization also needs `clap` |
+| `parse` | `parse-byteunit` + `parse-duration` + reserved, empty `parse-datetime` |
+| `serde`, `serde-json` | Camino serialization; JSON re-export and error conversion |
+| `gofer`, `tokio` | Fetching/runtime re-exports and error conversions; `gofer` enables `std` |
+| **Opt-in:** `completions` | Bash, Elvish, Fish, PowerShell, Zsh generators; enables `clap,std` |
+| **Opt-in:** `manpages` | ROFF manual-page generator; enables `clap,std` |
+| **Opt-in:** `error-stack` | `SysexitsError` report contexts, with or without `std` |
+| **Opt-in:** `unstable` | Forward Dogma's unstable feature |
+
+### Interoperability
+
+Enabled dependencies are re-exported through [`clientele::crates`]. Versions below are manifest requirements.
+
+| Feature | Crate(s) | Version | Integration |
+| --- | --- | --- | --- |
+| Always | [dogma] | 0.3.0 | Shared vocabulary; defaults disabled |
+| Always | [known-errors] | 0.1.2 | `SysexitsError`, `SysexitsResult`; `abort!`, `exit` with `std` |
+| `clap` | [clap] | 4.5 | Derive parsing, `StandardOptions`, typed sort keys |
+| `camino` | [camino] | 1.1 | `Utf8Path`, `Utf8PathBuf` and path helpers |
+| `dirs` | [dirs] | 6.0 | Native home-directory resolution |
+| `dotenv` | [dotenvy] | 0.15 | `dotenv()` |
+| `getenv` | [getenv] | 0.1 | `envs` re-export and XDG paths |
+| `argfile`, `wild` | [argfile], [wild] | 0.2, 2 | Argument-file and Windows glob expansion |
+| `tracing` | [tracing-core], [tracing-subscriber] | 0.1, 0.3.19 | Level conversions, global/scoped subscribers, reusable formats |
+| `serde` | [serde] | 1 | Re-export; serialization for already-enabled Camino |
+| `serde-json` | [serde_json] | 1 | Enables Serde; JSON-error → sysexits conversion |
+| `gofer` | [gofer] | 0.1.8 | Fetch-error → sysexits conversion |
+| `tokio` | [tokio] | 1 | Runtime; join-error → sysexits conversion |
+| `error-stack` | [error-stack] | 0.5 | Sysexits report contexts |
+| `parse-byteunit`, `parse-duration` | [ubyte], [duration-str] | 0.10, 0.15 | Parser re-exports |
+| `completions`, `manpages` | [clap_complete], [clap_mangen] | 4.6, 0.3 | Clap-based generators |
+
+- `known-errors` exposes the listed APIs, rather than a crate re-export.
+- `serde` alone does not enable JSON; `camino` remains optional.
+- Add a direct `tracing` dependency to emit events; subscriber setup is explicit.
 
 ## 👨‍💻 Development
 
 ```bash
 git clone https://github.com/dryrust/clientele.rs.git
 ```
+
+See [AGENTS.md](https://github.com/dryrust/clientele.rs/blob/master/AGENTS.md)
+for contributor guidance and
+[TODO.md](https://github.com/dryrust/clientele.rs/blob/master/TODO.md) for
+review status and the enhancement backlog.
 
 ---
 
@@ -186,18 +188,20 @@ git clone https://github.com/dryrust/clientele.rs.git
 [![Share on Facebook](https://img.shields.io/badge/share%20on-fb-1976D2?logo=facebook)](https://www.facebook.com/sharer/sharer.php?u=https://github.com/dryrust/clientele.rs)
 [![Share on LinkedIn](https://img.shields.io/badge/share%20on-linkedin-3949AB?logo=linkedin)](https://www.linkedin.com/sharing/share-offsite/?url=https://github.com/dryrust/clientele.rs)
 
-[naming conventions]: https://rust-lang.github.io/api-guidelines/naming.html
-[`examples/skeleton/main.rs`]: lib/clientele/examples/skeleton/main.rs
-
-[`javac`]: https://docs.oracle.com/javase/7/docs/technotes/tools/windows/javac.html#commandlineargfile
-[`sysexits.h(3)`]: https://man7.org/linux/man-pages/man3/sysexits.h.3head.html
+[Rust]: https://rust-lang.org
+[changelog]: https://github.com/dryrust/clientele.rs/blob/master/CHANGES.md
+[feature flags]: https://docs.rs/crate/clientele/latest/features
+[skeleton]: https://github.com/dryrust/clientele.rs/blob/master/lib/clientele/examples/skeleton/main.rs
 
 [argfile]: https://crates.io/crates/argfile
 [camino]: https://crates.io/crates/camino
 [clap]: https://crates.io/crates/clap
+[clap_complete]: https://crates.io/crates/clap_complete
+[clap_mangen]: https://crates.io/crates/clap_mangen
 [dirs]: https://crates.io/crates/dirs
-[duration-str]: https://crates.io/crates/duration-str
+[dogma]: https://crates.io/crates/dogma
 [dotenvy]: https://crates.io/crates/dotenvy
+[duration-str]: https://crates.io/crates/duration-str
 [error-stack]: https://crates.io/crates/error-stack
 [getenv]: https://crates.io/crates/getenv
 [gofer]: https://crates.io/crates/gofer
@@ -219,4 +223,3 @@ git clone https://github.com/dryrust/clientele.rs.git
 [`envs::*`]: https://docs.rs/getenv/latest/getenv/index.html
 [`paths::*`]: https://docs.rs/clientele/latest/clientele/paths/index.html
 [`clientele::crates`]: https://docs.rs/clientele/latest/clientele/crates/index.html
-[crate rustdoc]: https://docs.rs/clientele/latest/clientele/

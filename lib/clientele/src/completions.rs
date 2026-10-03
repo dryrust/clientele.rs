@@ -7,7 +7,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! clientele = { version = "0.4", default-features = false, features = ["completions"] }
+//! clientele = { version = "0.5", default-features = false, features = ["completions"] }
 //! ```
 //!
 //! These are re-exports of `clap_complete`'s static generators for Bash, Elvish,

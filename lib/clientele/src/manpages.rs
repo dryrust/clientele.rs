@@ -7,7 +7,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! clientele = { version = "0.4", default-features = false, features = ["manpages"] }
+//! clientele = { version = "0.5", default-features = false, features = ["manpages"] }
 //! ```
 //!
 //! [`Man`] is re-exported from `clap_mangen`. It takes ownership of a command
