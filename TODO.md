@@ -24,18 +24,13 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 8a**, adding fallible tracing initialization.
+**Suggested next leaf: 8b**, correcting the shared tracing-format representation.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
 
 ## 8. API composability and documentation (P2 unless marked P3)
 
-- [ ] **8a. Add fallible tracing initialization.**
-  In `lib/clientele/src/tracing.rs`, add a `try_init_tracing_subscriber()`-style
-  API returning initialization errors. Preserve the existing initializer and its
-  documented panic behavior. Test successful initialization and a preinstalled
-  global subscriber in separate processes. Requirements remain `std,tracing,clap`.
 - [ ] **8b. Correct the shared tracing-format representation.**
   `STDERR_PLAIN_FORMAT` and `STDERR_DEBUG_FORMAT` are `const LazyLock` values,
   creating fresh lazy values per use and triggering Clippy warnings. Provide an
@@ -210,12 +205,13 @@ cargo test -p clientele --test skeleton_cli --no-default-features --features cla
 cargo run --locked --example skeleton -- config
 ```
 
-For tracing color regressions, including dependency-enabled ANSI without `color`:
+For tracing initialization and color regressions, including dependency-enabled
+ANSI without `color`:
 
 ```sh
-cargo test -p clientele --test tracing_color --no-default-features --features clap,tracing --locked
-cargo test -p clientele --test tracing_color --no-default-features --features clap,color,tracing --locked
-cargo test -p clientele --test tracing_color --no-default-features --features clap,tracing,tracing-subscriber/ansi --locked
+cargo test -p clientele --test tracing_init --test tracing_color --no-default-features --features clap,tracing --locked
+cargo test -p clientele --test tracing_init --test tracing_color --no-default-features --features clap,color,tracing --locked
+cargo test -p clientele --test tracing_init --test tracing_color --no-default-features --features clap,tracing,tracing-subscriber/ansi --locked
 ```
 
 For release/dependency checks, retain MSRV and all-features coverage:

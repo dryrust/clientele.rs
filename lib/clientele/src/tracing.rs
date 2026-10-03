@@ -3,7 +3,7 @@
 //! Logging formats and subscriber initialization.
 //!
 //! Available with the `std` and `tracing` features. The formats can be used
-//! without Clap; `init_tracing_subscriber` additionally requires `clap`.
+//! without Clap; both subscriber initializers additionally require `clap`.
 
 #[cfg(feature = "clap")]
 use crate::StandardOptions;
@@ -45,7 +45,9 @@ pub const STDERR_DEBUG_FORMAT: LazyLock<Format<Compact, ()>> =
 ///
 /// # Panics
 ///
-/// Panics if a global tracing subscriber has already been installed.
+/// Panics if a global tracing subscriber has already been installed or another
+/// initialization error occurs. Use [`try_init_tracing_subscriber`] to handle
+/// initialization errors instead.
 ///
 /// # Examples
 ///
@@ -63,6 +65,42 @@ pub const STDERR_DEBUG_FORMAT: LazyLock<Format<Compact, ()>> =
 /// ```
 #[cfg(feature = "clap")]
 pub fn init_tracing_subscriber(options: &StandardOptions) {
+    try_init_tracing_subscriber(options).expect("Unable to install global subscriber");
+}
+
+/// Attempts to initialize the global tracing subscriber based on the given options.
+///
+/// Requires the `clap` feature in addition to `std` and `tracing`. Uses the same
+/// stderr output, plain/debug formats, level filtering, and color handling as
+/// [`init_tracing_subscriber`]. Returns `Ok(())` when initialization succeeds.
+///
+/// # Errors
+///
+/// Returns the underlying `tracing-subscriber` initialization error, including
+/// when a global subscriber has already been installed. An existing subscriber
+/// is not replaced. If `tracing-subscriber`'s `tracing-log` feature is enabled
+/// through dependency feature unification, errors installing its log bridge are
+/// also returned.
+///
+/// # Examples
+///
+/// ```no_run
+/// use clientele::{crates::clap::Parser, tracing::try_init_tracing_subscriber, StandardOptions};
+///
+/// #[derive(Parser)]
+/// struct Options {
+///     #[command(flatten)]
+///     flags: StandardOptions,
+/// }
+///
+/// let options = Options::parse();
+/// try_init_tracing_subscriber(&options.flags)?;
+/// # Ok::<(), Box<dyn std::error::Error + Send + Sync>>(())
+/// ```
+#[cfg(feature = "clap")]
+pub fn try_init_tracing_subscriber(
+    options: &StandardOptions,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
     #[cfg(feature = "color")]
     let ansi = {
         use crate::{ColorChoiceExt, ColorStream};
@@ -80,5 +118,5 @@ pub fn init_tracing_subscriber(options: &StandardOptions) {
             STDERR_PLAIN_FORMAT.clone()
         })
         .with_ansi(ansi)
-        .init();
+        .try_init()
 }

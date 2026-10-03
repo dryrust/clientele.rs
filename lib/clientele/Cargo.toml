@@ -53,6 +53,11 @@ harness = false
 required-features = ["std", "clap", "tracing"]
 
 [[test]]
+name = "tracing_init"
+harness = false
+required-features = ["std", "clap", "tracing"]
+
+[[test]]
 name = "paths_xdg"
 harness = false
 required-features = ["std", "getenv", "camino"]

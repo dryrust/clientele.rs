@@ -9,7 +9,7 @@
 //! when default features are disabled.
 //!
 //! Tracing formats require `std` and `tracing`; the options-based tracing
-//! initializer additionally requires `clap`.
+//! initializers additionally require `clap`.
 //! The `color` feature enables ANSI support in Clap and tracing when those
 //! optional dependencies are enabled, without enabling either dependency itself.
 //!
