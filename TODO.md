@@ -24,7 +24,7 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 9d.strict.iterator**, resolving the Clippy baseline.
+**Suggested next leaf: 9d.strict.gates**, enforcing the clean warning baseline.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -37,9 +37,6 @@ and stable. Ubuntu and Windows also run minimal feature combinations and
 packaged doctests.
 
 - [ ] **9d. Add CI quality gates in small steps.**
-  - [ ] **9d.strict.iterator:** Resolve the inherent
-    `SubcommandsProvider::into_iter()` warning while preserving calls and the
-    owned/borrowed `IntoIterator` implementations. Assess signature compatibility.
   - [ ] **9d.strict.gates:** Enforce warning-free Clippy and rustdoc in CI after
     resolving the iterator warning. Recheck the baseline before enabling gates.
 
@@ -147,8 +144,8 @@ done
 ```
 
 Last observed baseline: default tests, relevant minimal builds, all-features
-tests, and packaged doctests pass. Clippy emits 1 warning (the inherent iterator
-method); rustdoc is warning-free. Earlier runtime probes ran on macOS; Linux/Windows
+tests, and packaged doctests pass. Clippy and rustdoc are warning-free after
+removing the redundant inherent iterator method. Runtime probes ran on macOS; Linux/Windows
 cross-compilation results are not substitutes for native behavioral tests.
 Recheck and report failures rather than suppressing them.
 

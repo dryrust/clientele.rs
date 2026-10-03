@@ -166,14 +166,6 @@ impl SubcommandsProvider {
         self.commands.iter()
     }
 
-    /// Consumes the provider and yields owned commands in collection order.
-    ///
-    /// Retained for compatibility; generic consumers and `for` loops can also
-    /// use the [`IntoIterator`] implementation.
-    pub fn into_iter(self) -> impl Iterator<Item = Subcommand> {
-        IntoIterator::into_iter(self)
-    }
-
     /// Borrows the collected commands as a slice in collection order.
     pub fn commands(&self) -> &[Subcommand] {
         &self.commands
@@ -193,6 +185,10 @@ impl SubcommandsProvider {
 }
 
 /// Consumes the provider and yields each command without cloning it.
+///
+/// Both `provider.into_iter()` and `SubcommandsProvider::into_iter(provider)`
+/// resolve to this trait method through Rust's prelude. It replaces the redundant
+/// inherent method and exposes exact-length and double-ended iteration.
 impl IntoIterator for SubcommandsProvider {
     type Item = Subcommand;
     type IntoIter = std::vec::IntoIter<Subcommand>;
@@ -500,6 +496,13 @@ mod tests {
             "commands must be moved"
         );
         assert_eq!(collection_fixture().into_iter().collect::<Vec<_>>(), owned);
+        // Legacy associated-function calls resolve through the prelude trait.
+        let mut legacy: <SubcommandsProvider as IntoIterator>::IntoIter =
+            SubcommandsProvider::into_iter(collection_fixture());
+        assert_eq!(legacy.len(), 2);
+        assert_eq!(legacy.next_back().unwrap().name, "zeta");
+        assert_eq!(legacy.next().unwrap().name, "alpha");
+        assert_eq!(legacy.len(), 0);
         let mut names = Vec::new();
         for command in collection_fixture() {
             names.push(command.name);

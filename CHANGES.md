@@ -30,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `paths::home_dir()` and `paths::temp_dir()` for native directory resolution,
   with checked `_utf8` variants and independently gated optional dependencies
 ### Changed
+- Remove the redundant inherent `SubcommandsProvider::into_iter()` method in
+  favor of its existing prelude trait implementation. Method and associated
+  function calls continue to work; their returned iterator now also exposes
+  exact-length and double-ended iteration
 - `tracing::STDERR_PLAIN_FORMAT` and `STDERR_DEBUG_FORMAT` are shared static
   `LazyLock` values instead of constants. Existing `.clone()` calls still yield
   owned formats with the same output; callers moving or consuming a `LazyLock`
