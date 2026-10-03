@@ -24,18 +24,13 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 8e**, supporting formatting typed sort keys.
+**Suggested next leaf: 8f**, defining malformed and non-CSI escape handling.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
 
 ## 8. API composability and documentation (P2 unless marked P3)
 
-- [ ] **8e. Support formatting typed sort keys.**
-  `SortKey` and `SortKeys` implement `Display` only for string keys, although Clap
-  parsing supports typed `ValueEnum` keys. Generalize formatting for suitable
-  `Display` key types. Test a typed key and preserve existing string output,
-  direction prefixes, and multi-key separators.
 - [ ] **8f. Define robust malformed/non-CSI escape handling.**
   `lib/clientele/src/color.rs::strip_ansi()` is documented for CSI sequences from
   `color_print`; it currently turns `"a\x1bb"` into `"a"` by consuming the next

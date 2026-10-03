@@ -53,9 +53,12 @@ impl core::error::Error for SortSqlError {}
 /// it is neither trimmed nor rejected. Typed Clap parsing uses the same syntax
 /// and passes the unchanged key text to `clap::ValueEnum` for validation.
 ///
-/// String formatting separates keys with commas and prefixes descending keys
-/// with `-`; it omits ascending `+` prefixes and preserves whitespace. It is not
-/// a serialization format for arbitrary constructed keys: an empty sequence or
+/// Formatting is available when `T` implements [`core::fmt::Display`]. It uses
+/// each key's display text, separates keys with commas, and prefixes descending
+/// keys with `-`; ascending `+` prefixes are omitted. String keys retain their
+/// whitespace. Typed `ValueEnum` keys must implement `Display` separately; their
+/// display text need not match the names accepted by Clap. Formatting is not a
+/// serialization format for arbitrary constructed keys: an empty sequence or
 /// the default string sort displays as `""`, which cannot be parsed back.
 ///
 /// ```rust,ignore
@@ -174,7 +177,7 @@ impl<T: Clone + ToString> SortKeys<T> {
     }
 }
 
-impl core::fmt::Display for SortKeys {
+impl<T: Clone + core::fmt::Display> core::fmt::Display for SortKeys<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         for (i, key) in self.keys.iter().enumerate() {
             if i > 0 {
@@ -191,13 +194,18 @@ impl core::fmt::Display for SortKeys {
 /// `Default` selects `T::default()` in ascending order. Construction does not
 /// validate the key; empty and whitespace-only strings are permitted. String
 /// formatting preserves the key verbatim, prefixed by `-` only when descending.
+/// Typed keys support the same formatting when `T` implements
+/// [`core::fmt::Display`], using the key's display text without escaping it.
+/// When construction has no expected key type, specify `T` explicitly, for
+/// example `SortKey::<String>::new("name", false).to_string()`; formatting alone
+/// does not determine the target type of the constructor's `Into<T>` conversion.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct SortKey<T: Clone = String> {
     key: T,
     descending: bool,
 }
 
-impl core::fmt::Display for SortKey<String> {
+impl<T: Clone + core::fmt::Display> core::fmt::Display for SortKey<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}{}", if self.descending { "-" } else { "" }, self.key)
     }
@@ -384,6 +392,16 @@ mod tests {
         Name,
     }
 
+    impl core::fmt::Display for Column {
+        fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+            f.write_str(match self {
+                Self::Handle => "handle",
+                Self::Id => "id",
+                Self::Name => "display-name",
+            })
+        }
+    }
+
     #[derive(Parser, Debug)]
     struct EnumArgs {
         #[clap(long, value_name = "[+|-]KEY,...", allow_hyphen_values = true)]
@@ -447,6 +465,45 @@ mod tests {
     #[test]
     fn rejects_unknown_value_enum_sort_keys() {
         assert!(EnumArgs::try_parse_from(["my-program", "--sort=unknown"]).is_err());
+    }
+
+    #[test]
+    fn formats_typed_keys_using_their_display_text() {
+        assert_eq!(
+            SortKey::<Column>::new(Column::Name, false).to_string(),
+            "display-name"
+        );
+        assert_eq!(
+            SortKey::<Column>::new(Column::Name, true).to_string(),
+            "-display-name"
+        );
+
+        let args = EnumArgs::try_parse_from(["my-program", "--sort=-name,+id,handle"]).unwrap();
+        assert_eq!(args.sort.unwrap().to_string(), "-display-name,id,handle");
+        assert_eq!(SortKeys::<Column>::empty().to_string(), "");
+    }
+
+    #[test]
+    fn formatting_does_not_require_value_enum() {
+        let sort = SortKeys::<i32>::new(&[SortKey::new(42, false), SortKey::new(7, true)]);
+        assert_eq!(sort.keys()[0].to_string(), "42");
+        assert_eq!(sort.keys()[1].to_string(), "-7");
+        assert_eq!(sort.to_string(), "42,-7");
+    }
+
+    #[test]
+    fn string_formatting_preserves_direction_and_separators() {
+        for (input, expected) in [
+            ("name", "name"),
+            ("+name", "name"),
+            ("-name", "-name"),
+            ("-name,+id,handle", "-name,id,handle"),
+        ] {
+            let sort = input.parse::<SortKeys>().unwrap();
+            assert_eq!(sort.to_string(), expected);
+            let keys: Vec<_> = sort.keys().iter().map(ToString::to_string).collect();
+            assert_eq!(keys.join(","), expected);
+        }
     }
 
     #[test]
