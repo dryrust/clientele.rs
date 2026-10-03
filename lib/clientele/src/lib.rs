@@ -25,6 +25,9 @@
 //! Shell completion generation is available through `clientele::completions` with the
 //! opt-in `completions` feature, which enables `clap` and `std`. It is excluded
 //! from `all` and the default features.
+//! Man-page generation is available through `clientele::manpages` with the
+//! independent opt-in `manpages` feature, also enabling `clap` and `std` and
+//! excluded from `all` and defaults.
 //!
 //! ```edition2021
 //! # use clientele::*;
@@ -88,6 +91,9 @@ pub mod crates;
 
 #[cfg(feature = "completions")]
 pub mod completions;
+
+#[cfg(feature = "manpages")]
+pub mod manpages;
 
 mod color;
 pub use color::*;

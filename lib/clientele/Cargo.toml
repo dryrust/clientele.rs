@@ -14,6 +14,9 @@ keywords.workspace = true
 categories.workspace = true
 publish.workspace = true
 
+[package.metadata.docs.rs]
+all-features = true
+
 [[example]]
 name = "skeleton"
 required-features = ["std", "clap", "dotenv"]
@@ -21,6 +24,10 @@ required-features = ["std", "clap", "dotenv"]
 [[test]]
 name = "completions"
 required-features = ["completions"]
+
+[[test]]
+name = "manpages"
+required-features = ["manpages"]
 
 [[test]]
 name = "error_stack"
@@ -105,6 +112,7 @@ dotenv = ["dep:dotenvy"]
 error-stack = ["dep:error-stack", "known-errors/error-stack"]
 getenv = ["dep:getenv"]
 gofer = ["dep:gofer", "known-errors/gofer"]
+manpages = ["clap", "dep:clap_mangen"]
 parse = ["parse-byteunit", "parse-datetime", "parse-duration"]
 parse-byteunit = ["dep:ubyte"]
 # Reserved: currently provides no date/time parser, re-export, or dependency.
@@ -145,6 +153,7 @@ clap = { version = "4.5", default-features = false, features = [
     "wrap_help",
 ], optional = true }
 clap_complete = { version = "4.6", default-features = false, optional = true }
+clap_mangen = { version = "0.3", default-features = false, optional = true }
 dirs = { version = "6.0", default-features = false, optional = true }
 dogma = { version = "0.1.10", default-features = false }
 duration-str = { version = "0.15", default-features = false, optional = true }

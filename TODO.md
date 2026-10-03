@@ -24,16 +24,11 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 10b**, adding opt-in man-page generation.
+**Status:** All leaf tasks from the 2026-10-02 review have been completed.
+Add newly reviewed findings here before starting further enhancement work.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
-
-## 10. Optional CLI feature growth (P3)
-
-- [ ] **10b. Add opt-in man-page generation.**
-  Evaluate `clap_mangen` in a separate change with the same feature, documentation,
-  and consumer-verification discipline.
 
 ## Verification and baseline
 
@@ -116,6 +111,22 @@ For release/dependency checks, retain MSRV and all-features coverage:
 
 ```sh
 cargo +1.97.0 test --workspace --all-features --locked
+```
+
+For optional generators, test each feature independently and together:
+
+```sh
+cargo test -p clientele --no-default-features --features completions --locked
+cargo test -p clientele --no-default-features --features manpages --locked
+cargo check -p clientele --all-targets --no-default-features --features completions,manpages --locked
+```
+
+For version-bump tooling, `rake test` runs isolated Cargo workspaces and verifies
+that historical versions are preserved. CI quality gates also require:
+
+```sh
+cargo clippy --workspace --all-targets --locked -- -D warnings
+RUSTDOCFLAGS='-D warnings' cargo doc --workspace --no-deps --locked
 ```
 
 For README/packaging changes, reproduce CI's packaged-doctest check. The local

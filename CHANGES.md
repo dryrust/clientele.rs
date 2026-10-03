@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
+- Opt-in `manpages` feature and module for ROFF manual-page generation via
+  `clap_mangen`, independently of shell completions
 - Opt-in `completions` feature and module for static shell completion generation
   via `clap_complete`, also available through `clientele::crates`
 - Initialize tracing in the skeleton when enabled, honoring verbosity and stderr
