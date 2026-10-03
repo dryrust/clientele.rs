@@ -7,6 +7,16 @@ on:
 env:
   CARGO_TERM_COLOR: always
 jobs:
+  quality:
+    name: Check code quality
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Install rustfmt
+      run: rustup component add rustfmt
+    - name: Check formatting
+      run: cargo fmt --all -- --check
   build-ubuntu:
     name: Build on Ubuntu
     runs-on: ubuntu-latest

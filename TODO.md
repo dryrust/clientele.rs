@@ -53,7 +53,6 @@ tests plus packaged doctests on both systems.
   Cover supported `clap`, tracing, subcommands, and `error-stack` combinations;
   Windows-specific behavioral tests must run natively.
 - [ ] **9d. Add CI quality gates in small steps.**
-  - [ ] **9d.fmt:** Add the formatting check.
   - [ ] **9d.doc:** Add rustdoc verification.
   - [ ] **9d.clippy:** Add Clippy verification.
   - [ ] **9d.strict:** Enforce warning-free checks after the relevant baseline
