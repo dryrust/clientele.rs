@@ -34,6 +34,28 @@ mod windows {
                 "question" => vec!["match-two.txt".into()],
                 "unmatched" => vec!["absent*.txt".into()],
                 "quoted" => vec!["match*.txt".into()],
+                "argfile-glob" | "argfile-mixed" => {
+                    let mut expected: Vec<OsString> = if cfg!(feature = "argfile") {
+                        // Neither direct nor nested argfile patterns get a second
+                        // wildcard pass, even though both match fixture files.
+                        vec!["match*.txt".into(), "match-?wo.txt".into()]
+                    } else {
+                        vec!["@only.args".into()]
+                    };
+                    if mode == "argfile-mixed" {
+                        let start = values.len() - 2;
+                        values[start..].sort();
+                        expected.extend(["match one.txt".into(), "match-two.txt".into()]);
+                    }
+                    expected
+                }
+                "argfile-space" => {
+                    if cfg!(feature = "argfile") {
+                        vec!["match*.txt".into()]
+                    } else {
+                        vec!["@space file.args".into()]
+                    }
+                }
                 "mixed" => {
                     assert_eq!(values[0], "match*.txt");
                     assert_eq!(values[3], "absent*.txt");
@@ -64,6 +86,21 @@ mod windows {
                 "mixed",
                 r#"before "match*.txt" match*.txt absent*.txt after"#,
             ),
+        ] {
+            check(dir.path(), mode, raw);
+        }
+
+        // The raw @*.args glob must expand to @only.args before argfile loading
+        // opens only.args. Reading the globbed file itself would produce a wrong
+        // sentinel; attempting argfile expansion first would open a literal '*'.
+        fs::write(dir.child("@only.args"), "wrong file\n").unwrap();
+        fs::write(dir.child("only.args"), "match*.txt\n@nested.args\n").unwrap();
+        fs::write(dir.child("nested.args"), "match-?wo.txt\n").unwrap();
+        fs::write(dir.child("space file.args"), "match*.txt\n").unwrap();
+        for (mode, raw) in [
+            ("argfile-glob", "before @*.args after"),
+            ("argfile-mixed", "before @*.args match*.txt after"),
+            ("argfile-space", r#"before "@space file.args" after"#),
         ] {
             check(dir.path(), mode, raw);
         }

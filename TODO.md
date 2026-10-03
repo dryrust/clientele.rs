@@ -25,9 +25,11 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 6 outstanding leaf tasks: 3 P1, 2 P2, and 1 P3. Evidence below
-distinguishes runtime reproductions, source-review findings, coverage gaps, and
-optional extensions.
+**Status:** 6 open items: five have implementations/regressions in place but await
+native platform verification (3 P1 and 2 P2); R2-22 remains unimplemented (P3).
+The original evidence below describes the review snapshot, not the corrected code.
+Progress notes identify the remaining work; do not repeat completed implementation
+steps or treat cross-compilation as native verification.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -119,8 +121,10 @@ tests. Cross-compilation establishes build coverage only.
 - [ ] **R2-13 — Exercise Windows wildcard expansion with real raw command lines.**
   **Progress:** New `args_wild` subprocess target requires `std,wild` and uses
   Windows `CommandExt::raw_arg` for matching/unmatched, quoted, question-mark, and
-  mixed patterns, including matching filenames containing spaces. Argfile ordering
-  coverage and native Windows execution remain.
+  mixed patterns, including matching filenames containing spaces. It also covers
+  raw `@*.args` expansion before argfile loading, quoted argfile paths with spaces,
+  and no re-expansion of direct/nested argfile patterns, with disabled-argfile
+  controls. Both feature sets cross-compile; native Windows execution remains.
   **Evidence (coverage gap):** No existing test exercises `wild::args_os` with a
   wildcard. Passing ordinary strings through `Command::args` alone does not prove
   quoted-versus-unquoted Windows command-line behavior or its ordering with argfiles.
@@ -212,6 +216,15 @@ expansion after `--`, Unix argv[0] overrides, and disabled-feature pass-through:
 cargo test -p clientele --test args_os --locked
 cargo test -p clientele --test args_os --no-default-features --features std,argfile --locked
 cargo test -p clientele --test args_os --no-default-features --features std --locked
+```
+
+For raw Windows wildcard quoting and wildcard-before-argfile ordering (native
+Windows only; non-Windows targets report that the scenarios require Windows):
+
+```sh
+cargo test -p clientele --test args_wild --no-default-features --features std,wild --locked
+cargo test -p clientele --test args_wild --no-default-features --features std,wild,argfile --locked
+cargo test -p clientele --test args_wild --locked
 ```
 
 For sort parsing, checked SQL rendering, and their doctests with minimal features:
@@ -364,3 +377,22 @@ Host: aarch64 macOS; stable Rust/Cargo 1.98.1, with Rust 1.97.0 also installed.
 
 For maintenance of this backlog alone, review file references and run
 `git diff --check`; code/test changes require the applicable checks above.
+
+### Follow-up verification on 2026-10-03
+
+Ten atomic implementation/test steps advanced R2-03, R2-04, R2-05, R2-13, and
+R2-16. Their progress notes retain the outstanding native verification rather
+than marking cross-compiled tests as executed. R2-22 still needs measurement and
+implementation after that verification.
+
+- Passed formatting, default workspace tests (46 library tests and 21 doctests),
+  no-default-feature all-target checks, and default/all-feature Clippy and rustdoc
+  with warnings denied. A test-clone Clippy finding was corrected before completion.
+- Passed Rust 1.97.0 all-feature workspace tests (including 23 doctests).
+- Passed minimal `std,subcommands` discovery tests on case-insensitive macOS.
+  Non-Unicode filesystem fixtures reported a skip because creation returned EILSEQ.
+- Windows all-feature all-target checks and minimal discovery/wild/argfile checks
+  passed, including Windows-target Clippy with `std,wild,argfile,subcommands`.
+  Linux all-target checks with those features passed as well.
+- Raw wildcard scenarios require native Windows; the macOS driver reports this
+  explicitly. Native Windows and supporting Unix-filesystem runs remain pending.

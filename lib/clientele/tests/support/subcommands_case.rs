@@ -37,7 +37,7 @@ pub fn run() -> bool {
         };
         assert_eq!(
             SubcommandsProvider::collect("CLIENTELE-", 1).commands(),
-            [upper_prefix.clone()]
+            std::slice::from_ref(&upper_prefix)
         );
         assert_eq!(
             SubcommandsProvider::find("CLIENTELE-", "hello"),
