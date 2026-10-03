@@ -31,6 +31,9 @@ enum Command {
 ///
 /// With the `color` feature, `--color` in the expanded arguments controls Clap's
 /// help and error output, including missing-subcommand diagnostics.
+/// With `tracing`, installs the process-wide stderr subscriber after informational
+/// early exits and emits a debug event when running `config`. This standalone
+/// entry point owns subscriber initialization; a preinstalled subscriber panics.
 pub fn main() -> ExitCode {
     // Returning Result directly would turn every application error into status 1.
     match run() {
@@ -75,8 +78,15 @@ fn run() -> Result<(), SysexitsError> {
         return Ok(());
     }
 
+    // This standalone application owns the global subscriber. Embedded callers
+    // can use try_init_tracing_subscriber instead to handle an existing one.
+    #[cfg(feature = "tracing")]
+    clientele::tracing::init_tracing_subscriber(&options.flags);
+
     match options.command {
         Some(Command::Config {}) => {
+            #[cfg(feature = "tracing")]
+            tracing::debug!("Running config subcommand");
             println!("This is the implementation of the `config` subcommand.");
             Ok(())
         }

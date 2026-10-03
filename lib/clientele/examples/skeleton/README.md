@@ -33,27 +33,46 @@ cargo run --locked --example skeleton --no-default-features --features clap,dote
    command for later diagnostics.
 5. Handle `--version` and `--license` as successful early exits (version takes
    precedence if both are supplied). Clap handles help during parsing.
-6. Dispatch `config`, or report a missing subcommand after otherwise valid flags.
+6. With `tracing`, initialize the global stderr subscriber from `StandardOptions`.
+   The standalone application owns initialization; calling this entry point with
+   a subscriber already installed panics. Embedded applications can use the
+   fallible `try_init_tracing_subscriber` API instead.
+7. Dispatch `config`, or report a missing subcommand after otherwise valid flags.
    Return application errors through their sysexits status rather than collapsing
    every error into status 1.
 
 ## Features and options
 
 The example requires `clap,dotenv`; `clap` also enables `std`. Default features
-add argument-file expansion, Windows wildcard expansion, and color support.
+add argument-file expansion, Windows wildcard expansion, color, and tracing.
 With `argfile`, an argument such as `@args.txt` loads arguments from that file
 (one argument per line); a file containing `config` runs the subcommand.
 
 `--color auto|always|never` is available with `color`; `auto` uses terminal and
-environment detection. `--debug` and repeatable `--verbose` are parsed as
-standard flags. This version of the example does not initialize a logging
-subscriber yet. Other optional library integrations are not used by `config`.
+environment detection. With `tracing`, `--debug` enables trace-level logging and
+event metadata; repeatable `--verbose` selects warning (`-v`), info (`-vv`), or
+debug (`-vvv` or more) levels with plain formatting. The default level is error.
+`config` emits a debug event on stderr, visible with `--debug` or `-vvv`, while
+its result remains on stdout. Without `tracing`, these flags are parsed but do
+not initialize logging. Other optional library integrations are not used by
+`config`.
+
+```sh
+cargo run --locked --example skeleton -- --debug config
+cargo run --locked --example skeleton --no-default-features --features clap,dotenv,tracing -- -vvv config
+```
+
+Log color follows `--color` for stderr when `color` is enabled. Automatic color
+requires a terminal and no nonempty `NO_COLOR`; explicit `always`/`never`
+override detection. Without `color`, logs contain no ANSI color escapes.
+The example uses the development dependency `tracing` for its event macro;
+applications copying it should add their own `tracing` dependency.
 
 ## Exit statuses
 
 | Invocation or outcome | Status | Output |
 | --- | --- | --- |
-| `config` | 0 | Placeholder message on stdout |
+| `config` | 0 | Placeholder message on stdout; debug log on stderr when enabled |
 | `--help`, `--version`, `--license` | 0 | Requested information on stdout |
 | No arguments, unknown option/subcommand, or invalid Clap value | 2 | Clap usage/diagnostic on stderr |
 | Valid flags without a subcommand, e.g. `--debug` | 64 (`EX_USAGE`) | Missing-subcommand diagnostic on stderr |

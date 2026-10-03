@@ -63,8 +63,8 @@ fn main() -> ExitCode {
     }
     for args in [
         &["config"][..],
-        &["--debug", "config"],
         &["config", "--verbose"],
+        &["-vv", "config"],
     ] {
         check(
             &dir,
@@ -74,6 +74,46 @@ fn main() -> ExitCode {
             "",
             NO_COLOR_ENV,
         );
+    }
+
+    for args in [&["--debug", "config"][..], &["-vvv", "config"]] {
+        let output = check(
+            &dir,
+            args,
+            0,
+            "implementation of the `config` subcommand",
+            if cfg!(feature = "tracing") {
+                "Running config subcommand"
+            } else {
+                ""
+            },
+            NO_COLOR_ENV,
+        );
+        assert!(!output.stderr.contains(&0x1b), "{output:?}");
+        #[cfg(feature = "tracing")]
+        assert_eq!(
+            String::from_utf8_lossy(&output.stderr).contains("DEBUG"),
+            args[0] == "--debug",
+            "debug mode should include event metadata: {output:?}"
+        );
+    }
+
+    #[cfg(all(feature = "color", feature = "tracing"))]
+    for (color, environment, ansi) in [
+        ("always", NO_COLOR_ENV, true),
+        ("never", FORCE_COLOR_ENV, false),
+        ("auto", NO_COLOR_ENV, false),
+    ] {
+        let output = check(
+            &dir,
+            &["--debug", "--color", color, "config"],
+            0,
+            "implementation of the `config` subcommand",
+            "Running config subcommand",
+            environment,
+        );
+        assert_eq!(output.stderr.contains(&0x1b), ansi, "{output:?}");
+        assert!(!output.stdout.contains(&0x1b), "{output:?}");
     }
 
     #[cfg(feature = "color")]

@@ -24,7 +24,7 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 9l**, demonstrating skeleton logging initialization.
+**Suggested next leaf: 9j**, narrowing release version updates.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -47,10 +47,6 @@ packaged doctests.
   rewrite historical changelog entries. Update intended metadata explicitly,
   synchronize root `Cargo.toml` and `VERSION`, and let Cargo update `Cargo.lock`.
   Test in an isolated fixture that historical release entries remain intact.
-- [ ] **9l. Demonstrate logging initialization in the skeleton (P3).**
-  After the relevant tracing/color APIs are settled, show their use behind the
-  `tracing` feature and retain builds with only `clap,dotenv`. Treat this as a
-  separate example change from 6b's help/diagnostic color correction.
 
 ## 10. Optional CLI feature growth (P3)
 
