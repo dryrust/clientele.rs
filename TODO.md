@@ -25,7 +25,7 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 12 outstanding leaf tasks: 3 P1, 7 P2, and 2 P3. Evidence below
+**Status:** 11 outstanding leaf tasks: 3 P1, 6 P2, and 2 P3. Evidence below
 distinguishes runtime reproductions, source-review findings, coverage gaps, and
 optional extensions.
 
@@ -46,7 +46,7 @@ tests. Cross-compilation establishes build coverage only.
 | Executable discovery | Case-sensitive-prefix mismatch reproduced on macOS; Windows extension/identity findings and OS-path coverage gaps; R2-03 through R2-05, R2-16, R2-22 |
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing implementations and regression tests reviewed; optional typed-parser reuse in R2-21 |
 | Native/UTF-8/XDG paths and tracing | Existing path, format, color, and global-initialization tests pass locally; isolated-feature coverage in R2-14 |
-| Completions, manpages, error-stack, packaging | All-feature MSRV tests and packaged default/minimal doctests pass; isolated-feature and quality gates in R2-14, R2-18 |
+| Completions, manpages, error-stack, packaging | All-feature quality gates and packaged default/minimal doctests pass; isolated-feature coverage in R2-14 |
 | CI, Rake, Make, project documentation | Missing Ruby CI coverage and stale guidance/credits; R2-15, R2-19, R2-20 |
 
 ## P1 — Correctness and reliability
@@ -148,18 +148,6 @@ tests. Cross-compilation establishes build coverage only.
   ignore unrepresentable executable names, and agree on valid neighboring entries.
   **Verify:** Native Unix and Windows discovery tests with `std,subcommands`
   alone; compare OS paths directly rather than their lossy display text.
-
-- [ ] **R2-18 — Apply warning-denying quality gates to opt-in APIs.**
-  **Evidence (CI review):** The quality job runs Clippy and rustdoc with defaults
-  only. `completions`, `manpages`, and `error-stack` are excluded from those gates;
-  all-feature tests do not replace rustdoc link checking or Clippy. All-feature
-  Clippy/rustdoc checks pass in this review, so this is prevention rather than a
-  currently failing baseline.
-  **Acceptance:** Add all-feature Clippy/rustdoc coverage and a small
-  minimal-feature documentation check to CI, retaining `-D warnings` and existing gates.
-  **Verify:** `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`;
-  `RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps --locked`;
-  minimal rustdoc with `--no-default-features` and `clap` alone.
 
 ## P2 — Project documentation
 
@@ -335,7 +323,11 @@ and absent lockfiles. CI quality gates also require:
 
 ```sh
 cargo clippy --workspace --all-targets --locked -- -D warnings
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 RUSTDOCFLAGS='-D warnings' cargo doc --workspace --no-deps --locked
+RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps --locked
+RUSTDOCFLAGS='-D warnings' cargo doc --workspace --no-default-features --no-deps --locked
+RUSTDOCFLAGS='-D warnings' cargo doc --workspace --no-default-features --features clap --no-deps --locked
 ```
 
 For README/packaging changes, reproduce CI's packaged-doctest check. The local
