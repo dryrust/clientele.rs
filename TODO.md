@@ -24,19 +24,13 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 8b**, correcting the shared tracing-format representation.
+**Suggested next leaf: 8c**, implementing idiomatic log-level conversions.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
 
 ## 8. API composability and documentation (P2 unless marked P3)
 
-- [ ] **8b. Correct the shared tracing-format representation.**
-  `STDERR_PLAIN_FORMAT` and `STDERR_DEBUG_FORMAT` are `const LazyLock` values,
-  creating fresh lazy values per use and triggering Clippy warnings. Provide an
-  appropriate shared static-backed API. Evaluate compatibility of the public
-  constants before replacing their representation; preserve format output and
-  availability with `std,tracing` without Clap.
 - [ ] **8c. Implement idiomatic log-level conversions.**
   Replace the explicit `Into<LevelFilter>` implementations in
   `lib/clientele/src/options.rs` with `From<StandardOptions>` and
@@ -106,7 +100,7 @@ tests plus packaged doctests on both systems.
   - [ ] **9d.doc:** Add rustdoc verification.
   - [ ] **9d.clippy:** Add Clippy verification.
   - [ ] **9d.strict:** Enforce warning-free checks after the relevant baseline
-    warnings are resolved. See 8b–8d and 8j; recheck counts before enabling gates.
+    warnings are resolved. See 8c–8d and 8j; recheck counts before enabling gates.
 - [ ] **9e. Use `--locked` consistently in existing CI build/test steps.**
   Feature-matrix and package checks already use it; the default build, example,
   and test steps do not.
@@ -205,6 +199,12 @@ cargo test -p clientele --test skeleton_cli --no-default-features --features cla
 cargo run --locked --example skeleton -- config
 ```
 
+For shared tracing formats and their doctests without Clap:
+
+```sh
+cargo test -p clientele --no-default-features --features std,tracing --locked
+```
+
 For tracing initialization and color regressions, including dependency-enabled
 ANSI without `color`:
 
@@ -232,8 +232,8 @@ done
 ```
 
 Last observed baseline: default tests, relevant minimal builds, all-features
-tests, and packaged doctests pass. Clippy emits 7 warnings (conversion traits,
-the inherent iterator method, and interior-mutable constants); rustdoc emits
+tests, and packaged doctests pass. Clippy emits 3 warnings (conversion traits
+and the inherent iterator method); rustdoc emits
 4 bare-URL warnings. Earlier runtime probes ran on macOS; Linux/Windows
 cross-compilation results are not substitutes for native behavioral tests.
 Recheck and report failures rather than suppressing them.

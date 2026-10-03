@@ -14,7 +14,20 @@ use tracing_subscriber::fmt::{
 };
 
 /// Compact, untimed formatting without event levels or source metadata.
-pub const STDERR_PLAIN_FORMAT: LazyLock<Format<Compact, ()>> = LazyLock::new(|| {
+///
+/// Available with `std,tracing`, without requiring `clap`. Initialized once and
+/// shared across callers. Call `.clone()` to obtain an owned format for a
+/// subscriber or to customize it without changing the shared format.
+///
+/// This is a static rather than a constant: the `LazyLock` itself cannot be moved
+/// out or consumed. Clone the inner format instead.
+///
+/// ```
+/// use clientele::tracing::STDERR_PLAIN_FORMAT;
+///
+/// let format = STDERR_PLAIN_FORMAT.clone().with_level(true);
+/// ```
+pub static STDERR_PLAIN_FORMAT: LazyLock<Format<Compact, ()>> = LazyLock::new(|| {
     tracing_subscriber::fmt::format()
         .compact()
         .without_time()
@@ -27,7 +40,12 @@ pub const STDERR_PLAIN_FORMAT: LazyLock<Format<Compact, ()>> = LazyLock::new(|| 
 });
 
 /// Compact, untimed formatting retaining event levels and targets.
-pub const STDERR_DEBUG_FORMAT: LazyLock<Format<Compact, ()>> =
+///
+/// Available with `std,tracing`, without requiring `clap`. Initialized once and
+/// shared across callers. As with [`STDERR_PLAIN_FORMAT`], call `.clone()` to
+/// obtain an owned, customizable format; the static `LazyLock` cannot be moved
+/// out or consumed.
+pub static STDERR_DEBUG_FORMAT: LazyLock<Format<Compact, ()>> =
     LazyLock::new(|| tracing_subscriber::fmt::format().compact().without_time());
 
 /// Initializes `tracing_subscriber` based on the given options.
