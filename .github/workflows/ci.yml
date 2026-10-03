@@ -135,6 +135,9 @@ jobs:
       run: python tests/check_features.py
     - name: Test all features
       run: cargo test --workspace --all-features --locked
+    - name: Measure Windows discovery
+      if: matrix.toolchain == 'stable'
+      run: cargo bench -p clientele --bench subcommands --no-default-features --features std,subcommands --locked
     - name: Test packaged doctests
       shell: bash
       run: |

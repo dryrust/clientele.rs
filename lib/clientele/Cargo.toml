@@ -21,6 +21,11 @@ all-features = true
 name = "skeleton"
 required-features = ["std", "clap", "dotenv"]
 
+[[bench]]
+name = "subcommands"
+harness = false
+required-features = ["std", "subcommands"]
+
 [[test]]
 name = "args_os"
 harness = false

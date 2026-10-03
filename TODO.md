@@ -53,6 +53,13 @@ tests. Cross-compilation establishes build coverage only.
 ## P3 — Targeted API and performance extensions
 
 - [ ] **R2-22 — Reuse a per-call search context during Windows collection.**
+  **Progress:** Added a native Windows release benchmark, run by stable Windows
+  CI, with six directories plus two repeated entries, three extensions, 97 logical
+  commands, dotted exact-file collisions, and nine timed collections after warmup.
+  Run `cargo bench -p clientele --bench subcommands --no-default-features
+  --features std,subcommands --locked`. Timing is diagnostic, not a CI threshold.
+  Obtain the native baseline before implementing the optimization. R2-03 through
+  R2-05 are now verified; the old `exists` calls were already removed by R2-05.
   **Evidence (source-level performance opportunity):** Windows `collect` scans
   `PATH`, then calls `resolve_command` for every unique name. Each call rereads and
   reparses `PATH` and `PATHEXT`; candidates also incur `exists` before a second
