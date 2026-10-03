@@ -71,6 +71,10 @@ tests. Cross-compilation establishes build coverage only.
   extend and run `subcommands_path` on Windows with the same feature set.
 
 - [ ] **R2-04 — Reconcile Windows dotted-name collection and lookup identity.**
+  **Progress:** Lookup now searches logical stems across all of `PATH` before
+  explicit-file fallback. Shared lookup/listing fixtures include the same-directory
+  `report.v1`/`report.v1.bat` collision. Cross-directory regressions and native
+  Windows verification remain.
   **Evidence (source review):** In `lib/clientele/src/subcommands.rs`, Windows
   `collect` derives a name, then replaces only `command.path` through
   `resolve_command`. With `PATHEXT=.BAT` and both

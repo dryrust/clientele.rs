@@ -202,6 +202,10 @@ pub fn init() -> Result<TempDir> {
     let dir = TempDir::new()?;
     std::fs::create_dir(dir.child(TEST_DIRECTORY))?;
 
+    // A dotted exact filename must not shadow the collected report.v1 stem.
+    #[cfg(windows)]
+    std::fs::write(dir.child("clientele-report.v1"), "exact filename collision")?;
+
     #[cfg(unix)]
     for file in TEST_FILES {
         use std::os::unix::fs::OpenOptionsExt;

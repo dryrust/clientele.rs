@@ -88,7 +88,7 @@ impl SubcommandsProvider {
     ///
     /// Results are sorted lexically by logical name using Rust string ordering.
     /// Exactly equal names are returned once, with the first usable executable
-    /// in `PATH` order. On Windows, lookup's exact-filename and `PATHEXT`
+    /// in `PATH` order. On Windows, lookup's logical-stem and `PATHEXT`
     /// precedence select the executable, rather than directory enumeration order.
     /// Names with different spelling or case remain distinct.
     ///
@@ -119,7 +119,7 @@ impl SubcommandsProvider {
             .into_iter()
             .filter_map(|mut command| {
                 // Multiple extensions can share a stem in the same directory.
-                // Reuse lookup to honor PATHEXT and exact-filename precedence.
+                // Reuse lookup to honor PATHEXT and logical-stem precedence.
                 command.path = Self::resolve_command(prefix, &format!("{prefix}{}", command.name))?;
                 Some(command)
             })
@@ -130,10 +130,12 @@ impl SubcommandsProvider {
 
     /// Finds the first usable executable for the prefixed name in `PATH` order.
     ///
-    /// Requires `std,subcommands`. On Windows, each directory first checks the
-    /// exact prefixed filename if it has an extension. If no usable exact match
-    /// exists, `PATHEXT` extensions are appended in order, preserving any dots
-    /// already present in the command name.
+    /// Requires `std,subcommands`. On Windows, first search all directories for
+    /// the logical stem with `PATHEXT` extensions appended in order, preserving
+    /// any dots already present in the command name. Only if that search fails,
+    /// search `PATH` again for the exact prefixed filename if it has an extension.
+    /// Thus `report.v1.bat` wins over `report.v1`, even in a later directory, for
+    /// a query of `report.v1`. This makes collected names round-trip through lookup.
     /// Directories are never returned, including for explicit filename lookups.
     /// Parsing follows [`Self::collect`]'s `PATHEXT` rules. Missing or non-Unicode
     /// `PATHEXT` returns `None`, even for an explicit filename. An empty list of
@@ -401,12 +403,6 @@ impl SubcommandsProvider {
         for path in std::env::split_paths(&paths) {
             let path = path.join(command);
 
-            // Prefer an explicitly provided executable filename in this directory.
-            if path.extension().is_some() && path.exists() && Self::filter_file(prefix, &path, None)
-            {
-                return Some(path);
-            }
-
             // Append executable extensions without replacing dots in the command stem.
             for ext in &exts {
                 let path = path.with_added_extension(ext);
@@ -415,6 +411,14 @@ impl SubcommandsProvider {
                     true if Self::filter_file(prefix, &path, None) => return Some(path),
                     _ => continue,
                 }
+            }
+        }
+
+        // Explicit filenames are a fallback after the complete logical-stem search.
+        for path in std::env::split_paths(&paths) {
+            let path = path.join(command);
+            if path.extension().is_some() && Self::filter_file(prefix, &path, None) {
+                return Some(path);
             }
         }
 

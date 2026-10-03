@@ -38,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `paths::home_dir()` and `paths::temp_dir()` for native directory resolution,
   with checked `_utf8` variants and independently gated optional dependencies
 ### Changed
+- Search Windows subcommand logical stems across `PATH` before falling back to
+  explicit filenames, so dotted collected names round-trip through lookup. A
+  `report.v1.bat` candidate now wins over `report.v1`, including in a later directory
 - Keep `serde` independent of JSON dependencies. JSON-error conversions to
   `SysexitsError` now require `serde-json` rather than being enabled by `serde`
   alone; default-feature consumers retain JSON integration
