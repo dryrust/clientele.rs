@@ -81,7 +81,8 @@ impl SubcommandsProvider {
     ///
     /// On Windows, `PATHEXT` is a semicolon-separated list of dot-prefixed,
     /// nonempty extensions, matched case-insensitively in their original order.
-    /// Empty entries, bare dots, and entries without a leading dot are ignored;
+    /// Empty entries, bare dots, entries without a leading dot, and entries with
+    /// either path separator (`/` or `\`) are ignored;
     /// whitespace and quotes are not trimmed. Missing or non-Unicode `PATHEXT`,
     /// or a list with no accepted extensions, yields no collected commands.
     ///
@@ -428,7 +429,7 @@ fn parse_path_exts(value: &str) -> Vec<String> {
     value
         .split(';')
         .filter_map(|entry| entry.strip_prefix('.'))
-        .filter(|extension| !extension.is_empty())
+        .filter(|extension| !extension.is_empty() && !extension.contains(['/', '\\']))
         .map(str::to_lowercase)
         .collect()
 }
@@ -527,6 +528,17 @@ mod tests {
             assert!(parse_path_exts(value).is_empty(), "{value:?}");
         }
         assert_eq!(parse_path_exts(";.EXE;;CMD;.;.BAT;"), ["exe", "bat"]);
+    }
+
+    #[test]
+    fn ignores_path_separators_before_constructing_paths() {
+        for value in [".bad/name", ".bad\\name", ".bad/name;.bad\\name"] {
+            assert!(parse_path_exts(value).is_empty(), "{value:?}");
+        }
+        assert_eq!(
+            parse_path_exts(".bad/name;.bad\\name;.BAT;.工具;. CMD"),
+            ["bat", "工具", " cmd"]
+        );
     }
 
     #[test]
