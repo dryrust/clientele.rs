@@ -17,6 +17,8 @@ jobs:
       run: rustup component add rustfmt
     - name: Check formatting
       run: cargo fmt --all -- --check
+    - name: Check documentation
+      run: cargo doc --workspace --no-deps --locked
   build-ubuntu:
     name: Build on Ubuntu
     runs-on: ubuntu-latest
