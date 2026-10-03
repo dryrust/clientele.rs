@@ -17,7 +17,7 @@ homepage = "https://clientele.rs"
 repository = "https://github.com/dryrust/clientele.rs"
 license = "Unlicense"
 keywords = ["cli", "clap"]
-categories = ["command-line-interface", "no-std"]
+categories = ["command-line-interface"]
 publish = true
 
 [workspace.dependencies]

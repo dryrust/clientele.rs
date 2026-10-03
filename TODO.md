@@ -72,10 +72,6 @@ tests plus packaged doctests on both systems.
   feature prerequisites. Refresh the integration table and placeholder links;
   the tracing conversion is to `LevelFilter`, not the documented `Level`.
   Make the supported `clientele::crates` re-export entry point discoverable.
-- [ ] **9g. Align package metadata with actual standard-library support (P3).**
-  Root `Cargo.toml` lists the `no-std` category, but `#![no_std]` is commented out
-  in `lib.rs`. Correct the claim; a passing no-default-features build alone does
-  not establish no-std support.
 - [ ] **9h. Document `parse-datetime` as reserved (P3).**
   Its feature definition is empty. Clarify the current status without silently
   removing a public feature or adding an unrequested parser dependency.

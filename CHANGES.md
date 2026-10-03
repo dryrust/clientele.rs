@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Callers needing the executable filename should use `Subcommand.path.file_name()`
   instead of relying on the previously prefixed `name` field
 ### Fixed
+- Remove the unsupported `no-std` package category and clarify that disabling
+  default features does not remove the standard-library requirement
 - Preserve malformed, truncated, and non-CSI escape text in `strip_ansi()`
   instead of dropping characters; remove only complete, syntactically valid CSI
   sequences
