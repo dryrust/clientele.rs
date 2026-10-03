@@ -8,6 +8,34 @@
 //!
 //! The environment-only `home()`, `tmpdir()`, and XDG helpers require both
 //! `getenv` and `camino`. XDG overrides use native absolute-path rules.
+//!
+//! # Choosing a resolver
+//!
+//! | Functions | Required features | Resolution |
+//! | --- | --- | --- |
+//! | `temp_dir` / `temp_dir_utf8` | `std` / `std,camino` | Platform temporary directory |
+//! | `home_dir` / `home_dir_utf8` | `std,dirs` / `std,dirs,camino` | Platform home directory |
+//! | `home`, `tmpdir` | `std,getenv,camino` | Nonempty UTF-8 environment value only |
+//! | `xdg_*_home` | `std,getenv,camino` | Absolute UTF-8 override, then a suffix under `HOME` |
+//!
+//! Environment values are read on every call without trimming whitespace or
+//! expanding `~` or variable references. No helper creates directories, checks
+//! permissions, or canonicalizes paths. Native resolvers preserve OS strings;
+//! UTF-8 helpers reject unrepresentable paths instead of replacing characters.
+//!
+//! # XDG fallbacks
+//!
+//! An accepted XDG override does not require `HOME`. Otherwise the fallback uses
+//! the environment-only `home()` resolver, even when `dirs` is enabled. A relative
+//! `HOME` therefore produces a relative fallback; an unset, empty, or non-UTF-8
+//! `HOME` produces `None`. The suffixes are `.local/share`, `.config`,
+//! `.local/state`, and `.cache` for data, configuration, state, and cache.
+//!
+//! Absolute paths follow the host platform's rules: on Windows a drive-relative
+//! path such as `C:cache` or a root-relative path such as `\cache` is not an
+//! accepted override, while a fully qualified drive or UNC path is. These
+//! helpers use XDG environment conventions on Windows as well as Unix; they do
+//! not resolve Windows Known Folders or macOS Library directories.
 
 #[cfg(all(feature = "getenv", feature = "camino"))]
 use crate::envs;
