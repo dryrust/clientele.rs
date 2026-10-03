@@ -39,9 +39,6 @@ polish or feature growth. Priorities do not override an explicitly selected task
   - [ ] **8h.subcommands:** `lib/clientele/src/subcommands.rs`: fields, prefix and
     depth rules, environment/platform behavior, result ordering, and lookup
     naming. Review discoverability of the currently doc-hidden public exports.
-- [ ] **8j. Fix rustdoc's four bare-URL warnings (P3).**
-  Use actual links for the XDG specification references in
-  `lib/clientele/src/paths.rs`; verify with `cargo doc`.
 
 ## 9. CI, packaging metadata, and release tooling (P2/P3)
 
@@ -62,7 +59,7 @@ tests plus packaged doctests on both systems.
   - [ ] **9d.doc:** Add rustdoc verification.
   - [ ] **9d.clippy:** Add Clippy verification.
   - [ ] **9d.strict:** Enforce warning-free checks after the relevant baseline
-    warnings are resolved. See 8j. The compatibility-preserved inherent
+    warnings are resolved. The compatibility-preserved inherent
     `SubcommandsProvider::into_iter()` still triggers `should_implement_trait`
     despite owned/borrowed `IntoIterator` implementations; assess its signature
     compatibility before changing it. Recheck counts before enabling gates.
@@ -206,8 +203,7 @@ done
 
 Last observed baseline: default tests, relevant minimal builds, all-features
 tests, and packaged doctests pass. Clippy emits 1 warning (the inherent iterator
-method); rustdoc emits
-4 bare-URL warnings. Earlier runtime probes ran on macOS; Linux/Windows
+method); rustdoc is warning-free. Earlier runtime probes ran on macOS; Linux/Windows
 cross-compilation results are not substitutes for native behavioral tests.
 Recheck and report failures rather than suppressing them.
 

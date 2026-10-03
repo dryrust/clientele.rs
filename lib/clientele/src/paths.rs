@@ -99,7 +99,7 @@ pub fn tmpdir() -> Option<Utf8PathBuf> {
 /// [`home()`]. Returns `None` if neither a usable override nor a home directory
 /// is available. The directory does not need to exist.
 ///
-/// See: https://specifications.freedesktop.org/basedir-spec/latest/#variables
+/// See: <https://specifications.freedesktop.org/basedir-spec/latest/#variables>
 #[cfg(all(feature = "getenv", feature = "camino"))]
 pub fn xdg_data_home() -> Option<Utf8PathBuf> {
     envs::xdg_data_home()
@@ -121,7 +121,7 @@ pub fn xdg_data_home() -> Option<Utf8PathBuf> {
 /// [`home()`]. Returns `None` if neither a usable override nor a home directory
 /// is available. The directory does not need to exist.
 ///
-/// See: https://specifications.freedesktop.org/basedir-spec/latest/#variables
+/// See: <https://specifications.freedesktop.org/basedir-spec/latest/#variables>
 #[cfg(all(feature = "getenv", feature = "camino"))]
 pub fn xdg_config_home() -> Option<Utf8PathBuf> {
     envs::xdg_config_home()
@@ -143,7 +143,7 @@ pub fn xdg_config_home() -> Option<Utf8PathBuf> {
 /// [`home()`]. Returns `None` if neither a usable override nor a home directory
 /// is available. The directory does not need to exist.
 ///
-/// See: https://specifications.freedesktop.org/basedir-spec/latest/#variables
+/// See: <https://specifications.freedesktop.org/basedir-spec/latest/#variables>
 #[cfg(all(feature = "getenv", feature = "camino"))]
 pub fn xdg_state_home() -> Option<Utf8PathBuf> {
     envs::xdg_state_home()
@@ -165,7 +165,7 @@ pub fn xdg_state_home() -> Option<Utf8PathBuf> {
 /// [`home()`]. Returns `None` if neither a usable override nor a home directory
 /// is available. The directory does not need to exist.
 ///
-/// See: https://specifications.freedesktop.org/basedir-spec/latest/#variables
+/// See: <https://specifications.freedesktop.org/basedir-spec/latest/#variables>
 #[cfg(all(feature = "getenv", feature = "camino"))]
 pub fn xdg_cache_home() -> Option<Utf8PathBuf> {
     envs::xdg_cache_home()
