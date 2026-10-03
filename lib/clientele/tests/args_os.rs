@@ -1,6 +1,6 @@
 // This is free and unencumbered software released into the public domain.
 
-//! Argument-file recursion regressions run in deadline-controlled child processes.
+//! Argument expansion contracts run in deadline-controlled child processes.
 
 use std::{
     env,
@@ -40,9 +40,47 @@ fn main() {
                 assert_eq!(&clientele::args_os().unwrap()[1..], expected);
             }
             "literal" => assert_eq!(
-                &clientele::args_os().unwrap()[1..],
-                [OsString::from("@self.args")]
+                clientele::args_os().unwrap(),
+                env::args_os().collect::<Vec<_>>()
             ),
+            "lines" => assert_eq!(
+                &clientele::args_os().unwrap()[1..],
+                [
+                    "before",
+                    "--",
+                    " first line ",
+                    "\"quoted value\"",
+                    "",
+                    "λ\tvalue",
+                    "after"
+                ]
+                .map(OsString::from)
+            ),
+            "empty" => assert_eq!(
+                &clientele::args_os().unwrap()[1..],
+                ["before", "after"].map(OsString::from)
+            ),
+            "invalid" | "missing" => {
+                let error = clientele::args_os().unwrap_err();
+                let expected = if mode == "invalid" {
+                    std::io::ErrorKind::InvalidData
+                } else {
+                    std::io::ErrorKind::NotFound
+                };
+                assert_eq!(error.kind(), expected);
+                assert!(error.to_string().contains(&format!("{mode}.args")));
+            }
+            "argv0" => {
+                let expected = if cfg!(feature = "argfile") {
+                    vec!["replacement program", "--leading-value", "tail"]
+                } else {
+                    vec!["@program.args", "tail"]
+                };
+                assert_eq!(
+                    clientele::args_os().unwrap(),
+                    expected.into_iter().map(OsString::from).collect::<Vec<_>>()
+                );
+            }
             _ => panic!("unknown child mode: {mode}"),
         }
         return;
@@ -50,9 +88,58 @@ fn main() {
 
     let dir = TempDir::new().unwrap();
     fs::write(dir.child("self.args"), "before\n@self.args\n").unwrap();
+    fs::write(dir.child("invalid.args"), [b'v', b'\n', 0xff]).unwrap();
+    fs::write(
+        dir.child("program.args"),
+        "replacement program\n--leading-value\n",
+    )
+    .unwrap();
+    #[cfg(unix)]
+    check(dir.path(), "argv0", &["tail".into()]);
     if !cfg!(feature = "argfile") {
-        check(dir.path(), "literal", &["@self.args".into()]);
+        let mut args = [
+            "before",
+            "@self.args",
+            "--",
+            "@missing.args",
+            "@invalid.args",
+        ]
+        .map(OsString::from)
+        .to_vec();
+        #[cfg(any(unix, windows))]
+        args.push(non_unicode());
+        check(dir.path(), "literal", &args);
         return;
+    }
+
+    fs::write(
+        dir.child("lines.args"),
+        " first line \r\n\"quoted value\"\r\n\r\nλ\tvalue\n",
+    )
+    .unwrap();
+    fs::write(dir.child("empty.args"), "").unwrap();
+    check(
+        dir.path(),
+        "lines",
+        &["before", "--", "@lines.args", "after"].map(OsString::from),
+    );
+    check(
+        dir.path(),
+        "empty",
+        &["before", "@empty.args", "after"].map(OsString::from),
+    );
+    for mode in ["invalid", "missing"] {
+        // The result must be an error even after successful earlier expansion,
+        // with no partial argument vector or output leaked to the caller.
+        check(
+            dir.path(),
+            mode,
+            &[
+                "before".into(),
+                "@lines.args".into(),
+                format!("@{mode}.args").into(),
+            ],
+        );
     }
 
     fs::create_dir(dir.child("nested")).unwrap();
@@ -103,14 +190,19 @@ fn main() {
 }
 
 fn check(dir: &Path, mode: &str, args: &[OsString]) {
-    let mut child = Command::new(env::current_exe().unwrap())
+    let mut command = Command::new(env::current_exe().unwrap());
+    command
         .current_dir(dir)
         .env(CHILD_MODE, mode)
         .args(args)
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .unwrap();
+        .stderr(Stdio::piped());
+    #[cfg(unix)]
+    if mode == "argv0" {
+        use std::os::unix::process::CommandExt;
+        command.arg0("@program.args");
+    }
+    let mut child = command.spawn().unwrap();
     let deadline = Instant::now() + Duration::from_secs(5);
     while child.try_wait().unwrap().is_none() {
         if Instant::now() >= deadline {

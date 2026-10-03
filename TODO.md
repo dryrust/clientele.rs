@@ -25,7 +25,7 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 14 outstanding leaf tasks: 3 P1, 9 P2, and 2 P3. Evidence below
+**Status:** 13 outstanding leaf tasks: 3 P1, 8 P2, and 2 P3. Evidence below
 distinguishes runtime reproductions, source-review findings, coverage gaps, and
 optional extensions.
 
@@ -42,7 +42,7 @@ tests. Cross-compilation establishes build coverage only.
 | Area | Review outcome |
 | --- | --- |
 | Feature gates, dependency re-exports, consumer builds | Serde isolation and scoped tracing consumer checks pass; broader feature coverage in R2-14 |
-| Arguments and skeleton CLI | Remaining argument-expansion coverage gaps; R2-12, R2-13 |
+| Arguments and skeleton CLI | Argument-file contracts pass; native Windows wildcard coverage remains in R2-13 |
 | Executable discovery | Case-sensitive-prefix mismatch reproduced on macOS; Windows extension/identity findings and OS-path coverage gaps; R2-03 through R2-05, R2-16, R2-22 |
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing implementations and regression tests reviewed; optional typed-parser reuse in R2-21 |
 | Native/UTF-8/XDG paths and tracing | Existing path, format, color, and global-initialization tests pass locally; isolated-feature coverage in R2-14 |
@@ -98,19 +98,6 @@ tests. Cross-compilation establishes build coverage only.
   case-insensitive macOS, with a case-sensitive-filesystem control where available.
 
 ## P2 — Regression coverage and automation
-
-- [ ] **R2-12 — Test the argument-file and OS-string contracts directly.**
-  **Evidence (coverage gap):** `lib/clientele/tests/args_os.rs` now covers cycles,
-  repeated nested includes, quoted line contents, and OS-string arguments, but
-  does not yet cover invalid UTF-8 file contents, expansion after `--`, or argv[0].
-  Native non-Unicode filename fixtures run on Linux/Windows because macOS rejects
-  those filenames. `lib/clientele/tests/skeleton_cli.rs` uses string-only arguments.
-  **Acceptance:** Extend the harness-free `args_os` target with the remaining
-  documented contracts, including errors without partial results and argument
-  ordering. Retain disabled-feature pass-through and recursion coverage, and
-  keep environment changes inside child processes.
-  **Verify:** Run the target with defaults and with each of `std` and
-  `std,argfile` under `--no-default-features --locked`.
 
 - [ ] **R2-13 — Exercise Windows wildcard expansion with real raw command lines.**
   **Evidence (coverage gap):** No existing test exercises `wild::args_os` with a
@@ -268,7 +255,8 @@ For ANSI stripping and its doctests without optional features:
 cargo test -p clientele --no-default-features --locked
 ```
 
-For argument-file recursion, aliases, repeated includes, and disabled expansion:
+For argument-file recursion, aliases, line parsing, empty files, atomic errors,
+expansion after `--`, Unix argv[0] overrides, and disabled-feature pass-through:
 
 ```sh
 cargo test -p clientele --test args_os --locked
