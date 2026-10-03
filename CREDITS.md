@@ -1,10 +1,16 @@
 # Credits
 
-## `lib/clientele/src/sysexits.rs`
+## Historical sysexits implementation
 
-The `clientele::sysexits` module is a Rust implementation of the [`sysexits.h`]
-header file found on BSD operating systems, which while trivial does include the
-following [BSD-3-Clause] notice:
+The former `lib/clientele/src/sysexits.rs` implementation used definitions from
+the [`sysexits.h`] header found on BSD operating systems. Its [BSD-3-Clause]
+notice is retained below as historical attribution.
+
+Since Clientele 0.3.4, the implementation comes from [known-errors]'s
+`known_errors::sysexits` module. Clientele exposes `SysexitsError` and
+`SysexitsResult` at the crate root, and `exit` with the `std` feature, through
+the re-exports in [`lib/clientele/src/lib.rs`](lib/clientele/src/lib.rs).
+There is no current `clientele::sysexits` module or in-tree `sysexits.rs` file.
 
 ```
 /*
@@ -41,3 +47,4 @@ following [BSD-3-Clause] notice:
 
 [`sysexits.h`]: https://github.com/openbsd/src/blob/master/include/sysexits.h
 [BSD-3-Clause]: https://spdx.org/licenses/BSD-3-Clause.html
+[known-errors]: https://docs.rs/known-errors/latest/known_errors/sysexits/

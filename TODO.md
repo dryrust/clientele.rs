@@ -25,7 +25,7 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 9 outstanding leaf tasks: 3 P1, 4 P2, and 2 P3. Evidence below
+**Status:** 8 outstanding leaf tasks: 3 P1, 3 P2, and 2 P3. Evidence below
 distinguishes runtime reproductions, source-review findings, coverage gaps, and
 optional extensions.
 
@@ -47,7 +47,7 @@ tests. Cross-compilation establishes build coverage only.
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing implementations and regression tests reviewed; optional typed-parser reuse in R2-21 |
 | Native/UTF-8/XDG paths and tracing | Path, format, color, global-initialization, and focused feature-combination tests pass locally |
 | Completions, manpages, error-stack, packaging | Isolated-feature tests, all-feature quality gates, and packaged default/minimal doctests pass |
-| CI, Rake, Make, project documentation | Locked Ruby CI coverage is configured; stale guidance/credits remain in R2-19, R2-20 |
+| CI, Rake, Make, project documentation | Locked Ruby CI coverage and current sysexits attribution are in place; contributor guidance remains in R2-19 |
 
 ## P1 — Correctness and reliability
 
@@ -137,16 +137,6 @@ tests. Cross-compilation establishes build coverage only.
   editing, MSRV, environment-isolation, and verification rules.
   **Verify:** Cross-check against `Rakefile`, the manifests, workflow, and the
   baseline below; run `git diff --check`.
-
-- [ ] **R2-20 — Correct the historical sysexits attribution path.**
-  **Evidence (documentation review):** `CREDITS.md` describes
-  `lib/clientele/src/sysexits.rs` and `clientele::sysexits`, neither of which exists.
-  Since 0.3.4, the API is re-exported from `known_errors::sysexits` in
-  `lib/clientele/src/lib.rs`.
-  **Acceptance:** Explain the historical attribution and current dependency/API
-  location accurately while retaining the existing BSD notice and provenance.
-  **Verify:** Check the public re-exports and changelog against the revised text;
-  run `git diff --check`.
 
 ## P3 — Targeted API and performance extensions
 
