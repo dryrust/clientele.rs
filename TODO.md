@@ -25,7 +25,7 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 21 outstanding leaf tasks: 5 P1, 14 P2, and 2 P3. Evidence below
+**Status:** 20 outstanding leaf tasks: 4 P1, 14 P2, and 2 P3. Evidence below
 distinguishes runtime reproductions, source-review findings, coverage gaps, and
 optional extensions.
 
@@ -42,7 +42,7 @@ tests. Cross-compilation establishes build coverage only.
 | Area | Review outcome |
 | --- | --- |
 | Feature gates, dependency re-exports, consumer builds | Unexpected JSON dependency with `serde`; downstream derive examples fail; R2-07, R2-10, R2-11 |
-| Arguments and skeleton CLI | Recursive argfile timeout, lost error context, broken-pipe panic, expansion coverage gaps; R2-02, R2-08, R2-09, R2-12, R2-13 |
+| Arguments and skeleton CLI | Lost error context, broken-pipe panic, expansion coverage gaps; R2-08, R2-09, R2-12, R2-13 |
 | Executable discovery | Case-sensitive-prefix mismatch reproduced on macOS; Windows extension/identity findings and OS-path coverage gaps; R2-03 through R2-05, R2-16, R2-22 |
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing implementations and regression tests reviewed; optional typed-parser reuse in R2-21 |
 | Native/UTF-8/XDG paths and tracing | Existing path, format, color, and global-initialization tests pass locally; dependency access and isolated-feature coverage in R2-11, R2-14 |
@@ -50,19 +50,6 @@ tests. Cross-compilation establishes build coverage only.
 | CI, Rake, Make, project documentation | Version-bump rollback failure; missing Ruby CI coverage, suppressed unused warnings, stale guidance/credits; R2-06, R2-15, R2-17, R2-19, R2-20 |
 
 ## P1 — Correctness and reliability
-
-- [ ] **R2-02 — Return an error for recursive argument-file inclusion.**
-  **Evidence (reproduced):** With `std,argfile`, a file `cycle.args` containing
-  `@cycle.args` caused an `args_os()` child to exceed a 500 ms deadline and require
-  termination. `lib/clientele/src/args.rs::args_os` delegates expansion without
-  a Clientele-level recursion guard; the locked dependency is `argfile` 0.2.1.
-  **Acceptance:** Reject self-inclusion and mutual inclusion with a documented
-  `io::Error`, using upstream support or a bounded expansion implementation.
-  Preserve OS paths, line parsing, expansion order, and legitimate repeated
-  nonrecursive includes. Cover path aliases so trivial spelling changes do not
-  evade the guard. Run cycle regressions in deadline-controlled subprocesses.
-  **Verify:** Add an argument-expansion regression target gated by `std`, and run
-  it with `--no-default-features --features std,argfile --locked` and defaults.
 
 - [ ] **R2-03 — Reject path separators in Windows `PATHEXT` entries.**
   **Evidence (source review plus primitive probe):** In
@@ -194,18 +181,16 @@ tests. Cross-compilation establishes build coverage only.
 ## P2 — Regression coverage and automation
 
 - [ ] **R2-12 — Test the argument-file and OS-string contracts directly.**
-  **Evidence (coverage gap):** `lib/clientele/src/args.rs` has detailed contracts
-  but no dedicated integration target. `lib/clientele/tests/skeleton_cli.rs`
-  exercises a simple file, missing file, and color arguments; its string-only
-  driver cannot validate OS-string fidelity, arbitrary argument vectors, or
-  nested include semantics.
-  **Acceptance:** Add a harness-free `args_os` target gated by `std`. Cover
-  non-Unicode pass-through arguments and argfile paths, nesting relative to the
-  child's working directory, spaces/quotes as literal line contents, invalid UTF-8
-  file contents, and expansion after `--`. Check disabled-feature pass-through
-  and argument ordering, including the documented treatment of argv[0]. Keep
-  recursive-error behavior in R2-02 and environment changes inside child processes.
-  **Verify:** Run the new target with defaults and with each of `std` and
+  **Evidence (coverage gap):** `lib/clientele/tests/args_os.rs` now covers cycles,
+  repeated nested includes, quoted line contents, and OS-string arguments, but
+  does not yet cover invalid UTF-8 file contents, expansion after `--`, or argv[0].
+  Native non-Unicode filename fixtures run on Linux/Windows because macOS rejects
+  those filenames. `lib/clientele/tests/skeleton_cli.rs` uses string-only arguments.
+  **Acceptance:** Extend the harness-free `args_os` target with the remaining
+  documented contracts, including errors without partial results and argument
+  ordering. Retain disabled-feature pass-through and recursion coverage, and
+  keep environment changes inside child processes.
+  **Verify:** Run the target with defaults and with each of `std` and
   `std,argfile` under `--no-default-features --locked`.
 
 - [ ] **R2-13 — Exercise Windows wildcard expansion with real raw command lines.**
@@ -360,6 +345,14 @@ For ANSI stripping and its doctests without optional features:
 cargo test -p clientele --no-default-features --locked
 ```
 
+For argument-file recursion, aliases, repeated includes, and disabled expansion:
+
+```sh
+cargo test -p clientele --test args_os --locked
+cargo test -p clientele --test args_os --no-default-features --features std,argfile --locked
+cargo test -p clientele --test args_os --no-default-features --features std --locked
+```
+
 For sort parsing, checked SQL rendering, and their doctests with minimal features:
 
 ```sh
@@ -475,8 +468,8 @@ Host: aarch64 macOS; stable Rust/Cargo 1.98.1, with Rust 1.97.0 also installed.
 **Failures and limitations:**
 
 - The downstream derive snippet failed until the `clap` module import was added;
-  cycle, case-insensitive lookup, failed-bump, and closed-pipe probes exposed the
-  behaviors described in R2-02, R2-05 through R2-09.
+  case-insensitive lookup, failed-bump, and closed-pipe probes exposed the
+  behaviors described in R2-05 through R2-09.
 - Ordinary quality checks are warning-free with current allowances. A diagnostic
   `cargo rustc -p clientele --lib --all-features --locked -- --force-warn unused`
   reports five suppressed warnings; see R2-17.

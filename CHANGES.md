@@ -49,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Callers needing the executable filename should use `Subcommand.path.file_name()`
   instead of relying on the previously prefixed `name` field
 ### Fixed
+- Reject recursive @argfile inclusion, including relative and symbolic-link aliases,
+  with an `InvalidInput` I/O error while allowing repeated nonrecursive includes
 - Enabling `gofer` now enables its required `std` support, fixing standalone
   `--no-default-features --features gofer` builds
 - Restrict `rake version:bump` to workspace version metadata and Cargo-managed

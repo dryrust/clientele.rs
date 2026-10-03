@@ -30,6 +30,9 @@ use std::{ffi::OsString, vec::Vec};
 ///    Relative paths, including nested includes, resolve from the process's
 ///    current directory. File paths themselves need not be Unicode. Without
 ///    `argfile`, `@path` arguments remain literal.
+///    Canonical paths track the active include chain: including a file already
+///    in that chain is an error, including through relative or symbolic-link
+///    aliases. A file may be included again after its earlier expansion finishes.
 ///
 /// Windows wildcard expansion runs **before** argument-file expansion. Wildcards
 /// introduced by file contents are not expanded by a second wildcard pass.
@@ -39,9 +42,11 @@ use std::{ffi::OsString, vec::Vec};
 /// # Errors
 ///
 /// With `argfile`, returns an [`std::io::Error`] if any referenced file cannot be
-/// opened or read, including missing files, permission errors, and invalid UTF-8
-/// contents. No partial argument vector is returned on error. Without `argfile`,
-/// this function always returns `Ok` with the collected arguments.
+/// resolved, opened, or read, including missing files, permission errors, and
+/// invalid UTF-8 contents. Recursive inclusion returns
+/// [`std::io::ErrorKind::InvalidInput`]. No partial argument vector is returned on
+/// error. Without `argfile`, this function always returns `Ok` with the collected
+/// arguments.
 ///
 /// # Examples
 ///
@@ -62,5 +67,54 @@ pub fn args_os() -> Result<Vec<OsString>, std::io::Error> {
     #[cfg(not(feature = "argfile"))]
     return Ok(args.collect());
     #[cfg(feature = "argfile")]
-    return argfile::expand_args_from(args, argfile::parse_fromfile, argfile::PREFIX);
+    return expand_argfiles(args);
+}
+
+#[cfg(feature = "argfile")]
+fn expand_argfiles(args: impl Iterator<Item = OsString>) -> std::io::Result<Vec<OsString>> {
+    use argfile::{Argument, PREFIX};
+    use std::{collections::HashSet, fs, io, path::PathBuf};
+
+    enum Work {
+        Argument(Argument),
+        EndFile(PathBuf),
+    }
+
+    let mut pending: Vec<_> = args
+        .map(|arg| Work::Argument(Argument::parse(arg, PREFIX)))
+        .collect();
+    let mut expanded = Vec::with_capacity(pending.len());
+    pending.reverse();
+    let mut active = HashSet::new();
+
+    // An explicit work stack avoids consuming the call stack for nested files.
+    while let Some(work) = pending.pop() {
+        match work {
+            Work::EndFile(path) => {
+                active.remove(&path);
+            }
+            Work::Argument(Argument::PassThrough(arg)) => expanded.push(arg),
+            Work::Argument(Argument::Path(path)) => {
+                let with_path = |error: io::Error| {
+                    io::Error::new(error.kind(), format!("argument file {path:?}: {error}"))
+                };
+                let canonical = fs::canonicalize(&path).map_err(with_path)?;
+                if !active.insert(canonical.clone()) {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidInput,
+                        format!("recursive argument file inclusion: {path:?}"),
+                    ));
+                }
+                let content = fs::read_to_string(&path).map_err(with_path)?;
+                pending.push(Work::EndFile(canonical));
+                pending.extend(
+                    argfile::parse_fromfile(&content, PREFIX)
+                        .into_iter()
+                        .rev()
+                        .map(Work::Argument),
+                );
+            }
+        }
+    }
+    Ok(expanded)
 }
