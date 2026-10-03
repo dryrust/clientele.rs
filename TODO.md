@@ -24,7 +24,7 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 8h.options**, documenting standard flag defaults and scope.
+**Suggested next leaf: 8h.color**, completing color-choice extension rustdoc.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -32,9 +32,6 @@ polish or feature growth. Priorities do not override an explicitly selected task
 ## 8. API composability and documentation (P2 unless marked P3)
 
 - [ ] **8h. Complete public rustdoc, one module per change.**
-  - [ ] **8h.options:** `lib/clientele/src/options.rs`: standard flag defaults,
-    global versus command-local flags, and verbosity behavior. Field docs are
-    also Clap help text, so review their CLI effect.
   - [ ] **8h.color:** `lib/clientele/src/clap/color_choice.rs`: the extension
     trait and its methods, stream selection, environment rules, and feature gates.
   - [ ] **8h.sort:** `lib/clientele/src/options/sort.rs`: public constructors and

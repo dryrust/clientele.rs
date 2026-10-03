@@ -1,11 +1,87 @@
 // This is free and unencumbered software released into the public domain.
 
+//! Reusable CLI flags and sort-key types.
+//!
+//! Requires `std,clap` (`clap` enables `std`). Flatten [`StandardOptions`] into a
+//! Clap parser to add common flags. The `color` feature adds the color flag;
+//! `tracing` adds owned and borrowed conversions to a tracing `LevelFilter`.
+
 pub mod sort;
 
 extern crate std;
 
 use clap::{ArgAction, Args};
 
+/// Common flags for a Clap parser, also re-exported at the crate root.
+///
+/// Requires `std,clap`. Use `#[command(flatten)]` on a field of this type in a
+/// derived parser. Defaults below are supplied by Clap when flags are absent;
+/// this type does not implement `Default`.
+///
+/// # Flags and scope
+///
+/// | Field | Flags | Parsed default | Scope |
+/// | --- | --- | --- | --- |
+/// | `color` (requires `color`) | `--color <auto\|always\|never>` | `Auto` | Global |
+/// | [`debug`](Self::debug) | `-d`, `--debug` | `false` | Global |
+/// | [`license`](Self::license) | `--license` | `false` | Command-local |
+/// | [`verbose`](Self::verbose) | `-v`, `--verbose` | `0` | Global |
+/// | [`version`](Self::version) | `-V`, `--version` | `false` | Command-local |
+///
+/// Global flags are accepted on the command containing the flattened options
+/// and on its subcommands, and their values are propagated by Clap. Command-local
+/// flags belong only to the command where these options are flattened; they are
+/// not inherited by subcommands.
+///
+/// Parsing only records the flags. The application is responsible for printing
+/// license/version information and choosing whether to exit, applying color
+/// preferences, and initializing logging. The `version` field is a boolean flag,
+/// not Clap's automatic version action. If the containing command enables that
+/// action through version metadata, disable it with `disable_version_flag = true`
+/// to avoid defining a conflicting `--version` flag.
+///
+/// # Verbosity and tracing
+///
+/// Each `-v` or `--verbose` occurrence increments the verbosity count; short flags
+/// may be grouped as `-vvv`. With `tracing`, converting owned or borrowed options
+/// to `LevelFilter` selects ERROR, WARN, INFO, or DEBUG for verbosity 0, 1, 2, or
+/// 3 and above, respectively. `debug` selects TRACE regardless of verbosity.
+/// Other flags do not affect that conversion. Without `tracing`, the flags are
+/// still parsed and can be interpreted by the application.
+///
+/// # Examples
+///
+/// ```
+/// use clientele::{crates::clap::{Parser, Subcommand}, StandardOptions};
+///
+/// #[derive(Parser)]
+/// struct Options {
+///     #[command(flatten)]
+///     flags: StandardOptions,
+///     #[command(subcommand)]
+///     command: Option<Command>,
+/// }
+///
+/// #[derive(Subcommand)]
+/// enum Command { Config }
+///
+/// let defaults = Options::try_parse_from(["demo"])?;
+/// assert!(!defaults.flags.debug);
+/// assert!(!defaults.flags.license);
+/// assert!(!defaults.flags.version);
+/// assert_eq!(defaults.flags.verbose, 0);
+///
+/// // Global flags work after a subcommand, too.
+/// let options = Options::try_parse_from(["demo", "config", "-vv", "--debug"])?;
+/// assert_eq!(options.flags.verbose, 2);
+/// assert!(options.flags.debug);
+///
+/// // Command-local flags are accepted only on the containing command.
+/// let options = Options::try_parse_from(["demo", "--license", "config"])?;
+/// assert!(options.flags.license);
+/// assert!(Options::try_parse_from(["demo", "config", "--license"]).is_err());
+/// # Ok::<(), clientele::crates::clap::Error>(())
+/// ```
 #[derive(Debug, Args)]
 pub struct StandardOptions {
     #[cfg(feature = "color")]
