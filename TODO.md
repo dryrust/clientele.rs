@@ -24,23 +24,20 @@ implementing a task.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Suggested next leaf: 8f**, defining malformed and non-CSI escape handling.
+**Suggested next leaf: 8g**, extending ANSI stripping to OSC hyperlinks.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
 
 ## 8. API composability and documentation (P2 unless marked P3)
 
-- [ ] **8f. Define robust malformed/non-CSI escape handling.**
-  `lib/clientele/src/color.rs::strip_ansi()` is documented for CSI sequences from
-  `color_print`; it currently turns `"a\x1bb"` into `"a"` by consuming the next
-  character after an unrecognized escape. Specify the handling contract and add
-  focused tests for ordinary Unicode, valid CSI, truncated CSI, and non-CSI input.
 - [ ] **8g. Extend ANSI stripping to OSC hyperlinks (P3).**
-  Depends on the contract in 8f. An OSC hyperlink currently leaves fragments such
-  as `8;;https://example.comlabel8;;`. Preserve the visible label while removing
-  supported controls; cover BEL and ST terminators and document malformed-input
-  behavior. Evaluate any parser dependency against the crate's feature policy.
+  `strip_ansi()` currently preserves unsupported non-CSI escapes, including OSC
+  hyperlinks. Extend its documented contract to preserve the visible label while
+  removing supported controls; cover BEL and ST terminators and document
+  malformed-input behavior. Keep malformed/truncated CSI and unsupported escape
+  preservation intact. Evaluate any parser dependency against the crate's feature
+  policy.
 - [ ] **8h. Complete public rustdoc, one module per change.**
   - [ ] **8h.args:** `lib/clientele/src/args.rs`: features, return values, I/O
     errors, OS-string preservation, Windows glob expansion before @argfiles.
@@ -150,6 +147,12 @@ combinations with `cargo check -p clientele --all-targets --no-default-features
 Useful sets: `clap`; `std,subcommands`; `std,getenv,camino`; `std,tracing`;
 `clap,tracing`; `clap,color,tracing`; `error-stack`; `std,error-stack`.
 Preserve optional-example/test gates in `lib/clientele/Cargo.toml`.
+
+For ANSI stripping and its doctests without optional features:
+
+```sh
+cargo test -p clientele --no-default-features --locked
+```
 
 For sort parsing, checked SQL rendering, and their doctests with minimal features:
 
