@@ -1,3 +1,9 @@
+//! Ordered string or typed sort keys for CLI arguments and SQL ordering.
+//!
+//! Requires `clap`, which enables `std`. See [`SortKeys`] for parsing, defaults,
+//! and typed CLI usage. Raw SQL rendering requires trusted input; prefer
+//! [`SortKeys::to_sql_checked`] for application-approved column mappings.
+
 extern crate alloc;
 
 use alloc::{borrow::ToOwned, format, string::String, vec, vec::Vec};
@@ -52,6 +58,10 @@ impl core::error::Error for SortSqlError {}
 /// error. Whitespace is preserved verbatim, including whitespace-only keys;
 /// it is neither trimmed nor rejected. Typed Clap parsing uses the same syntax
 /// and passes the unchanged key text to `clap::ValueEnum` for validation.
+/// Parsing returns a `String` error at the first invalid component, with no
+/// partial result. Typed parsing is case-sensitive and also rejects names that
+/// the enum does not accept. `FromStr` is implemented only for string keys;
+/// typed keys use Clap's value parser instead.
 ///
 /// Formatting is available when `T` implements [`core::fmt::Display`]. It uses
 /// each key's display text, separates keys with commas, and prefixes descending
@@ -91,6 +101,31 @@ impl core::error::Error for SortSqlError {}
 /// let alias = Options::try_parse_from(["demo", "--order-by=-name,+id"])?;
 /// assert_eq!(alias.sort, Some(sort));
 /// assert!(Options::try_parse_from(["demo"])?.sort.is_none());
+/// # Ok::<(), clientele::crates::clap::Error>(())
+/// ```
+///
+/// # Typed keys
+///
+/// Derive `ValueEnum` to restrict CLI keys to known fields. A `Display`
+/// implementation is needed only if the resulting keys will be formatted.
+///
+/// ```
+/// use clientele::{crates::clap::{Parser, ValueEnum}, options::sort::SortKeys};
+///
+/// #[derive(Clone, Debug, PartialEq, ValueEnum)]
+/// enum Field { Name, CreatedAt }
+///
+/// #[derive(Parser)]
+/// struct Options {
+///     #[arg(long, allow_hyphen_values = true)]
+///     sort: SortKeys<Field>,
+/// }
+///
+/// let options = Options::try_parse_from(["demo", "--sort=-created-at,name"])?;
+/// assert_eq!(options.sort.keys()[0].key(), &Field::CreatedAt);
+/// assert!(options.sort.keys()[0].descending());
+/// assert!(options.sort.keys()[1].ascending());
+/// assert!(Options::try_parse_from(["demo", "--sort=unknown"]).is_err());
 /// # Ok::<(), clientele::crates::clap::Error>(())
 /// ```
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -138,6 +173,7 @@ impl<T: Clone> SortKeys<T> {
         self.keys.is_empty()
     }
 
+    /// Borrows all keys in their supplied order, including duplicates.
     pub fn keys(&self) -> &[SortKey<T>] {
         &self.keys
     }
@@ -260,14 +296,17 @@ impl<T: Clone> SortKey<T> {
         }
     }
 
+    /// Borrows the underlying key, without its direction prefix.
     pub fn key(&self) -> &T {
         &self.key
     }
 
+    /// Returns true when this key selects ascending order.
     pub fn ascending(&self) -> bool {
         !self.descending
     }
 
+    /// Returns true when this key selects descending order.
     pub fn descending(&self) -> bool {
         self.descending
     }
