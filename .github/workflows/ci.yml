@@ -13,12 +13,14 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-    - name: Install rustfmt
-      run: rustup component add rustfmt
+    - name: Install quality tools
+      run: rustup component add rustfmt clippy
     - name: Check formatting
       run: cargo fmt --all -- --check
     - name: Check documentation
       run: cargo doc --workspace --no-deps --locked
+    - name: Check Clippy
+      run: cargo clippy --workspace --all-targets --locked
   build-ubuntu:
     name: Build on Ubuntu
     runs-on: ubuntu-latest
