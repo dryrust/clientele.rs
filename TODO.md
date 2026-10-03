@@ -3,8 +3,8 @@
 Note: the next release is going to be 0.5.0, meaning backwards
 incompatibility does not need to be strictly preserved.
 
-Review snapshot: 2026-10-03. This file records the outstanding project review
-findings and enough context to continue without the original conversation.
+Review snapshot: 2026-10-03. This file records project review history and
+verification evidence, with enough context to continue future reviews.
 Task IDs are stable and may contain gaps. Recheck the relevant code before
 implementing a task. The `R2-*` IDs identify findings from this review; completed
 items from the previous review have not been reopened.
@@ -25,10 +25,10 @@ items from the previous review have not been reopened.
 - After verification, remove finished items from this backlog. Keep the IDs of
   remaining tasks stable so later requests can refer to them.
 
-**Status:** 1 open item: R2-22 is in progress (P3).
-The original evidence below describes the review snapshot, not the corrected code.
-Progress notes identify the remaining work; do not repeat completed implementation
-steps or treat cross-compilation as native verification.
+**Status:** No outstanding leaf tasks. All findings from this review have been
+implemented and verified. The dated baseline and follow-up sections below are
+historical snapshots; the later native verification records supersede their
+pending-platform notes. Do not treat cross-compilation as native verification.
 
 Priority: **P1** correctness/reliability, **P2** API/UX/maintenance, **P3** optional
 polish or feature growth. Priorities do not override an explicitly selected task.
@@ -36,50 +36,19 @@ polish or feature growth. Priorities do not override an explicitly selected task
 ## Review coverage
 
 Reviewed all tracked source modules, integration/unit tests, the skeleton example,
-manifests and lockfile, documentation, and CI/release/developer tooling. Behavioral
-probes ran on macOS; Windows-specific findings below still need native regression
-tests. Cross-compilation establishes build coverage only.
+manifests and lockfile, documentation, and CI/release/developer tooling. Original
+behavioral probes ran on macOS; subsequent native Windows/Linux/macOS CI evidence
+is recorded below. Cross-compilation establishes build coverage only.
 
 | Area | Review outcome |
 | --- | --- |
 | Feature gates, dependency re-exports, consumer builds | Standalone-feature builds, weak-feature guards, Serde isolation, and scoped tracing checks pass |
 | Arguments and skeleton CLI | Argument-file contracts and R2-13 native Windows raw wildcard/argfile ordering tests pass |
-| Executable discovery | R2-03/R2-04 verified on Windows; R2-05 on Windows/macOS/Linux; R2-16 non-Unicode fixtures on Windows/Linux; remaining work: R2-22 |
+| Executable discovery | R2-03/R2-04 verified on Windows; R2-05 on Windows/macOS/Linux; R2-16 on Windows/Linux; R2-22 per-call search reuse measured and verified on Windows |
 | Color scanning, ANSI/OSC stripping, sort parsing and checked SQL | Existing regressions and the typed `parse_with` callback contract pass |
 | Native/UTF-8/XDG paths and tracing | Path, format, color, global-initialization, and focused feature-combination tests pass locally |
 | Completions, manpages, error-stack, packaging | Isolated-feature tests, all-feature quality gates, and packaged default/minimal doctests pass |
 | CI, Rake, Make, project documentation | Locked Ruby CI coverage, current contributor guidance, and historical attribution are in place |
-
-## P3 — Targeted API and performance extensions
-
-- [ ] **R2-22 — Reuse a per-call search context during Windows collection.**
-  **Progress:** Added a native Windows release benchmark, run by stable Windows
-  CI, with six directories plus two repeated entries, three extensions, 97 logical
-  commands, dotted exact-file collisions, and nine timed collections after warmup.
-  Run `cargo bench -p clientele --bench subcommands --no-default-features
-  --features std,subcommands --locked`. Timing is diagnostic, not a CI threshold.
-  Native baseline at `a9df518`: median 56.585 ms, min 55.714 ms, max 58.987 ms
-  ([stable Windows job](https://github.com/dryrust/clientele.rs/actions/runs/37144251868/job/111264830458)).
-  R2-03 through R2-05 are verified; the old `exists` calls were removed by R2-05.
-  The implementation now reuses parsed variables and lazy directory listings
-  within each call. Added a single-threaded Windows subprocess regression for
-  changing PATH/PATHEXT, removed/new files and directories, missing variables, and
-  retained snapshots. Local default/minimal tests, formatting, Clippy, rustdoc,
-  Windows-target Clippy, and Rust 1.97 Windows-target checks pass. The latter
-  initially lacked the target; installing it resolved the check failure.
-  Native Windows regressions and after-measurements remain to verify.
-  **Evidence (source-level performance opportunity):** Windows `collect` scans
-  `PATH`, then calls `resolve_command` for every unique name. Each call rereads and
-  reparses `PATH` and `PATHEXT`; candidates also incur `exists` before a second
-  metadata lookup in `filter_file`. No performance regression is asserted without
-  measurement.
-  **Acceptance:** Measure a synthetic multi-directory/multi-extension search,
-  then reuse parsed search state within one collection call and remove proven
-  redundant filesystem work. Preserve a fresh environment snapshot for subsequent
-  public calls, OS-path spelling, filtering, and precedence. Resolve R2-03 through
-  R2-05 first so optimization preserves the corrected semantics.
-  **Verify:** Record before/after measurements and run native Windows discovery
-  regressions, including repeated `PATH` directories and extension collisions.
 
 ## Verification and baseline
 
@@ -386,3 +355,44 @@ or an unpaired Windows surrogate, compare exact `PathBuf` values through a
 non-Unicode `PATH` parent, skip invalid executable names, and find valid neighbors.
 Windows also checks explicit filename lookup. The macOS EILSEQ skip remains an
 expected filesystem limitation, now covered by the native Linux execution.
+
+### R2-22 measurements and native verification on 2026-10-03
+
+Closed R2-22 after measuring the existing implementation, reusing parsed `PATH`
+and `PATHEXT` plus lazy directory listings within each Windows call, and verifying
+the optimized implementation natively. Directory-cache keys retain raw OS-path
+spelling. The redundant `exists` probes had already been removed by R2-05;
+this change removes repeated directory enumeration during collection/lookup.
+
+Reproduce on Windows with:
+
+```sh
+cargo bench -p clientele --bench subcommands --no-default-features --features std,subcommands --locked
+```
+
+The unchanged release-mode fixture has six directories plus two repeated `PATH`
+entries, three executable extensions, 97 logical commands, dotted exact-file
+collisions, and nine timed collections after warmup. Expected listings and lookup
+round trips are checked outside the timing. Stable Windows CI runs this benchmark
+as a diagnostic, without a timing threshold.
+
+| Revision | Median | Minimum | Maximum | Native Windows evidence |
+| --- | --- | --- | --- | --- |
+| `a9df518` baseline | 56.585 ms | 55.714 ms | 58.987 ms | [job 111264830458](https://github.com/dryrust/clientele.rs/actions/runs/37144251868/job/111264830458) |
+| `e318b4d` optimized | 22.871 ms | 22.711 ms | 23.349 ms | [job 111266675407](https://github.com/dryrust/clientele.rs/actions/runs/37144888070/job/111266675407) |
+
+The median is about 60% lower for this fixture. These are separate hosted-runner
+measurements, not a universal performance guarantee.
+
+- [CI run 37144888070](https://github.com/dryrust/clientele.rs/actions/runs/37144888070)
+  passed all jobs: native stable/MSRV Windows, Linux, and macOS tests; focused
+  feature suites; warning-denying quality gates; packaging; and release tooling.
+- Windows default/minimal/all-feature discovery tests pass, including repeated
+  directories, extension collisions, hidden/directory filtering, case matching,
+  non-Unicode paths, and the new single-threaded freshness subprocess.
+- The freshness regression changes `PATH` and `PATHEXT`, removes/creates files and
+  directories, unsets required variables, and verifies that successive calls see
+  new state while previously collected snapshots remain intact.
+- Local default/minimal tests, formatting, Clippy, rustdoc, Windows-target Clippy,
+  and Rust 1.97 Windows-target checks pass. The MSRV cross-check initially lacked
+  its target installation; installing the target resolved that check failure.
