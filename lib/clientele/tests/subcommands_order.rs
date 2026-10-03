@@ -9,6 +9,11 @@ use temp_dir::TempDir;
 const CHILD_MODE: &str = "CLIENTELE_SUBCOMMAND_ORDER_CHILD";
 
 fn main() {
+    #[cfg(windows)]
+    if env::var_os(CHILD_MODE).is_none() && windows_collisions() {
+        return;
+    }
+
     if let Ok(winner) = env::var(CHILD_MODE) {
         let extension = if cfg!(windows) {
             if env::var("PATHEXT").unwrap().starts_with(".CMD") {
@@ -82,4 +87,88 @@ fn main() {
             );
         }
     }
+}
+
+/// Returns true after checking a collision child; parents continue other cases.
+#[cfg(windows)]
+fn windows_collisions() -> bool {
+    const CHILD: &str = "CLIENTELE_DOTTED_COLLISION_CHILD";
+    if env::var_os(CHILD).is_some() {
+        let extensions = env::var("PATHEXT").unwrap();
+        let suffix = if extensions.starts_with(".CMD") {
+            "cmd"
+        } else {
+            "bat"
+        };
+        let mut expected = Vec::new();
+        if extensions.contains(".V1") {
+            expected.push(Subcommand {
+                name: "report".into(),
+                path: Path::new("exact").join("clientele-report.v1"),
+            });
+        }
+        expected.extend([
+            Subcommand {
+                name: "report.v1".into(),
+                path: Path::new("stem").join(format!("clientele-report.v1.{suffix}")),
+            },
+            Subcommand {
+                name: "task".into(),
+                path: Path::new("exact").join("clientele-task.bat"),
+            },
+            Subcommand {
+                name: "task.bat".into(),
+                path: Path::new("stem").join("clientele-task.bat.bat"),
+            },
+        ]);
+        assert_eq!(
+            SubcommandsProvider::collect("clientele-", 1).into_commands(),
+            expected
+        );
+        for command in expected {
+            assert_eq!(
+                SubcommandsProvider::find("clientele-", &command.name),
+                Some(command)
+            );
+        }
+        // Explicit filenames still work when no matching logical stem exists.
+        assert_eq!(
+            SubcommandsProvider::find("clientele-", "report.v1.bat"),
+            Some(Subcommand {
+                name: "report.v1".into(),
+                path: Path::new("stem").join("clientele-report.v1.bat"),
+            })
+        );
+        return true;
+    }
+
+    let dir = TempDir::new().unwrap();
+    for directory in ["exact", "stem"] {
+        fs::create_dir(dir.child(directory)).unwrap();
+    }
+    for file in [
+        "exact/clientele-report.v1",
+        "exact/clientele-task.bat",
+        "stem/clientele-report.v1.bat",
+        "stem/clientele-report.v1.cmd",
+        "stem/clientele-task.bat.bat",
+    ] {
+        fs::write(dir.child(file), "fixture").unwrap();
+    }
+    for directories in [["exact", "stem", "exact"], ["stem", "exact", "stem"]] {
+        for extensions in [".BAT;.CMD", ".CMD;.BAT", ".V1;.BAT"] {
+            let output = Command::new(env::current_exe().unwrap())
+                .current_dir(dir.path())
+                .env(CHILD, "1")
+                .env("PATH", env::join_paths(directories).unwrap())
+                .env("PATHEXT", extensions)
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{directories:?}, {extensions}: {output:?}"
+            );
+        }
+    }
+    false
 }
